@@ -1,65 +1,253 @@
-<script type="text/javascript">
-    function firmwareValidation() {
-        var fn = document.getElementById("fi").value;
-        if (fn.lastIndexOf("/") != -1) fn = fn.substring(fn.lastIndexOf("/") + 1);
-        if (fn.lastIndexOf("\\") != -1) fn = fn.substring(fn.lastIndexOf("\\") + 1);
-        if (fn.toLowerCase().indexOf(sessionStorage.getItem("ProductName").toLowerCase()) != 0) {
-            alert("You didn't select a valid Firmware file for " + sessionStorage.getItem("ProductName"));
-            return false;
-        };
-        var ret = confirm("Are you sure to flash firmware?");
-        if (ret) document.getElementById('r').innerHTML = 'In Progress...';
-        return ret;
+<style>
+    .pure-control-group label {
+        font-weight: bold;
     }
-</script>
 
-<h3>Upload a new Firmware : </h3>
-<form class="pure-form pure-form-aligned" id="f" method='POST' action='/fw' enctype='multipart/form-data'
-    onsubmit='return firmwareValidation()'>
+    .spinner {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-left-color: #fff;
+        border-radius: 50%;
+        width: 12px;
+        height: 12px;
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<h2>Current Firmware<span id="l1">
+        <h6 style="display:inline"><b> Loading...</b></h6>
+    </span></h2>
+<div class="pure-form pure-form-aligned">
+    <div class="pure-control-group">
+        <label for="installed_version">Version</label>
+        <span id='installed_version'></span>
+    </div>
+</div>
+
+<h2>Online Update<span id="l2">
+        <h6 style="display:inline"><b> Loading...</b></h6>
+    </span></h2>
+<div class="pure-form pure-form-aligned">
+    <div class="pure-control-group">
+        <label for="latest_version">Latest Version</label>
+        <span id='latest_version'></span>
+    </div>
+    <div class="pure-control-group">
+        <label for="title">Title</label>
+        <span id='title' style="display: inline-block;"></span>
+    </div>
+    <div class="pure-control-group">
+        <label for="release_date">Release Date</label>
+        <span id='release_date'></span>
+    </div>
+    <div class="pure-control-group">
+        <label for="release_summary" style="vertical-align: top;">Summary</label>
+        <span id='release_summary' style="display: inline-block;"></span>
+    </div>
+
+    <div class="pure-control-group">
+        <label for="release_url">URL</label>
+        <span id='release_url'></span>
+    </div>
+    <div class="pure-controls">
+        <button class="pure-button pure-button-primary" id="refreshButton" style="background: #1cb841;">Refresh</button>
+        <button class="pure-button pure-button-primary" id="updateButton" style="background: #df7514;"
+            disabled>Update</button>
+        &nbsp;&nbsp;<span id='rUpdate'></span>
+    </div>
+</div>
+
+<h2>Manual Update</h2>
+<form class="pure-form pure-form-aligned" id="f" method='POST' action='/fw' enctype='multipart/form-data'>
     <fieldset>
         <div class="pure-control-group">
             <label for="name">Firmware File</label>
             <input type='file' name='fi' id='fi' accept='.bin' required>
         </div>
         <div class="pure-controls">
-            <input type='submit' name='sub' id='sub' value='/!\ Upload Firmware /!\'
-                class="pure-button pure-button-primary">
+            <button type='submit' id='uploadButton' class="pure-button pure-button-primary">Upload Firmware</button>
+            &nbsp;&nbsp;<span id='rUpload'></span>
         </div>
-
     </fieldset>
 </form>
-<span id='r'></span>
 
 <script>
-    //QuerySelector Prefix is added by load function to know into what element queySelector need to look for
-    //var qsp = '#content0 ';
+    // QuerySelector Prefix is added by load function to know into what element querySelector needs to look for
+    // var qsp = '#content0 ';
+
+    function firmwareValidation() {
+        const fileInput = $(qsp + '#fi');
+        const productName = sessionStorage.getItem("ProductName");
+        if (!fileInput || !productName) {
+            return false;
+        }
+
+        let fn = fileInput.value.split(/(\\|\/)/g).pop();
+
+        // Define the patterns for the filename
+        const versionPattern = '(\\.\\d+\\.\\d+\\.\\d+)?';
+        const filenamePattern1 = new RegExp(`^${productName}${versionPattern}\\.bin$`, 'i');
+        let filenamePattern2 = null;
+
+        // If product name starts with 'W', define an additional pattern
+        if (productName.startsWith('W')) {
+            const productNameWithoutFirstChar = productName.substring(1);
+            filenamePattern2 = new RegExp(`^Wireless${productNameWithoutFirstChar}${versionPattern}\\.bin$`, 'i');
+        }
+
+        // Check if the filename matches either pattern
+        if (!filenamePattern1.test(fn) && (!filenamePattern2 || !filenamePattern2.test(fn))) {
+            alert(`You didn't select a valid Firmware file for ${productName}`);
+            return false;
+        }
+        return confirm("Please do not power off the device during the update process.");
+    }
+
+    function compareVersions(installed, latest) {
+        const installedParts = installed.split('.').map(Number);
+        const latestParts = latest.split('.').map(Number);
+
+        for (let i = 0; i < Math.max(installedParts.length, latestParts.length); i++) {
+            const installedPart = installedParts[i] || 0;
+            const latestPart = latestParts[i] || 0;
+            if (installedPart < latestPart) { return -1; }
+            if (installedPart > latestPart) { return 1; }
+        }
+        return 0;
+    }
+
+    function disableAllButtons() {
+        $(qsp + '#refreshButton').disabled = true;
+        $(qsp + '#updateButton').disabled = true;
+        $(qsp + '#fi').readOnly = true;
+        $(qsp + '#uploadButton').disabled = true;
+    }
+
+    function calculateAllButtonStates() {
+        const refreshButton = $(qsp + '#refreshButton');
+        refreshButton.innerHTML = 'Refresh';
+        refreshButton.disabled = false;
+
+        const installedVersion = $(qsp + '#installed_version').textContent;
+        const latestVersion = $(qsp + '#latest_version').textContent;
+        const updateButton = $(qsp + '#updateButton');
+        if (compareVersions(latestVersion, installedVersion) > 0) {
+            updateButton.disabled = false;
+            updateButton.innerHTML = 'Update';
+        } else {
+            updateButton.disabled = true;
+            updateButton.innerHTML = latestVersion ? 'Up to date' : 'Update';
+        }
+
+        const uploadButton = $(qsp + '#uploadButton');
+        uploadButton.innerHTML = 'Upload Firmware';
+        uploadButton.disabled = false;
+        $(qsp + '#fi').readOnly = false;
+    }
+
+    function getUpdateInfos(refresh = false) {
+
+        disableAllButtons();
+
+        const refreshButton = $(qsp + "#refreshButton");
+
+        // Show loading animation
+        refreshButton.innerHTML = '<span class="spinner"></span> Refreshing...';
+
+        // clear previous values
+        ['#latest_version', '#title', '#release_date', '#release_summary', '#release_url'].forEach(id => {
+            $(qsp + id).innerHTML = '';
+        });
+
+        // add param to /gui for force refresh
+        let url = refresh ? "/gui?refresh=true" : "/gui";
+
+        getJSON(url, function (GUI) {
+            for (k in GUI) {
+                if ((e = $(qsp + '#' + k)) != undefined) e.innerHTML = GUI[k];
+            }
+            // transform the release url into a clickable link
+            const releaseUrlSpan = $(qsp + '#release_url');
+            const url = releaseUrlSpan.innerHTML;
+            if (url) {
+                releaseUrlSpan.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+            }
+
+            // transform line breaks into <br> tags in the release summary
+            const releaseSummarySpan = $(qsp + '#release_summary');
+            const summary = releaseSummarySpan.innerHTML;
+            if (summary) {
+                releaseSummarySpan.innerHTML = summary.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>');
+            }
+
+            // Update buttons
+            calculateAllButtonStates();
+
+            fadeOut($(qsp + "#l1"));
+            fadeOut($(qsp + "#l2"));
+
+        }, function () {
+
+            calculateAllButtonStates();
+            ['#l1', '#l2'].forEach(id => {
+                $(qsp + id).innerHTML = '<h4 style="display:inline;color:red;"><b> Failed</b></h4>';
+            });
+        });
+    }
+    getUpdateInfos();
+    $(qsp + "#refreshButton").addEventListener('click', () => { getUpdateInfos(true); });
+
+    $(qsp + "#updateButton").addEventListener('click', () => {
+
+        disableAllButtons();
+        $(qsp + '#updateButton').innerHTML = '<span class="spinner"></span> Updating...';
+
+        post('/update', $(qsp + '#latest_version').textContent, () => {
+            $(qsp + '#updateButton').innerHTML = '<span class="spinner"></span> Rebooting...';
+            $(qsp + '#rUpdate').innerHTML = '<h3>Page refresh in <span id="cd">20</span>sec.</h3>';
+            loadScript('startCountdown("#cd", 19, () => {location.reload();});');
+        }, () => {
+            calculateAllButtonStates();
+        });
+    });
 
     $(qsp + "#f").addEventListener('submit', function (evt) {
         evt.preventDefault();
         if (!firmwareValidation()) return;
-        $(qsp + '#fi').readOnly = true;
-        $(qsp + '#sub').disabled = true;
+        disableAllButtons();
+
+        // Add loading animation to the submit button
+        $(qsp + '#uploadButton').innerHTML = '<span class="spinner"></span> <span id="progress">0%</span>';
+
         post('/fw',
             new FormData($(qsp + '#f')),
             function () {
-                var reload15sec = document.createElement('script');
-                $(qsp + '#r').innerHTML = '<h3><span style="color: green;"><b>Done</b></span> System is rebooting. This page will be reloaded in <span id="cd">20</span>sec.</h3>';
-                runScript('var count=19;var cdi=setInterval(function(){if($("#cd")){$("#cd").innerText=count;if(!count){clearInterval(cdi);location.reload();}count--;}else{clearInterval(cdi);}},1000);');
-                $(qsp + '#f').reset();
+                $(qsp + '#progress').innerHTML = 'Rebooting...';
+                $(qsp + '#rUpload').innerHTML = '<h3>Page refresh in <span id="cd">20</span>sec.</h3>';
+                loadScript('startCountdown("#cd", 19, () => {location.reload();});');
             },
             function (responseText) {
-                $(qsp + '#r').innerHTML = '<span style="color: red;"><b>Failed</b></span> (' + responseText + ')';
+                $(qsp + '#rUpload').innerHTML = '<span style="color: red;"><b>Failed</b></span> (' + responseText + ')';
                 $(qsp + '#f').reset();
-                $(qsp + '#fi').readOnly = false;
-                $(qsp + '#sub').disabled = false;
+                calculateAllButtonStates();
             },
             30000,
             function (evt) {
-                $(qsp + '#r').innerHTML = 'In Progress';
-                if (evt.lengthComputable) $(qsp + '#r').innerHTML += ' : ' + evt.loaded / evt.total * 100 + '%';
+                if (evt.lengthComputable) {
+                    const percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                    $(qsp + '#progress').innerHTML = `${percentComplete}%`;
+                }
             }
         );
     });
-
-    $(qsp + "#f").onsubmit = null; //remove default submit after new Event listener
 </script>

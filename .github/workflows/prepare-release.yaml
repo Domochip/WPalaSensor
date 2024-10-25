@@ -34,17 +34,24 @@ jobs:
       - name: Get Versions
         id: versions
         run: |
+          APPLICATION1_MODEL=$(grep -oP '(?<=#define APPLICATION1_MODEL ").*(?=")'  ./src/Main.h)
+          echo "APPLICATION1_MODEL=${APPLICATION1_MODEL}" >> $GITHUB_ENV
+          PPLICATION1_MODEL=$(grep -oP '(?<=#define APPLICATION1_MODEL "W).*(?=")'  ./src/Main.h)
+          echo "PPLICATION1_MODEL=${PPLICATION1_MODEL}" >> $GITHUB_ENV
           VERSION_NUMBER=$(grep -oP '(?<=#define VERSION_NUMBER ").*(?=")'  ./src/Main.h)
           echo "VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
 
       - name: Rename Firmware
-        run: mv .pio/build/d1_mini/WPalaSensor.bin .pio/build/d1_mini/WPalaSensor.${{ env.VERSION_NUMBER }}.bin
+        run: |
+          cp .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.bin .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin
+          cp .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.bin .pio/build/d1_mini/Wireless${{ env.PPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin
 
       - name: Create Draft Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
           tag_name: "${{ env.VERSION_NUMBER }}"
-          body: "WPalaSensor Version: ${{ env.VERSION_NUMBER }}"
           generate_release_notes: true
-          files: .pio/build/d1_mini/WPalaSensor.${{ env.VERSION_NUMBER }}.bin
+          files: |
+            .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin
+            .pio/build/d1_mini/Wireless${{ env.PPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin

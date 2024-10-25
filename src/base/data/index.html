@@ -41,14 +41,12 @@
         <div id="menu">
             <div class="pure-menu">
                 <div class="pure-menu-heading">Domochip</div>
-                <div class="pure-menu-heading" id="menuAppName"></div>
+                <div class="pure-menu-heading" id="menuProductName"></div>
 
-                <ul class="pure-menu-list" id="menuList">
-                    <li class="pure-menu-item pure-menu-selected" id="menuStatus"><a href=""
-                            class="pure-menu-link">Status</a></li>
+                <ul class="pure-menu-list">
+                    <li class="pure-menu-item" id="menuStatus"><a href="" class="pure-menu-link">Status</a></li>
                     <li class="pure-menu-item" id="menuConfig"><a href="" class="pure-menu-link">Config</a></li>
                     <li class="pure-menu-item" id="menuFirmware"><a href="" class="pure-menu-link">Firmware</a></li>
-                    <li class="pure-menu-item" id="menuDiscover"><a href="" class="pure-menu-link">Discover</a></li>
                 </ul>
             </div>
         </div>
@@ -58,46 +56,53 @@
                 <h1 id="mainHeader"></h1>
             </div>
 
-            <div class="content" id="mainContent">
+            <div class="content">
                 <div id="content0"></div>
                 <div id="contentw"></div>
-
                 <div id="content1"></div>
-                <div id="content2"></div>
-                <div id="content3"></div>
             </div>
         </div>
     </div>
 
     <script>
-        //from https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Code_snippets/QuerySelector
-        function $(selector, el) {
-            if (!el) el = document;
+        function $(selector, el = document) {
             return el.querySelector(selector);
         }
     </script>
     <script src="side-menu.js"></script>
     <script>
-        function runScript(code) {
-            var scr = document.createElement('script');
-            scr.text = code;
-            var elemForDebug = document.head.appendChild(scr);
-            elemForDebug.parentNode.removeChild(scr);
+        const loadedScripts = new Set();
+
+        function loadScript(code) {
+            const script = document.createElement('script');
+            const blob = new Blob([code], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            script.src = url;
+            script.onload = () => URL.revokeObjectURL(url);
+            document.head.appendChild(script);
+            loadedScripts.add(script);
+        }
+
+        function unloadScripts() {
+            loadedScripts.forEach(script => {
+                if (script.src) { URL.revokeObjectURL(script.src); }
+                document.head.removeChild(script);
+            });
+            loadedScripts.clear();
         }
 
         function request(method, url, data, success, fail, timeout, uploadProgress) {
-            var xhr = new XMLHttpRequest();
-            xhr.addEventListener('readystatechange', function () {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        if (success) success(xhr.response);
-                    }
-                    else {
-                        if (fail) fail(xhr.response);
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        if (typeof success === 'function') success(xhr.response);
+                    } else {
+                        if (typeof fail === 'function') fail(xhr.response);
                     }
                 }
-            });
-            if (uploadProgress) xhr.upload.addEventListener('progress', uploadProgress);
+            };
+            if (uploadProgress && xhr.upload) { xhr.upload.onprogress = uploadProgress; }
             xhr.open(method, url);
             if (timeout) xhr.timeout = timeout;
             if (typeof data == "string") xhr.setRequestHeader('Content-type', 'application/json');
@@ -105,16 +110,17 @@
         }
 
         function load(element, url, callback) {
-            request("GET", url, null, function (response) {
-                element.innerHTML = '';
+            request("GET", url, null, (response) => {
                 element.innerHTML = response;
-                var scriptList = element.getElementsByTagName('script');
-                for (var i = 0; i < scriptList.length; i++) {
+                const scriptList = element.getElementsByTagName('script');
+                for (const script of scriptList) {
                     //Replace "QuerySelectorPrefix" aka "qsp" : allow script to search into the parent element
-                    scriptList[i].innerHTML = scriptList[i].innerHTML.replace(/qsp/g, '\'#' + element.id + ' \'');
-                    runScript(scriptList[i].innerHTML);
+                    script.innerHTML = script.innerHTML.replace(/qsp/g, `'#${element.id} '`);
+                    loadScript(script.innerHTML);
                 }
-                if (callback) callback();
+                if (typeof callback === 'function') callback();
+            }, (error) => {
+                console.error(`Failed to load content from ${url}: ${error}`);
             });
         };
 
@@ -133,8 +139,8 @@
         };
 
         function convertFormDataToJson(formData) {
-            var object = {};
-            formData.forEach(function (value, key) {
+            const object = {};
+            formData.forEach((value, key) => {
                 // Reflect.has in favor of: object.hasOwnProperty(key)
                 if (!Reflect.has(object, key)) {
                     object[key] = value;
@@ -149,87 +155,100 @@
         }
 
         function fadeOut(el) {
+            if (!el || el.style.display === 'none') return; // Check if el is null or undefined
+
             el.style.opacity = 1;
+            const duration = 400; // Duration of the fade-out effect in milliseconds
+            const start = Date.now();
 
-            var last = +new Date();
-            var tick = function () {
-                el.style.opacity = +el.style.opacity - (new Date() - last) / 400;
-                last = +new Date();
+            function tick() {
+                if (!el) return; // Check if el is null or undefined
 
-                if (+el.style.opacity > 0)
-                    (window.requestAnimationFrame && requestAnimationFrame(tick)) || setTimeout(tick, 16);
-                else
+                const elapsed = Date.now() - start;
+                el.style.opacity = Math.max(1 - elapsed / duration, 0);
+
+                if (elapsed < duration) {
+                    requestAnimationFrame(tick);
+                } else {
                     el.style.display = 'none';
-            };
+                }
+            }
 
-            tick();
+            requestAnimationFrame(tick);
+        }
+
+        function startCountdown(elementSelector, initialCount, onComplete) {
+            let count = initialCount;
+            const cdi = setInterval(() => {
+                const cdElement = $(elementSelector);
+                if (cdElement) {
+                    cdElement.innerText = count;
+                    if (count === 0) {
+                        clearInterval(cdi);
+                        if (typeof onComplete === 'function') {
+                            onComplete();
+                        }
+                    }
+                    count--;
+                } else {
+                    clearInterval(cdi);
+                }
+            }, 1000);
         }
 
         function triggerEvent(el, evtName) {
-            var evt = document.createEvent('Event');
-            evt.initEvent(evtName, true, true);
+            var evt = new Event(evtName, {
+                bubbles: true,
+                cancelable: true
+            });
             el.dispatchEvent(evt);
         }
 
-
-        function emptyContents() {
-            $("#menuStatus").classList.remove("pure-menu-selected");
-            $("#menuConfig").classList.remove("pure-menu-selected");
-            $("#menuFirmware").classList.remove("pure-menu-selected");
-            $("#menuDiscover").classList.remove("pure-menu-selected");
-
-            $("#content0").innerHTML = '';
-            $("#contentw").innerHTML = '';
-            $("#content1").innerHTML = '';
+        function clearMenuAndContent() {
+            unloadScripts();
+            ["#menuStatus", "#menuConfig", "#menuFirmware"].forEach(item => { $(item).classList.remove("pure-menu-selected"); });
+            ["#content0", "#contentw", "#content1"].forEach(item => { $(item).innerHTML = ''; });
         };
 
-        $("#menuStatus").addEventListener("click", function (evt) {
-            evt.preventDefault();
-            emptyContents();
-            $("#menuStatus").classList.add("pure-menu-selected");
-            $("#mainHeader").textContent = "Status";
+        function handleMenuClick(menuId, headerText, contentMappings, callback) {
+            $(menuId).addEventListener("click", (evt) => {
+                evt.preventDefault();
+                clearMenuAndContent();
+                $(menuId).classList.add("pure-menu-selected");
+                $("#mainHeader").textContent = headerText;
 
-            load($("#content0"), "/status0.html");
-            load($("#contentw"), "/statusw.html");
-
-            load($("#content1"), "/status1.html", function () {
-                if ($("#applicationName") != null && $("#applicationName").innerText.length != 0) {
-                    document.title = "Domochip " + $("#applicationName").innerText;
-                    sessionStorage.setItem("ProductName", $("#applicationName").innerText);
-                }
-                if ($("#shortApplicationName") != null && $("#shortApplicationName").innerText.length != 0) {
-                    $("meta[name='description']").content = $("#shortApplicationName").innerText;
-                    $("#menuAppName").innerText = $("#shortApplicationName").innerText;
+                for (const [contentId, url] of Object.entries(contentMappings)) {
+                    load($(contentId), url, callback);
                 }
             });
+        }
+
+        handleMenuClick("#menuStatus", "Status", {
+            "#content0": "/status0.html",
+            "#contentw": "/statusw.html",
+            "#content1": "/status1.html"
+        }, () => {
+            const productNameElement = $("#productName");
+            if (productNameElement && productNameElement.innerText.length !== 0) {
+                const productNameText = productNameElement.innerText;
+                document.title = `Domochip ${productNameText}`;
+                sessionStorage.setItem("ProductName", productNameText);
+                $("meta[name='description']").content = productNameText;
+                $("#menuProductName").innerText = productNameText;
+            }
         });
+
+        handleMenuClick("#menuConfig", "Config", {
+            "#content0": "/config0.html",
+            "#contentw": "/configw.html",
+            "#content1": "/config1.html"
+        });
+
+        handleMenuClick("#menuFirmware", "Firmware", {
+            "#content0": "/fw.html"
+        });
+
         triggerEvent($("#menuStatus"), 'click');
-
-        $("#menuConfig").addEventListener("click", function (evt) {
-            evt.preventDefault();
-            emptyContents();
-            $("#menuConfig").classList.add("pure-menu-selected");
-            $("#mainHeader").textContent = "Config";
-            load($("#content0"), "/config0.html");
-            load($("#contentw"), "/configw.html");
-            load($("#content1"), "/config1.html");
-        });
-
-        $("#menuFirmware").addEventListener("click", function (evt) {
-            evt.preventDefault();
-            emptyContents();
-            $("#menuFirmware").classList.add("pure-menu-selected");
-            $("#mainHeader").textContent = "Firmware";
-            load($("#content0"), "/fw.html");
-        });
-
-        $("#menuDiscover").addEventListener("click", function (evt) {
-            evt.preventDefault();
-            emptyContents();
-            $("#menuDiscover").classList.add("pure-menu-selected");
-            $("#mainHeader").textContent = "Discover";
-            load($("#content0"), "/discover.html");
-        });
     </script>
 </body>
 
