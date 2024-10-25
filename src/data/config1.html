@@ -315,59 +315,25 @@
     });
 
 
-    $(qsp + "#set10").addEventListener('click', function () {
-        post("/sdp", "{\"temperature\":10}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R1").value = data.r })
-        })
-    })
+    function addClickListener(selector, payload, resultSelector) {
+        $(qsp + selector).addEventListener('click', function () {
+            post("/sdp", payload, function () {
+                getJSON("/gdp", function (data) { $(qsp + resultSelector).value = data.r })
+            })
+        });
+    }
 
-    $(qsp + "#set10d").addEventListener('click', function () {
-        post("/sdp", "{\"up\":1}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R1").value = data.r })
-        })
-    })
+    addClickListener("#set10", "{\"temperature\":10}", "#R1");
+    addClickListener("#set10d", "{\"up\":1}", "#R1");
+    addClickListener("#set10u", "{\"down\":1}", "#R1");
 
-    $(qsp + "#set10u").addEventListener('click', function () {
-        post("/sdp", "{\"down\":1}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R1").value = data.r })
-        })
-    })
+    addClickListener("#set20", "{\"temperature\":20}", "#R2");
+    addClickListener("#set20d", "{\"up\":1}", "#R2");
+    addClickListener("#set20u", "{\"down\":1}", "#R2");
 
-    $(qsp + "#set20").addEventListener('click', function () {
-        post("/sdp", "{\"temperature\":20}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R2").value = data.r })
-        })
-    })
-
-    $(qsp + "#set20d").addEventListener('click', function () {
-        post("/sdp", "{\"up\":1}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R2").value = data.r })
-        })
-    })
-
-    $(qsp + "#set20u").addEventListener('click', function () {
-        post("/sdp", "{\"down\":1}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R2").value = data.r })
-        })
-    })
-
-    $(qsp + "#set30").addEventListener('click', function () {
-        post("/sdp", "{\"temperature\":30}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R3").value = data.r })
-        })
-    })
-
-    $(qsp + "#set30d").addEventListener('click', function () {
-        post("/sdp", "{\"up\":1}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R3").value = data.r })
-        })
-    })
-
-    $(qsp + "#set30u").addEventListener('click', function () {
-        post("/sdp", "{\"down\":1}", function () {
-            getJSON("/gdp", function (data) { $(qsp + "#R3").value = data.r })
-        })
-    })
+    addClickListener("#set30", "{\"temperature\":30}", "#R3");
+    addClickListener("#set30d", "{\"up\":1}", "#R3");
+    addClickListener("#set30u", "{\"down\":1}", "#R3");
 
     $(qsp + "#calc").addEventListener('click', function () {
         var coeffs = getSteinhartHart($(qsp + "#R1").value, 10.0, $(qsp + "#R2").value, 20.0, $(qsp + "#R3").value, 30.0);
