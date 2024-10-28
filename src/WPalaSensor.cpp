@@ -52,8 +52,8 @@ void WPalaSensor::timerTick()
     baseTopic.remove(baseTopic.length() - 1);
 
     JsonDocument doc;
-    doc["Core"] = serialized(_applicationList[Core]->getStatusJSON());
-    doc["Wifi"] = serialized(_applicationList[WifiMan]->getStatusJSON());
+    doc[F("Core")] = serialized(_applicationList[Core]->getStatusJSON());
+    doc[F("Wifi")] = serialized(_applicationList[WifiMan]->getStatusJSON());
     doc[_appName] = serialized(getStatusJSON());
 
     String strJson;
@@ -442,12 +442,12 @@ bool WPalaSensor::publishHassDiscoveryToMqtt()
   // ---------- WPalaSensor Device ----------
 
   // prepare WPalaSensor device JSON
-  jsonDoc["configuration_url"] = F("http://wpalasensor.local");
-  jsonDoc["identifiers"][0] = uniqueIdPrefixWPalaSensor;
-  jsonDoc["manufacturer"] = F("Domochip");
-  jsonDoc["model"] = F("WPalaSensor");
-  jsonDoc["name"] = WiFi.getHostname();
-  jsonDoc["sw_version"] = VERSION;
+  jsonDoc[F("configuration_url")] = F("http://wpalasensor.local");
+  jsonDoc[F("identifiers")][0] = uniqueIdPrefixWPalaSensor;
+  jsonDoc[F("manufacturer")] = F("Domochip");
+  jsonDoc[F("model")] = F("WPalaSensor");
+  jsonDoc[F("name")] = WiFi.getHostname();
+  jsonDoc[F("sw_version")] = VERSION;
   serializeJson(jsonDoc, device); // serialize to device String
   jsonDoc.clear();                // clean jsonDoc
 
@@ -467,14 +467,14 @@ bool WPalaSensor::publishHassDiscoveryToMqtt()
   topic += F("/config");
 
   // prepare payload for WPalaSensor connectivity sensor
-  jsonDoc["~"] = baseTopic.substring(0, baseTopic.length() - 1); // remove ending '/'
-  jsonDoc["device_class"] = F("connectivity");
-  jsonDoc["device"] = serialized(device);
-  jsonDoc["entity_category"] = F("diagnostic");
-  jsonDoc["object_id"] = F("wpalasensor_connectivity");
-  jsonDoc["state_topic"] = F("~/connected");
-  jsonDoc["unique_id"] = uniqueId;
-  jsonDoc["value_template"] = F("{{ iif(int(value) > 0, 'ON', 'OFF') }}");
+  jsonDoc[F("~")] = baseTopic.substring(0, baseTopic.length() - 1); // remove ending '/'
+  jsonDoc[F("device_class")] = F("connectivity");
+  jsonDoc[F("device")] = serialized(device);
+  jsonDoc[F("entity_category")] = F("diagnostic");
+  jsonDoc[F("object_id")] = F("wpalasensor_connectivity");
+  jsonDoc[F("state_topic")] = F("~/connected");
+  jsonDoc[F("unique_id")] = uniqueId;
+  jsonDoc[F("value_template")] = F("{{ iif(int(value) > 0, 'ON', 'OFF') }}");
 
   jsonDoc.shrinkToFit();
   serializeJson(jsonDoc, payload);
@@ -537,39 +537,39 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
   JsonVariant jv;
   char tempPassword[183 + 1] = {0};
 
-  if ((jv = doc["rp"]).is<JsonVariant>())
+  if ((jv = doc[F("rp")]).is<JsonVariant>())
     _refreshPeriod = jv;
 
-  if ((jv = doc["sha"]).is<JsonVariant>())
+  if ((jv = doc[F("sha")]).is<JsonVariant>())
     _digipotsNTC.steinhartHartCoeffs[0] = jv;
-  if ((jv = doc["shb"]).is<JsonVariant>())
+  if ((jv = doc[F("shb")]).is<JsonVariant>())
     _digipotsNTC.steinhartHartCoeffs[1] = jv;
-  if ((jv = doc["shc"]).is<JsonVariant>())
+  if ((jv = doc[F("shc")]).is<JsonVariant>())
     _digipotsNTC.steinhartHartCoeffs[2] = jv;
 
   // Parse Home Automation config
 
-  if ((jv = doc["haproto"]).is<JsonVariant>())
+  if ((jv = doc[F("haproto")]).is<JsonVariant>())
     _ha.protocol = jv;
 
   // if an home Automation protocol has been selected then get common param
   if (_ha.protocol != HA_PROTO_DISABLED)
   {
-    if ((jv = doc["hamfr"]).is<JsonVariant>())
+    if ((jv = doc[F("hamfr")]).is<JsonVariant>())
       _ha.maxFailedRequest = jv;
 
-    if ((jv = doc["hatt"]).is<JsonVariant>())
+    if ((jv = doc[F("hatt")]).is<JsonVariant>())
       _ha.temperatureTimeout = jv;
   }
 
   // Parse ConnectionBox config
-  if ((jv = doc["cbproto"]).is<JsonVariant>())
+  if ((jv = doc[F("cbproto")]).is<JsonVariant>())
     _ha.cboxProtocol = jv;
 
   // if an ConnectionBox protocol has been selected then get common param
   if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
   {
-    if ((jv = doc["cbtt"]).is<JsonVariant>())
+    if ((jv = doc[F("cbtt")]).is<JsonVariant>())
       _ha.cboxTemperatureTimeout = jv;
   }
 
@@ -577,15 +577,15 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
   if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
 
-    if ((jv = doc["hamhost"]).is<const char *>())
+    if ((jv = doc[F("hamhost")]).is<const char *>())
       strlcpy(_ha.mqtt.hostname, jv, sizeof(_ha.mqtt.hostname));
-    if ((jv = doc["hamport"]).is<JsonVariant>())
+    if ((jv = doc[F("hamport")]).is<JsonVariant>())
       _ha.mqtt.port = jv;
-    if ((jv = doc["hamu"]).is<const char *>())
+    if ((jv = doc[F("hamu")]).is<const char *>())
       strlcpy(_ha.mqtt.username, jv, sizeof(_ha.mqtt.username));
 
     // put MQTT password into tempPassword
-    if ((jv = doc["hamp"]).is<const char *>())
+    if ((jv = doc[F("hamp")]).is<const char *>())
     {
       strlcpy(tempPassword, jv, sizeof(_ha.mqtt.password));
 
@@ -593,11 +593,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
       if (!fromWebPage || strcmp_P(tempPassword, appDataPredefPassword))
         strcpy(_ha.mqtt.password, tempPassword);
     }
-    if ((jv = doc["hambt"]).is<const char *>())
+    if ((jv = doc[F("hambt")]).is<const char *>())
       strlcpy(_ha.mqtt.baseTopic, jv, sizeof(_ha.mqtt.baseTopic));
 
-    _ha.mqtt.hassDiscoveryEnabled = doc["hamhassde"];
-    if ((jv = doc["hamhassdp"]).is<const char *>())
+    _ha.mqtt.hassDiscoveryEnabled = doc[F("hamhassde")];
+    if ((jv = doc[F("hamhassdp")]).is<const char *>())
       strlcpy(_ha.mqtt.hassDiscoveryPrefix, jv, sizeof(_ha.mqtt.hassDiscoveryPrefix));
   }
 
@@ -606,12 +606,12 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
   {
   case HA_PROTO_HTTP:
 
-    if ((jv = doc["hahtype"]).is<JsonVariant>())
+    if ((jv = doc[F("hahtype")]).is<JsonVariant>())
       _ha.http.type = jv;
-    if ((jv = doc["hahhost"]).is<const char *>())
+    if ((jv = doc[F("hahhost")]).is<const char *>())
       strlcpy(_ha.http.hostname, jv, sizeof(_ha.http.hostname));
-    _ha.http.tls = doc["hahtls"];
-    if ((jv = doc["hahtempid"]).is<JsonVariant>())
+    _ha.http.tls = doc[F("hahtls")];
+    if ((jv = doc[F("hahtempid")]).is<JsonVariant>())
       _ha.http.temperatureId = jv;
 
     switch (_ha.http.type)
@@ -619,7 +619,7 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
     case HA_HTTP_JEEDOM:
 
       // put apiKey into tempPassword
-      if ((jv = doc["hahjak"]).is<const char *>())
+      if ((jv = doc[F("hahjak")]).is<const char *>())
       {
         strlcpy(tempPassword, jv, sizeof(_ha.http.secret));
 
@@ -634,11 +634,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
 
     case HA_HTTP_FIBARO:
 
-      if ((jv = doc["hahfuser"]).is<const char *>())
+      if ((jv = doc[F("hahfuser")]).is<const char *>())
         strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
 
       // put Fibaropassword into tempPassword
-      if ((jv = doc["hahfpass"]).is<const char *>())
+      if ((jv = doc[F("hahfpass")]).is<const char *>())
       {
         strlcpy(tempPassword, jv, sizeof(_ha.http.secret));
 
@@ -657,11 +657,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
       if (_ha.http.hostname[0] && !strchr(_ha.http.hostname, ':') && !_ha.http.tls && (strlen(_ha.http.hostname) + 5 < sizeof(_ha.http.hostname) - 1))
         strcat(_ha.http.hostname, ":8123");
 
-      if ((jv = doc["hahhaei"]).is<const char *>())
+      if ((jv = doc[F("hahhaei")]).is<const char *>())
         strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
 
       // put longLivedAccessToken into tempPassword
-      if ((jv = doc["hahhallat"]).is<const char *>())
+      if ((jv = doc[F("hahhallat")]).is<const char *>())
       {
         strlcpy(tempPassword, jv, sizeof(_ha.http.secret));
 
@@ -678,7 +678,7 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
     break;
   case HA_PROTO_MQTT:
 
-    if ((jv = doc["hamtemptopic"]).is<const char *>())
+    if ((jv = doc[F("hamtemptopic")]).is<const char *>())
       strlcpy(_ha.mqtt.temperatureTopic, jv, sizeof(_ha.mqtt.temperatureTopic));
 
     if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.temperatureTopic[0])
@@ -691,7 +691,7 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
   {
   case CBOX_PROTO_HTTP:
 
-    if ((jv = doc["cbhip"]).is<const char *>())
+    if ((jv = doc[F("cbhip")]).is<const char *>())
     {
       IPAddress ipParser;
       if (ipParser.fromString(jv.as<const char *>()))
@@ -706,7 +706,7 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
 
   case CBOX_PROTO_MQTT:
 
-    if ((jv = doc["cbmt1topic"]).is<const char *>())
+    if ((jv = doc[F("cbmt1topic")]).is<const char *>())
       strlcpy(_ha.mqtt.cboxT1Topic, jv, sizeof(_ha.mqtt.cboxT1Topic));
 
     if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.cboxT1Topic[0])
@@ -725,86 +725,86 @@ String WPalaSensor::generateConfigJSON(bool forSaveFile = false)
 
   doc["rp"] = _refreshPeriod;
 
-  doc["sha"] = serialized(String(_digipotsNTC.steinhartHartCoeffs[0], 16));
-  doc["shb"] = serialized(String(_digipotsNTC.steinhartHartCoeffs[1], 16));
-  doc["shc"] = serialized(String(_digipotsNTC.steinhartHartCoeffs[2], 16));
+  doc[F("sha")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[0], 16));
+  doc[F("shb")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[1], 16));
+  doc[F("shc")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[2], 16));
 
-  doc["hamfr"] = _ha.maxFailedRequest;
-  doc["haproto"] = _ha.protocol;
-  doc["hatt"] = _ha.temperatureTimeout;
+  doc[F("hamfr")] = _ha.maxFailedRequest;
+  doc[F("haproto")] = _ha.protocol;
+  doc[F("hatt")] = _ha.temperatureTimeout;
 
   // if for WebPage or protocol selected is HTTP
   if (!forSaveFile || _ha.protocol == HA_PROTO_HTTP)
   {
-    doc["hahtype"] = _ha.http.type;
-    doc["hahhost"] = _ha.http.hostname;
-    doc["hahtls"] = _ha.http.tls;
-    doc["hahtempid"] = _ha.http.temperatureId;
+    doc[F("hahtype")] = _ha.http.type;
+    doc[F("hahhost")] = _ha.http.hostname;
+    doc[F("hahtls")] = _ha.http.tls;
+    doc[F("hahtempid")] = _ha.http.temperatureId;
 
     // if Home Automation protocol selected is Jeedom
     if (_ha.http.type == HA_HTTP_JEEDOM)
     {
       if (forSaveFile)
-        doc["hahjak"] = _ha.http.secret;
+        doc[F("hahjak")] = _ha.http.secret;
       else
-        doc["hahjak"] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+        doc[F("hahjak")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
     }
 
     // if Home Automation protocol selected is Fibaro
     if (_ha.http.type == HA_HTTP_FIBARO)
     {
-      doc["hahfuser"] = _ha.http.fibaro.username;
+      doc[F("hahfuser")] = _ha.http.fibaro.username;
       if (forSaveFile)
-        doc["hahfpass"] = _ha.http.secret;
+        doc[F("hahfpass")] = _ha.http.secret;
       else
-        doc["hahfpass"] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+        doc[F("hahfpass")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
     }
 
     // if Home Automation protocol selected is HomeAssistant
     if (_ha.http.type == HA_HTTP_HOMEASSISTANT)
     {
-      doc["hahhaei"] = _ha.http.homeassistant.entityId;
+      doc[F("hahhaei")] = _ha.http.homeassistant.entityId;
       if (forSaveFile)
-        doc["hahhallat"] = _ha.http.secret;
+        doc[F("hahhallat")] = _ha.http.secret;
       else
-        doc["hahhallat"] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+        doc[F("hahhallat")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
     }
   }
 
   // if for WebPage or protocol selected is MQTT
   if (!forSaveFile || _ha.protocol == HA_PROTO_MQTT)
   {
-    doc["hamtemptopic"] = _ha.mqtt.temperatureTopic;
+    doc[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
   }
 
-  doc["cbproto"] = _ha.cboxProtocol;
-  doc["cbtt"] = _ha.cboxTemperatureTimeout;
+  doc[F("cbproto")] = _ha.cboxProtocol;
+  doc[F("cbtt")] = _ha.cboxTemperatureTimeout;
 
   // if for WebPage or CBox protocol selected is HTTP
   if (!forSaveFile || _ha.cboxProtocol == CBOX_PROTO_HTTP)
   {
     if (_ha.http.cboxIp)
-      doc["cbhip"] = IPAddress(_ha.http.cboxIp).toString();
+      doc[F("cbhip")] = IPAddress(_ha.http.cboxIp).toString();
   }
 
   // if for WebPage or CBox protocol selected is MQTT
   if (!forSaveFile || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
-    doc["cbmt1topic"] = _ha.mqtt.cboxT1Topic;
+    doc[F("cbmt1topic")] = _ha.mqtt.cboxT1Topic;
   }
 
   if (!forSaveFile || _ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
-    doc["hamhost"] = _ha.mqtt.hostname;
-    doc["hamport"] = _ha.mqtt.port;
-    doc["hamu"] = _ha.mqtt.username;
+    doc[F("hamhost")] = _ha.mqtt.hostname;
+    doc[F("hamport")] = _ha.mqtt.port;
+    doc[F("hamu")] = _ha.mqtt.username;
     if (forSaveFile)
-      doc["hamp"] = _ha.mqtt.password;
+      doc[F("hamp")] = _ha.mqtt.password;
     else
-      doc["hamp"] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
-    doc["hambt"] = _ha.mqtt.baseTopic;
-    doc["hamhassde"] = _ha.mqtt.hassDiscoveryEnabled;
-    doc["hamhassdp"] = _ha.mqtt.hassDiscoveryPrefix;
+      doc[F("hamp")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+    doc[F("hambt")] = _ha.mqtt.baseTopic;
+    doc[F("hamhassde")] = _ha.mqtt.hassDiscoveryEnabled;
+    doc[F("hamhassdp")] = _ha.mqtt.hassDiscoveryPrefix;
   }
 
   String gc;
@@ -822,16 +822,16 @@ String WPalaSensor::generateStatusJSON()
 
   // Home automation protocol
   if (_ha.protocol == HA_PROTO_HTTP)
-    doc["haprotocol"] = F("HTTP");
+    doc[F("haprotocol")] = F("HTTP");
   else if (_ha.protocol == HA_PROTO_MQTT)
-    doc["haprotocol"] = F("MQTT");
+    doc[F("haprotocol")] = F("MQTT");
   else
-    doc["haprotocol"] = F("Disabled");
+    doc[F("haprotocol")] = F("Disabled");
 
   // Home automation connection status
   if (_ha.protocol == HA_PROTO_HTTP)
   {
-    doc["hahttplastrespcode"] = _haRequestResult;
+    doc[F("hahttplastrespcode")] = _haRequestResult;
   }
   else if (_ha.protocol == HA_PROTO_MQTT)
   {
@@ -866,28 +866,28 @@ String WPalaSensor::generateStatusJSON()
       hamqttstatus = F("Connection Unauthorized");
       break;
     }
-    doc["hamqttstatus"] = hamqttstatus;
+    doc[F("hamqttstatus")] = hamqttstatus;
   }
 
   // Home Automation last temperature and age
   if (_ha.protocol != HA_PROTO_DISABLED)
   {
-    doc["haslasttemp"] = String(_haTemperature, 2);
-    doc["haslasttempage"] = ((millis() - _haTemperatureMillis) / 1000);
+    doc[F("haslasttemp")] = String(_haTemperature, 2);
+    doc[F("haslasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
   }
 
   // WPalaControl/CBox protocol
   if (_ha.cboxProtocol == CBOX_PROTO_HTTP)
-    doc["cboxprotocol"] = F("HTTP");
+    doc[F("cboxprotocol")] = F("HTTP");
   else if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
-    doc["cboxprotocol"] = F("MQTT");
+    doc[F("cboxprotocol")] = F("MQTT");
   else
-    doc["cboxprotocol"] = F("Disabled");
+    doc[F("cboxprotocol")] = F("Disabled");
 
   // WPalaControl/CBox connection status
   if (_ha.cboxProtocol == CBOX_PROTO_HTTP)
   {
-    doc["cboxhttplastrespcode"] = _stoveRequestResult;
+    doc[F("cboxhttplastrespcode")] = _stoveRequestResult;
   }
   else if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
@@ -922,22 +922,22 @@ String WPalaSensor::generateStatusJSON()
       cboxmqttstatus = F("Connection Unauthorized");
       break;
     }
-    doc["cboxmqttstatus"] = cboxmqttstatus;
+    doc[F("cboxmqttstatus")] = cboxmqttstatus;
   }
 
   // WPalaControl/CBox last temperature and age
   if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
   {
-    doc["cboxlasttemp"] = String(_stoveTemperature, 2);
-    doc["cboxlasttempage"] = ((millis() - _stoveTemperatureMillis) / 1000);
+    doc[F("cboxlasttemp")] = String(_stoveTemperature, 2);
+    doc[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
   }
 
-  doc["onewiretemp"] = String(_owTemperature, 2);
-  doc["onewiretempused"] = (_haTemperatureUsed ? F("No") : F("Yes"));
+  doc[F("onewiretemp")] = String(_owTemperature, 2);
+  doc[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
 
-  doc["pushedtemp"] = String(_pushedTemperature, 2);
-  doc["dgp50k"] = _mcp4151_50k.getPosition(0);
-  doc["dgp5k"] = _mcp4151_5k.getPosition(0);
+  doc[F("pushedtemp")] = String(_pushedTemperature, 2);
+  doc[F("dgp50k")] = _mcp4151_50k.getPosition(0);
+  doc[F("dgp5k")] = _mcp4151_5k.getPosition(0);
 
   String gs;
   doc.shrinkToFit();
@@ -1038,7 +1038,7 @@ size_t WPalaSensor::getHTMLContentSize(WebPageForPlaceHolder wp)
 void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication)
 {
   // GetDigiPot
-  server.on("/gdp", HTTP_GET, [this, &server]()
+  server.on(F("/gdp"), HTTP_GET, [this, &server]()
             {
     String dpJSON('{');
     dpJSON = dpJSON + F("\"r\":") + (_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal);
@@ -1052,12 +1052,12 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
     server.send(200, F("text/json"), dpJSON); });
 
   // SetDigiPot
-  server.on("/sdp", HTTP_POST, [this, &server]()
+  server.on(F("/sdp"), HTTP_POST, [this, &server]()
             {
 #define TICK_TO_SKIP 20
 
     JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, server.arg("plain"));
+    DeserializationError error = deserializeJson(doc, server.arg(F("plain")));
 
     if (error)
     {
@@ -1068,7 +1068,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
     JsonVariant jv;
 
     //look for temperature to apply
-    if ((jv = doc["temperature"]).is<JsonVariant>())
+    if ((jv = doc[F("temperature")]).is<JsonVariant>())
     {
       //convert and set it
       setDualDigiPot(jv.as<float>());
@@ -1077,7 +1077,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
     }
 
     //look for increase of digipots
-    if (doc["up"].is<JsonVariant>())
+    if (doc[F("up")].is<JsonVariant>())
     {
       //go one step up
       setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal + _digipotsNTC.rBW5KStep));
@@ -1086,7 +1086,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
     }
 
     //look for decrease of digipots
-    if (doc["down"].is<JsonVariant>())
+    if (doc[F("down")].is<JsonVariant>())
     {
       //go one step down
       setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal - _digipotsNTC.rBW5KStep));
@@ -1097,7 +1097,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
 #if DEVELOPPER_MODE
 
     //look for 5k digipot requested position
-    if ((jv = doc["dp5k"]).is<JsonVariant>())
+    if ((jv = doc[F("dp5k")]).is<JsonVariant>())
     {
       //convert and set it
       _mcp4151_5k.setPosition(0, jv);
@@ -1106,7 +1106,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
     }
 
     //look for 50k digipot requested position
-    if ((jv = doc["dp50k"]).is<JsonVariant>())
+    if ((jv = doc[F("dp50k")]).is<JsonVariant>())
     {
       //convert and set it
       _mcp4151_50k.setPosition(0, jv);
@@ -1115,7 +1115,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
     }
 
     //look for resistance to apply
-    if ((jv = doc["resistance"]).is<JsonVariant>())
+    if ((jv = doc[F("resistance")]).is<JsonVariant>())
     {
       //convert resistance value and call right function
       setDualDigiPot(0, jv);
