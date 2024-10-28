@@ -1038,93 +1038,96 @@ size_t WPalaSensor::getHTMLContentSize(WebPageForPlaceHolder wp)
 void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication)
 {
   // GetDigiPot
-  server.on(F("/gdp"), HTTP_GET, [this, &server]()
+  server.on(F("/gdp"), HTTP_GET,
+            [this, &server]()
             {
-    String dpJSON('{');
-    dpJSON = dpJSON + F("\"r\":") + (_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal);
+              String dpJSON('{');
+              dpJSON = dpJSON + F("\"r\":") + (_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal);
 #if DEVELOPPER_MODE
-    dpJSON = dpJSON + F(",\"dp5k\":") + _mcp4151_5k.getPosition(0);
-    dpJSON = dpJSON + F(",\"dp50k\":") + _mcp4151_50k.getPosition(0);
+              dpJSON = dpJSON + F(",\"dp5k\":") + _mcp4151_5k.getPosition(0);
+              dpJSON = dpJSON + F(",\"dp50k\":") + _mcp4151_50k.getPosition(0);
 #endif
-    dpJSON += '}';
+              dpJSON += '}';
 
-    server.sendHeader(F("Cache-Control"), F("no-cache"));
-    server.send(200, F("text/json"), dpJSON); });
+              server.sendHeader(F("Cache-Control"), F("no-cache"));
+              server.send(200, F("text/json"), dpJSON);
+            });
 
   // SetDigiPot
-  server.on(F("/sdp"), HTTP_POST, [this, &server]()
+  server.on(F("/sdp"), HTTP_POST,
+            [this, &server]()
             {
 #define TICK_TO_SKIP 20
+              JsonDocument doc;
+              DeserializationError error = deserializeJson(doc, server.arg(F("plain")));
 
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, server.arg(F("plain")));
+              if (error)
+              {
+                server.send(400, F("text/html"), F("Malformed JSON"));
+                return;
+              }
 
-    if (error)
-    {
-      server.send(400, F("text/html"), F("Malformed JSON"));
-      return;
-    }
+              JsonVariant jv;
 
-    JsonVariant jv;
+              // look for temperature to apply
+              if ((jv = doc[F("temperature")]).is<JsonVariant>())
+              {
+                // convert and set it
+                setDualDigiPot(jv.as<float>());
+                // go for timer tick skipped (time to look a value on stove)
+                _skipTick = TICK_TO_SKIP;
+              }
 
-    //look for temperature to apply
-    if ((jv = doc[F("temperature")]).is<JsonVariant>())
-    {
-      //convert and set it
-      setDualDigiPot(jv.as<float>());
-      //go for timer tick skipped (time to look a value on stove)
-      _skipTick = TICK_TO_SKIP;
-    }
+              // look for increase of digipots
+              if (doc[F("up")].is<JsonVariant>())
+              {
+                // go one step up
+                setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal + _digipotsNTC.rBW5KStep));
+                // go for timer tick skipped (time to look a value on stove)
+                _skipTick = TICK_TO_SKIP;
+              }
 
-    //look for increase of digipots
-    if (doc[F("up")].is<JsonVariant>())
-    {
-      //go one step up
-      setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal + _digipotsNTC.rBW5KStep));
-      //go for timer tick skipped (time to look a value on stove)
-      _skipTick = TICK_TO_SKIP;
-    }
-
-    //look for decrease of digipots
-    if (doc[F("down")].is<JsonVariant>())
-    {
-      //go one step down
-      setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal - _digipotsNTC.rBW5KStep));
-      //go for timer tick skipped (time to look a value on stove)
-      _skipTick = TICK_TO_SKIP;
-    }
+              // look for decrease of digipots
+              if (doc[F("down")].is<JsonVariant>())
+              {
+                // go one step down
+                setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal - _digipotsNTC.rBW5KStep));
+                // go for timer tick skipped (time to look a value on stove)
+                _skipTick = TICK_TO_SKIP;
+              }
 
 #if DEVELOPPER_MODE
 
-    //look for 5k digipot requested position
-    if ((jv = doc[F("dp5k")]).is<JsonVariant>())
-    {
-      //convert and set it
-      _mcp4151_5k.setPosition(0, jv);
-      //go for timer tick skipped (time to look a value on stove)
-      _skipTick = TICK_TO_SKIP;
-    }
+              // look for 5k digipot requested position
+              if ((jv = doc[F("dp5k")]).is<JsonVariant>())
+              {
+                // convert and set it
+                _mcp4151_5k.setPosition(0, jv);
+                // go for timer tick skipped (time to look a value on stove)
+                _skipTick = TICK_TO_SKIP;
+              }
 
-    //look for 50k digipot requested position
-    if ((jv = doc[F("dp50k")]).is<JsonVariant>())
-    {
-      //convert and set it
-      _mcp4151_50k.setPosition(0, jv);
-      //go for timer tick skipped (time to look a value on stove)
-      _skipTick = TICK_TO_SKIP;
-    }
+              // look for 50k digipot requested position
+              if ((jv = doc[F("dp50k")]).is<JsonVariant>())
+              {
+                // convert and set it
+                _mcp4151_50k.setPosition(0, jv);
+                // go for timer tick skipped (time to look a value on stove)
+                _skipTick = TICK_TO_SKIP;
+              }
 
-    //look for resistance to apply
-    if ((jv = doc[F("resistance")]).is<JsonVariant>())
-    {
-      //convert resistance value and call right function
-      setDualDigiPot(0, jv);
-      //go for timer tick skipped (time to look a value on stove)
-      _skipTick = TICK_TO_SKIP;
-    }
+              // look for resistance to apply
+              if ((jv = doc[F("resistance")]).is<JsonVariant>())
+              {
+                // convert resistance value and call right function
+                setDualDigiPot(0, jv);
+                // go for timer tick skipped (time to look a value on stove)
+                _skipTick = TICK_TO_SKIP;
+              }
 #endif
 
-    server.send(200); });
+              server.send(200);
+            });
 }
 
 //------------------------------------------
