@@ -10,7 +10,7 @@
 
 void Core::setConfigDefaultValues() {};
 bool Core::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false) { return true; };
-String Core::generateConfigJSON(bool clearPassword = false) { return String(); };
+String Core::generateConfigJSON(bool forSaveFile = false) { return String(); };
 String Core::generateStatusJSON()
 {
   JsonDocument doc;
@@ -24,15 +24,15 @@ String Core::generateStatusJSON()
   unsigned long minutes = millis() / 60000;
 
   doc["sn"] = sn;
-  doc["baseversion"] = BASE_VERSION;
-  doc["version"] = VERSION;
-  doc["uptime"] = String((byte)(minutes / 1440)) + 'd' + (byte)(minutes / 60 % 24) + 'h' + (byte)(minutes % 60) + 'm';
-  doc["freeheap"] = ESP.getFreeHeap();
+  doc[F("baseversion")] = BASE_VERSION;
+  doc[F("version")] = VERSION;
+  doc[F("uptime")] = String((byte)(minutes / 1440)) + 'd' + (byte)(minutes / 60 % 24) + 'h' + (byte)(minutes % 60) + 'm';
+  doc[F("freeheap")] = ESP.getFreeHeap();
 #ifdef ESP8266
-  doc["freestack"] = ESP.getFreeContStack();
-  doc["flashsize"] = ESP.getFlashChipRealSize();
+  doc[F("freestack")] = ESP.getFreeContStack();
+  doc[F("flashsize")] = ESP.getFlashChipRealSize();
 #else
-  doc["freestack"] = uxTaskGetStackHighWaterMark(nullptr);
+  doc[F("freestack")] = uxTaskGetStackHighWaterMark(nullptr);
 #endif
 
   String gs;
@@ -83,81 +83,115 @@ size_t Core::getHTMLContentSize(WebPageForPlaceHolder wp)
 void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication)
 {
   // root is index
-  server.on("/", HTTP_GET, [&server]()
+  server.on("/", HTTP_GET,
+            [&server]()
             {
-    SERVER_KEEPALIVE_FALSE()
-    server.sendHeader(F("Content-Encoding"), F("gzip"));
-    server.send_P(200, PSTR("text/html"), indexhtmlgz, sizeof(indexhtmlgz)); });
+              SERVER_KEEPALIVE_FALSE()
+              server.sendHeader(F("Content-Encoding"), F("gzip"));
+              server.send_P(200, PSTR("text/html"), indexhtmlgz, sizeof(indexhtmlgz));
+            });
 
   // Ressources URLs
-  server.on("/pure-min.css", HTTP_GET, [&server]()
+  server.on(F("/pure-min.css"), HTTP_GET,
+            [&server]()
             {
-    SERVER_KEEPALIVE_FALSE()
-    server.sendHeader(F("Content-Encoding"), F("gzip"));
-    server.sendHeader(F("Cache-Control"), F("max-age=604800, public"));
-    server.send_P(200, PSTR("text/css"), puremincssgz, sizeof(puremincssgz)); });
+              SERVER_KEEPALIVE_FALSE()
+              server.sendHeader(F("Content-Encoding"), F("gzip"));
+              server.sendHeader(F("Cache-Control"), F("max-age=604800, public"));
+              server.send_P(200, PSTR("text/css"), puremincssgz, sizeof(puremincssgz));
+            });
 
-  server.on("/side-menu.css", HTTP_GET, [&server]()
+  server.on(F("/side-menu.css"), HTTP_GET,
+            [&server]()
             {
-    SERVER_KEEPALIVE_FALSE()
-    server.sendHeader(F("Content-Encoding"), F("gzip"));
-    server.sendHeader(F("Cache-Control"), F("max-age=604800, public"));
-    server.send_P(200, PSTR("text/css"), sidemenucssgz, sizeof(sidemenucssgz)); });
+              SERVER_KEEPALIVE_FALSE()
+              server.sendHeader(F("Content-Encoding"), F("gzip"));
+              server.sendHeader(F("Cache-Control"), F("max-age=604800, public"));
+              server.send_P(200, PSTR("text/css"), sidemenucssgz, sizeof(sidemenucssgz));
+            });
 
-  server.on("/side-menu.js", HTTP_GET, [&server]()
+  server.on(F("/side-menu.js"), HTTP_GET,
+            [&server]()
             {
-    SERVER_KEEPALIVE_FALSE()
-    server.sendHeader(F("Content-Encoding"), F("gzip"));
-    server.sendHeader(F("Cache-Control"), F("max-age=604800, public"));
-    server.send_P(200, PSTR("text/javascript"), sidemenujsgz, sizeof(sidemenujsgz)); });
+              SERVER_KEEPALIVE_FALSE()
+              server.sendHeader(F("Content-Encoding"), F("gzip"));
+              server.sendHeader(F("Cache-Control"), F("max-age=604800, public"));
+              server.send_P(200, PSTR("text/javascript"), sidemenujsgz, sizeof(sidemenujsgz));
+            });
 
-  server.on("/fw.html", HTTP_GET, [this, &server]()
+  server.on(F("/fw.html"), HTTP_GET,
+            [this, &server]()
             {
-    SERVER_KEEPALIVE_FALSE()
-    server.sendHeader(F("Content-Encoding"), F("gzip"));
-    server.send_P(200, PSTR("text/html"), fwhtmlgz, sizeof(fwhtmlgz)); });
+              SERVER_KEEPALIVE_FALSE()
+              server.sendHeader(F("Content-Encoding"), F("gzip"));
+              server.send_P(200, PSTR("text/html"), fwhtmlgz, sizeof(fwhtmlgz));
+            });
 
   // Get Update Infos ---------------------------------------------------------
-  server.on("/gui", HTTP_GET, [this, &server]()
-            {
-    SERVER_KEEPALIVE_FALSE()
-    server.send(200, F("application/json"), getUpdateInfos(server.hasArg("refresh"))); });
+  server.on(
+      F("/gui"), HTTP_GET,
+      [this, &server]()
+      {
+        SERVER_KEEPALIVE_FALSE()
+        server.send(200, F("application/json"), getUpdateInfos(server.hasArg(F("refresh"))));
+      });
 
   // Update Firmware from Github ----------------------------------------------
-  server.on("/update", HTTP_POST, [this, &shouldReboot, &pauseApplication, &server]()
-            {
-              shouldReboot = updateFirmware(server.arg("plain").c_str());
+  server.on(
+      F("/update"), HTTP_POST,
+      [this, &shouldReboot, &server]()
+      {
+        String msg;
 
-              SERVER_KEEPALIVE_FALSE()
-              if (shouldReboot)
-                server.send(200, F("text/html"), F("Firmware Successfully Updated"));
-              else
-                server.send(500, F("text/html"), F("Firmware Update Failed")); });
+        server.chunkedResponseModeStart(200, PSTR("text/plain"));
+
+        // Define the progress callback function
+        std::function<void(size_t, size_t)> progressCallback = [&server](size_t progress, size_t total)
+        {
+          uint8_t percent = (progress * 100) / total;
+          LOG_SERIAL_PRINTF_P(PSTR("Progress: %d%%\n"), percent);
+          server.sendContent((String(F("p:")) + percent + '\n').c_str());
+        };
+
+        // Call the updateFirmware function with the progress callback
+        shouldReboot = updateFirmware(server.arg(F("plain")).c_str(), msg, progressCallback);
+        if (shouldReboot)
+          server.sendContent(F("s:true\n"));
+        else
+          server.sendContent(String(F("s:false\nm:")) + msg + '\n');
+
+        server.chunkedResponseFinalize();
+      });
 
   // Firmware POST URL allows to push new firmware ----------------------------
   server.on(
-      "/fw", HTTP_POST, [&shouldReboot, &pauseApplication, &server]()
+      F("/fw"), HTTP_POST,
+      [&shouldReboot, &pauseApplication, &server]()
       {
-    shouldReboot = !Update.hasError();
-    if (shouldReboot)
-    {
-      SERVER_KEEPALIVE_FALSE()
-      server.send(200, F("text/html"), F("Firmware Successfully Updated"));
-    }
-    else
-    {
-      // Upload failed so restart to Run Application in loop
-      pauseApplication = false;
-      // Prepare response
-      String errorMsg;
+        shouldReboot = !Update.hasError();
+
+        String msg;
+
+        if (shouldReboot)
+          msg = F("Update successful");
+        else
+        {
+          msg = F("Update failed: ");
 #ifdef ESP8266
-      errorMsg = Update.getErrorString();
+          msg = Update.getErrorString();
 #else
-      errorMsg = Update.errorString();
+          msg = Update.errorString();
 #endif
-      SERVER_KEEPALIVE_FALSE()
-      server.send(500, F("text/html"), errorMsg);
-    } },
+          Update.clearError();
+          // Update failed so restart to Run Application in loop
+          pauseApplication = false;
+        }
+
+        LOG_SERIAL_PRINTLN(msg);
+
+        SERVER_KEEPALIVE_FALSE()
+        server.send(shouldReboot ? 200 : 500, F("text/html"), msg);
+      },
       [&pauseApplication, &server]()
       {
         HTTPUpload &upload = server.upload();
@@ -167,13 +201,7 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
           // stop to Run Application in loop
           pauseApplication = true;
 
-#ifdef LOG_SERIAL
-          // Set Update onError callback
-          Update.onError([](uint8_t err)
-                         { Update.printError(LOG_SERIAL); });
-
-          LOG_SERIAL.printf("Update Start: %s\n", upload.filename.c_str());
-#endif
+          LOG_SERIAL_PRINTF_P(PSTR("Update Start: %s\n"), upload.filename.c_str());
 
 #ifdef ESP8266
           Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000);
@@ -187,10 +215,7 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
         }
         else if (upload.status == UPLOAD_FILE_END)
         {
-          if (Update.end(true))
-#ifdef LOG_SERIAL
-            LOG_SERIAL.printf("Update Success: %uB\n", upload.totalSize);
-#endif
+          Update.end(true);
         }
 
 #ifdef ESP8266
@@ -201,28 +226,28 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
       });
 
   // reboot POST --------------------------------------------------------------
-  server.on("/rbt", HTTP_POST, [&shouldReboot, &server]()
+  server.on(F("/rbt"), HTTP_POST,
+            [&shouldReboot, &server]()
             {
-    SERVER_KEEPALIVE_FALSE()
-    server.send_P(200,PSTR("text/html"),PSTR("Reboot command received"));
-    shouldReboot = true; });
-
-  // reboot RescueMode POST ---------------------------------------------------
-  server.on("/rbtrsc", HTTP_POST, [&shouldReboot, &server]()
-            {
-    SERVER_KEEPALIVE_FALSE()
-    server.send_P(200,PSTR("text/html"),PSTR("Reboot in rescue command received"));
-    //Set EEPROM for Rescue mode flag
-    EEPROM.begin(4);
-    EEPROM.write(0, 1);
-    EEPROM.end();
-    shouldReboot = true; });
+              if (server.hasArg(F("rescue")))
+              {
+                // Set EEPROM for Rescue mode flag
+                EEPROM.begin(4);
+                EEPROM.write(0, 1);
+                EEPROM.end();
+              }
+              SERVER_KEEPALIVE_FALSE()
+              server.send_P(200, PSTR("text/html"), PSTR("Reboot command received"));
+              shouldReboot = true;
+            });
 
   // 404 on not found ---------------------------------------------------------
-  server.onNotFound([&server]()
-                    {
-    SERVER_KEEPALIVE_FALSE()
-    server.send(404); });
+  server.onNotFound(
+      [&server]()
+      {
+        SERVER_KEEPALIVE_FALSE()
+        server.send(404);
+      });
 }
 
 void Core::appRun()
@@ -242,7 +267,7 @@ Core::Core(char appId, String appName) : Application(appId, appName)
 
 void Core::checkForUpdate()
 {
-  String githubURL = "https://api.github.com/repos/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/latest";
+  String githubURL = F("https://api.github.com/repos/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/latest");
 
   WiFiClientSecure clientSecure;
   HTTPClient http;
@@ -258,9 +283,9 @@ void Core::checkForUpdate()
     if (!error)
     {
       JsonVariant jv;
-      if ((jv = doc["tag_name"]).is<const char *>())
+      if ((jv = doc[F("tag_name")]).is<const char *>())
         strlcpy(_lastFirmwareInfos.version, jv, sizeof(_lastFirmwareInfos.version));
-      if ((jv = doc["name"]).is<const char *>())
+      if ((jv = doc[F("name")]).is<const char *>())
       {
         // find the first space and copy the rest to title
         char *space = strchr(jv, ' ');
@@ -270,12 +295,12 @@ void Core::checkForUpdate()
           _lastFirmwareInfos.title[0] = 0;
       }
 
-      if ((jv = doc["published_at"]).is<const char *>())
+      if ((jv = doc[F("published_at")]).is<const char *>())
         strlcpy(_lastFirmwareInfos.releaseDate, jv, sizeof(_lastFirmwareInfos.releaseDate));
       else
         _lastFirmwareInfos.releaseDate[0] = 0;
 
-      if ((jv = doc["body"]).is<const char *>())
+      if ((jv = doc[F("body")]).is<const char *>())
       {
         // copy body to summary until "\r\n\r\n##"
         const char *body = jv.as<const char *>();
@@ -319,14 +344,14 @@ String Core::getUpdateInfos(bool refresh)
 
   JsonDocument doc;
 
-  doc["installed_version"] = VERSION;
+  doc[F("installed_version")] = VERSION;
   if (_lastFirmwareInfos.version[0])
   {
-    doc["latest_version"] = _lastFirmwareInfos.version;
-    doc["title"] = _lastFirmwareInfos.title;
-    doc["release_date"] = _lastFirmwareInfos.releaseDate;
-    doc["release_summary"] = _lastFirmwareInfos.summary;
-    doc["release_url"] = String(F("https://github.com/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/tag/")) + _lastFirmwareInfos.version;
+    doc[F("latest_version")] = _lastFirmwareInfos.version;
+    doc[F("title")] = _lastFirmwareInfos.title;
+    doc[F("release_date")] = _lastFirmwareInfos.releaseDate;
+    doc[F("release_summary")] = _lastFirmwareInfos.summary;
+    doc[F("release_url")] = String(F("https://github.com/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/tag/")) + _lastFirmwareInfos.version;
   }
 
   String infos;
@@ -335,7 +360,7 @@ String Core::getUpdateInfos(bool refresh)
   return infos;
 }
 
-bool Core::updateFirmware(const char *version)
+bool Core::updateFirmware(const char *version, String &retMsg, std::function<void(size_t, size_t)> progressCallback)
 {
   char versionToFlash[8];
 
@@ -356,12 +381,9 @@ bool Core::updateFirmware(const char *version)
   clientSecure.setInsecure();
 
   String fwUrl(F("https://github.com/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/download/"));
-  fwUrl = fwUrl + versionToFlash + '/' + APPLICATION1_MODEL + '.' + versionToFlash + F(".bin");
+  fwUrl = fwUrl + versionToFlash + '/' + F(APPLICATION1_MODEL) + '.' + versionToFlash + F(".bin");
 
-#ifdef LOG_SERIAL
-  LOG_SERIAL.print(F("Trying to Update from URL: "));
-  LOG_SERIAL.println(fwUrl);
-#endif
+  LOG_SERIAL_PRINTF_P(PSTR("Trying to Update from URL: %s\n"), fwUrl.c_str());
 
   HTTPClient https;
   https.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
@@ -370,11 +392,13 @@ bool Core::updateFirmware(const char *version)
 
   if (httpCode != 200)
   {
-#ifdef LOG_SERIAL
-    LOG_SERIAL.print(F("Failed to download file, httpCode: "));
-    LOG_SERIAL.println(httpCode);
-#endif
     https.end();
+
+    retMsg = F("Failed to download file, httpCode: ");
+    retMsg += httpCode;
+
+    LOG_SERIAL_PRINTLN(retMsg);
+
     return false;
   }
 
@@ -384,13 +408,10 @@ bool Core::updateFirmware(const char *version)
   WiFiClient *stream = https.getStreamPtr();
   int contentLength = https.getSize();
 
-#ifdef LOG_SERIAL
-  // Set Update onError callback
-  Update.onError([](uint8_t err)
-                 { Update.printError(LOG_SERIAL); });
+  LOG_SERIAL_PRINTF_P(PSTR("Update Start: %s (Online Update)\n"), (String(F(APPLICATION1_MODEL)) + '.' + versionToFlash + F(".bin")).c_str());
 
-  LOG_SERIAL.println(F("Firmware file found, Update Start"));
-#endif
+  if (progressCallback)
+    Update.onProgress(progressCallback);
 
 #ifdef ESP8266
   Update.begin(contentLength);
@@ -400,16 +421,25 @@ bool Core::updateFirmware(const char *version)
 
   Update.writeStream(*stream);
 
-  if (Update.end())
-  {
-#ifdef LOG_SERIAL
-    LOG_SERIAL.printf("Update Success: %uB\n", contentLength);
-#endif
-  }
+  Update.end();
 
   https.end();
 
-  return !Update.hasError();
+  bool success = !Update.hasError();
+  if (success)
+    LOG_SERIAL_PRINTLN(F("Update successful"));
+  else
+  {
+#ifdef ESP8266
+    retMsg = Update.getErrorString();
+#else
+    retMsg = Update.errorString();
+#endif
+    LOG_SERIAL_PRINTF_P(PSTR("Update failed: %s\n"), retMsg.c_str());
+    Update.clearError();
+  }
+
+  return success;
 }
 
 int8_t Core::versionCompare(const char *version1, const char *version2)

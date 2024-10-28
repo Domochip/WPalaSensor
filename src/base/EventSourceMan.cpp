@@ -37,8 +37,8 @@ void EventSourceMan::eventSourceHandler(WebServer &server)
     server.setContentLength(CONTENT_LENGTH_UNKNOWN); // the payload can go on forever
     server.sendContent_P(PSTR("HTTP/1.1 200 OK\nContent-Type: text/event-stream;\nConnection: keep-alive\nCache-Control: no-cache\nAccess-Control-Allow-Origin: *\n\n"));
 
-#if DEVELOPPER_MODE && defined(LOG_SERIAL)
-    LOG_SERIAL.printf_P(PSTR("statusEventSourceHandler - client #%d (%s:%d) registered\n"), subPos, server.client().remoteIP().toString().c_str(), server.client().remotePort());
+#if DEVELOPPER_MODE
+    LOG_SERIAL_PRINTF_P(PSTR("statusEventSourceHandler - client #%d (%s:%d) registered\n"), subPos, server.client().remoteIP().toString().c_str(), server.client().remotePort());
 #endif
 }
 
@@ -51,8 +51,8 @@ void EventSourceMan::eventSourceKeepAlive()
         {
             _EventSourceClientList[i].println(F(":keepalive\n\n"));
 
-#if DEVELOPPER_MODE && defined(LOG_SERIAL)
-            LOG_SERIAL.printf_P(PSTR("statusEventSourceKeepAlive - keep-alive sent to client #%d (%s:%d)\n"), i, _EventSourceClientList[i].remoteIP().toString().c_str(), _EventSourceClientList[i].remotePort());
+#if DEVELOPPER_MODE
+            LOG_SERIAL_PRINTF_P(PSTR("statusEventSourceKeepAlive - keep-alive sent to client #%d (%s:%d)\n"), i, _EventSourceClientList[i].remoteIP().toString().c_str(), _EventSourceClientList[i].remotePort());
 #endif
         }
     }
@@ -86,8 +86,8 @@ void EventSourceMan::eventSourceBroadcast(const String &message, const String &e
         {
             _EventSourceClientList[i].printf_P(PSTR("event: %s\ndata: %s\n\n"), eventType.c_str(), message.c_str());
 
-#if DEVELOPPER_MODE && defined(LOG_SERIAL)
-            LOG_SERIAL.printf_P(PSTR("statusEventSourceBroadcast - event sent to client #%d\n"), i);
+#if DEVELOPPER_MODE
+            LOG_SERIAL_PRINTF_P(PSTR("statusEventSourceBroadcast - event sent to client #%d\n"), i);
 #endif
         }
     }

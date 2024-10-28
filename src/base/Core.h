@@ -31,7 +31,7 @@ private:
 
   void setConfigDefaultValues();
   bool parseConfigJSON(JsonDocument &doc, bool fromWebPage);
-  String generateConfigJSON(bool clearPassword);
+  String generateConfigJSON(bool forSaveFile);
   String generateStatusJSON();
   bool appInit(bool reInit);
   const PROGMEM char *getHTMLContent(WebPageForPlaceHolder wp);
@@ -44,7 +44,7 @@ public:
 
   void checkForUpdate();
   String getUpdateInfos(bool refresh = false);
-  bool updateFirmware(const char *version = nullptr);
+  bool updateFirmware(const char *version, String &retMsg, std::function<void(size_t, size_t)> progressCallback = nullptr);
   static int8_t versionCompare(const char *version1, const char *version2);
 };
 

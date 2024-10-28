@@ -137,24 +137,18 @@ bool MQTTMan::loop()
         if (_needMqttReconnect)
         {
             _needMqttReconnect = false;
-#ifdef LOG_SERIAL
-            LOG_SERIAL.print(F("MQTT Reconnection : "));
-#endif
+
+            LOG_SERIAL_PRINT(F("MQTT Reconnection : "));
+
             bool res = connect(false);
-#ifdef LOG_SERIAL
-            if (res)
-                LOG_SERIAL.println(F("OK"));
-            else
-                LOG_SERIAL.println(F("Failed"));
-#endif
+
+            LOG_SERIAL_PRINTLN(res ? F("OK") : F("Failed"));
         }
 
         // if not connected and reconnect ticker not started
         if (!connected() && !_mqttReconnectTicker.active())
         {
-#ifdef LOG_SERIAL
-            LOG_SERIAL.println(F("MQTT Disconnected"));
-#endif
+            LOG_SERIAL_PRINTLN(F("MQTT Disconnected"));
             // set Ticker to reconnect after 20 or 60 sec (Wifi connected or not)
 #ifdef ESP8266
             _mqttReconnectTicker.once((WiFi.isConnected() ? 20 : 60), [this]()

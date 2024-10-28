@@ -46,6 +46,6 @@
     });
 
     $(qsp + "#f0b").addEventListener('submit', function (evt) {
-        handleSubmit(evt, '/rbtrsc', 'System will reboot shortly in RESCUE MODE.You\'ll need to connect to module WiFi.');
+        handleSubmit(evt, '/rbt?rescue=true', 'System will reboot shortly in RESCUE MODE.You\'ll need to connect to module WiFi.');
     });
 </script>
