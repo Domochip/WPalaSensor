@@ -43,13 +43,26 @@
 
 #endif
 
-// Enable developper mode (fwdev webpage and SPIFFS is used)
+// Enable developper mode
 #define DEVELOPPER_MODE 0
 
 // Log Serial Object
 #define LOG_SERIAL Serial
 // Choose Log Serial Speed
 #define LOG_SERIAL_SPEED 115200
+
+// Log Serial Macros
+#ifdef LOG_SERIAL
+#define LOG_SERIAL_PRINT(...) LOG_SERIAL.print(__VA_ARGS__)
+#define LOG_SERIAL_PRINTLN(...) LOG_SERIAL.println(__VA_ARGS__)
+#define LOG_SERIAL_PRINTF(...) LOG_SERIAL.printf(__VA_ARGS__)
+#define LOG_SERIAL_PRINTF_P(...) LOG_SERIAL.printf_P(__VA_ARGS__)
+#else
+#define LOG_SERIAL_PRINT(...)
+#define LOG_SERIAL_PRINTLN(...)
+#define LOG_SERIAL_PRINTF(...)
+#define LOG_SERIAL_PRINTF_P(...)
+#endif
 
 // Choose Pin used to boot in Rescue Mode
 // #define RESCUE_BTN_PIN 16

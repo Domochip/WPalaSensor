@@ -41,7 +41,7 @@ void WPalaSensor::setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPo
 void WPalaSensor::timerTick()
 {
   // LOG
-  LOG_SERIAL.println(F("TimerTick"));
+  LOG_SERIAL_PRINTLN(F("TimerTick"));
 
   // if MQTT protocol is enabled and connected then publish Core, Wifi and WPalaControl status
   if ((_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT) && _mqttMan.connected())
@@ -420,7 +420,7 @@ bool WPalaSensor::publishHassDiscoveryToMqtt()
   if (!_mqttMan.connected())
     return false;
 
-  LOG_SERIAL.println(F("Publish Home Assistant Discovery data"));
+  LOG_SERIAL_PRINTLN(F("Publish Home Assistant Discovery data"));
 
   // variables
   JsonDocument jsonDoc;
