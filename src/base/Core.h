@@ -17,18 +17,6 @@
 class Core : public Application
 {
 private:
-  typedef struct
-  {
-    char version[8] = {0};
-    char title[64] = {0};
-    char releaseDate[11] = {0};
-    char summary[255] = {0};
-  } LastFirmwareInfos;
-
-  LastFirmwareInfos _lastFirmwareInfos;
-  Ticker _checkForUpdateTicker;
-  bool _needCheckForUpdateTick = false;
-
   void setConfigDefaultValues();
   bool parseConfigJSON(JsonDocument &doc, bool fromWebPage);
   String generateConfigJSON(bool forSaveFile);
@@ -42,8 +30,8 @@ private:
 public:
   Core(char appId, String appName);
 
-  void checkForUpdate();
-  String getUpdateInfos(bool refresh = false);
+  bool getLastestUpdateInfo(char (*version)[10], char (*title)[64] = nullptr, char (*releaseDate)[11] = nullptr, char (*summary)[256] = nullptr);
+  String getLatestUpdateInfoJson();
   bool updateFirmware(const char *version, String &retMsg, std::function<void(size_t, size_t)> progressCallback = nullptr);
   static int8_t versionCompare(const char *version1, const char *version2);
 };
