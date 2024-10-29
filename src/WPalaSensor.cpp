@@ -435,7 +435,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   MQTTMan::prepareTopic(baseTopic);
 
   // prepare unique id prefix
-  uniqueIdPrefix = F(APPLICATION1_MODEL "_");
+  uniqueIdPrefix = F(CUSTOM_APP_MODEL "_");
   uniqueIdPrefix += WiFi.macAddress();
   uniqueIdPrefix.replace(":", "");
 
@@ -444,8 +444,8 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   // prepare device JSON
   jsonDoc[F("configuration_url")] = F("http://wpalasensor.local");
   jsonDoc[F("identifiers")][0] = uniqueIdPrefix;
-  jsonDoc[F("manufacturer")] = F(APPLICATION1_MANUFACTURER);
-  jsonDoc[F("model")] = F(APPLICATION1_MODEL);
+  jsonDoc[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
+  jsonDoc[F("model")] = F(CUSTOM_APP_MODEL);
   jsonDoc[F("name")] = WiFi.getHostname();
   jsonDoc[F("sw_version")] = VERSION;
   serializeJson(jsonDoc, device); // serialize to device String
@@ -543,8 +543,8 @@ bool WPalaSensor::mqttPublishUpdate()
       // prepare WPalaSensor device JSON
       jsonDoc[F("configuration_url")] = F("http://wpalasensor.local");
       jsonDoc[F("identifiers")][0] = uniqueIdPrefix;
-      jsonDoc[F("manufacturer")] = F(APPLICATION1_MANUFACTURER);
-      jsonDoc[F("model")] = F(APPLICATION1_MODEL);
+      jsonDoc[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
+      jsonDoc[F("model")] = F(CUSTOM_APP_MODEL);
       jsonDoc[F("name")] = WiFi.getHostname();
       jsonDoc[F("sw_version")] = VERSION;
       serializeJson(jsonDoc, device); // serialize to device String
@@ -1206,7 +1206,7 @@ void WPalaSensor::appRun()
 // Constructor
 WPalaSensor::WPalaSensor(char appId, String appName) : Application(appId, appName), _ds18b20(ONEWIRE_BUS_PIN), _mcp4151_5k(MCP4151_5k_SSPIN), _mcp4151_50k(MCP4151_50k_SSPIN)
 {
-  _applicationList[Application1] = this;
+  _applicationList[CustomApp] = this;
 
   // Init SPI for DigiPot
   SPI.begin();

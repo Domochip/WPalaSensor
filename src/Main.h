@@ -8,15 +8,15 @@
 #define TOSTRING(x) STRINGIFY(x)
 
 // ----- Should be modified for your application -----
-#define APPLICATION1_MANUFACTURER "Domochip" // also used as Github user for OTA
-#define APPLICATION1_MODEL "WPalaSensor"     // also used as Github repository for OTA
-#define APPLICATION1_CLASS WPalaSensor
+#define CUSTOM_APP_MANUFACTURER "Domochip" // also used as Github user for OTA
+#define CUSTOM_APP_MODEL "WPalaSensor"     // also used as Github repository for OTA
+#define CUSTOM_APP_CLASS WPalaSensor
 #define VERSION_NUMBER "4.1.1"
 
-#define APPLICATION1_NAME TOSTRING(APPLICATION1_CLASS)     // stringified class name
-#define APPLICATION1_HEADER TOSTRING(APPLICATION1_CLASS.h) // calculated header file "{APPLICATION1_NAME}.h"
-#define DEFAULT_AP_SSID APPLICATION1_NAME                  // Default Access Point SSID "{APPLICATION1_NAME}{4 digits of ChipID}"
-#define DEFAULT_AP_PSK APPLICATION1_NAME "Pass"            // Default Access Point Password "{APPLICATION1_NAME}Pass"
+#define CUSTOM_APP_NAME TOSTRING(CUSTOM_APP_CLASS)     // stringified class name
+#define CUSTOM_APP_HEADER TOSTRING(CUSTOM_APP_CLASS.h) // calculated header file "{CUSTOM_APP_NAME}.h"
+#define DEFAULT_AP_SSID CUSTOM_APP_NAME                  // Default Access Point SSID "{CUSTOM_APP_NAME}{4 digits of ChipID}"
+#define DEFAULT_AP_PSK CUSTOM_APP_NAME "Pass"            // Default Access Point Password "{CUSTOM_APP_NAME}Pass"
 
 // Control EventSourceMan code (To be used by Application if EventSource server is needed)
 #define EVTSRC_ENABLED 0
