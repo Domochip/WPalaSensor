@@ -490,6 +490,14 @@ bool WPalaSensor::mqttPublishHassDiscovery()
 }
 
 //------------------------------------------
+// Publish update to MQTT
+void WPalaSensor::mqttPublishUpdate()
+{
+  // get update info from Core
+  // String updateInfo = (_applicationList[Core]->getUpdateInfo();
+}
+
+//------------------------------------------
 // Used to initialize configuration properties to default values
 void WPalaSensor::setConfigDefaultValues()
 {
@@ -880,8 +888,9 @@ String WPalaSensor::generateStatusJSON()
 // code to execute during initialization and reinitialization of the app
 bool WPalaSensor::appInit(bool reInit)
 {
-  // stop Ticker
+  // stop Tickers
   _refreshTicker.detach();
+  _publishUpdateTicker.detach();
 
   // Stop MQTT
   _mqttMan.disconnect();
@@ -921,6 +930,14 @@ bool WPalaSensor::appInit(bool reInit)
 #else
   _refreshTicker.attach<typeof this>(_refreshPeriod, [](typeof this palaSensor)
                                      { palaSensor->_needTick = true; }, this);
+#endif
+
+#ifdef ESP8266
+  _publishUpdateTicker.attach(86400, [this]()
+                              { this->_needPublishUpdate = true; });
+#else
+  _publishUpdateTicker.attach<typeof this>(86400, [](typeof this palaSensor)
+                                           { palaSensor->_needPublishUpdate = true; }, this);
 #endif
 
   return _ds18b20.getReady();
@@ -1075,6 +1092,11 @@ void WPalaSensor::appRun()
       {
         _needPublishHassDiscovery = false;
         _needTick = true;
+      }
+      if (_needPublishUpdate)
+      {
+        _needPublishUpdate = false;
+        mqttPublishUpdate();
       }
     }
   }

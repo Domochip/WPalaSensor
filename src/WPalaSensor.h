@@ -114,6 +114,8 @@ private:
   Ticker _refreshTicker;
   byte _skipTick = 0;
   bool _needPublishHassDiscovery = false;
+  bool _needPublishUpdate = true; // will be published at first
+  Ticker _publishUpdateTicker;
 
   // Used in TimerTick for logic and calculation
 
@@ -144,6 +146,7 @@ private:
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
   bool mqttPublishHassDiscovery();
+  void mqttPublishUpdate();
 
   void setConfigDefaultValues();
   bool parseConfigJSON(JsonDocument &doc, bool fromWebPage);
