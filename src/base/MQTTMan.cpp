@@ -125,6 +125,35 @@ bool MQTTMan::publishToConnectedTopic(const char *payload)
     return false;
 }
 
+String MQTTMan::getStateString()
+{
+    switch (state())
+    {
+    case MQTT_CONNECTION_TIMEOUT:
+        return F("Timed Out");
+    case MQTT_CONNECTION_LOST:
+        return F("Lost");
+    case MQTT_CONNECT_FAILED:
+        return F("Failed");
+    case MQTT_DISCONNECTED:
+        return F("Disconnected");
+    case MQTT_CONNECTED:
+        return F("Connected");
+    case MQTT_CONNECT_BAD_PROTOCOL:
+        return F("Bad Protocol Version");
+    case MQTT_CONNECT_BAD_CLIENT_ID:
+        return F("Incorrect ClientID");
+    case MQTT_CONNECT_UNAVAILABLE:
+        return F("Server Unavailable");
+    case MQTT_CONNECT_BAD_CREDENTIALS:
+        return F("Bad Credentials");
+    case MQTT_CONNECT_UNAUTHORIZED:
+        return F("Unauthorized Connection");
+    default:
+        return F("Unknown");
+    }
+}
+
 bool MQTTMan::loop()
 {
     if (state() != MQTT_DISCONNECTED)
