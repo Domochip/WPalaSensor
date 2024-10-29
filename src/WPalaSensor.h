@@ -143,7 +143,7 @@ private:
   void timerTick();
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
-  bool publishHassDiscoveryToMqtt();
+  bool mqttPublishHassDiscovery();
 
   void setConfigDefaultValues();
   bool parseConfigJSON(JsonDocument &doc, bool fromWebPage);

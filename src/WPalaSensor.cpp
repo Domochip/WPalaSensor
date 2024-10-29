@@ -36,7 +36,7 @@ void WPalaSensor::setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPo
 }
 
 //-----------------------------------------------------------------------
-// Main Timer Tick (aka this should be done every 30sec)
+// Main Timer Tick
 //-----------------------------------------------------------------------
 void WPalaSensor::timerTick()
 {
@@ -414,7 +414,7 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
 }
 
 //------------------------------------------
-bool WPalaSensor::publishHassDiscoveryToMqtt()
+bool WPalaSensor::mqttPublishHassDiscovery()
 {
   // if MQTT is not connected then return false
   if (!_mqttMan.connected())
@@ -1141,7 +1141,7 @@ void WPalaSensor::appRun()
     // if Home Assistant discovery enabled and publish is needed
     if (_ha.mqtt.hassDiscoveryEnabled && _needPublishHassDiscovery)
     {
-      if (publishHassDiscoveryToMqtt()) // publish discovery
+      if (mqttPublishHassDiscovery())
       {
         _needPublishHassDiscovery = false;
         _needTick = true;
