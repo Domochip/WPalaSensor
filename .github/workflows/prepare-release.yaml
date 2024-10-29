@@ -34,17 +34,17 @@ jobs:
       - name: Get Versions
         id: versions
         run: |
-          APPLICATION1_MODEL=$(grep -oP '(?<=#define APPLICATION1_MODEL ").*(?=")'  ./src/Main.h)
-          echo "APPLICATION1_MODEL=${APPLICATION1_MODEL}" >> $GITHUB_ENV
-          PPLICATION1_MODEL=$(grep -oP '(?<=#define APPLICATION1_MODEL "W).*(?=")'  ./src/Main.h)
-          echo "PPLICATION1_MODEL=${PPLICATION1_MODEL}" >> $GITHUB_ENV
+          CUSTOM_APP_MODEL=$(grep -oP '(?<=#define CUSTOM_APP_MODEL ").*(?=")'  ./src/Main.h)
+          echo "CUSTOM_APP_MODEL=${CUSTOM_APP_MODEL}" >> $GITHUB_ENV
+          USTOM_APP_MODEL=$(grep -oP '(?<=#define CUSTOM_APP_MODEL "W).*(?=")'  ./src/Main.h)
+          echo "USTOM_APP_MODEL=${USTOM_APP_MODEL}" >> $GITHUB_ENV
           VERSION_NUMBER=$(grep -oP '(?<=#define VERSION_NUMBER ").*(?=")'  ./src/Main.h)
           echo "VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
 
       - name: Rename Firmware
         run: |
-          cp .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.bin .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin
-          cp .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.bin .pio/build/d1_mini/Wireless${{ env.PPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin
+          cp .pio/build/d1_mini/${{ env.CUSTOM_APP_MODEL }}.bin .pio/build/d1_mini/${{ env.CUSTOM_APP_MODEL }}.${{ env.VERSION_NUMBER }}.bin
+          cp .pio/build/d1_mini/${{ env.CUSTOM_APP_MODEL }}.bin .pio/build/d1_mini/Wireless${{ env.USTOM_APP_MODEL }}.${{ env.VERSION_NUMBER }}.bin
 
       - name: Create Draft Release
         uses: softprops/action-gh-release@v2
@@ -53,5 +53,5 @@ jobs:
           tag_name: "${{ env.VERSION_NUMBER }}"
           generate_release_notes: true
           files: |
-            .pio/build/d1_mini/${{ env.APPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin
-            .pio/build/d1_mini/Wireless${{ env.PPLICATION1_MODEL }}.${{ env.VERSION_NUMBER }}.bin
+            .pio/build/d1_mini/${{ env.CUSTOM_APP_MODEL }}.${{ env.VERSION_NUMBER }}.bin
+            .pio/build/d1_mini/Wireless${{ env.USTOM_APP_MODEL }}.${{ env.VERSION_NUMBER }}.bin

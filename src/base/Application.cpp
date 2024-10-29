@@ -55,7 +55,7 @@ bool Application::getLastestUpdateInfo(char (*version)[10], char (*title)[64] /*
   if (!version)
     return false;
 
-  String githubURL = F("https://api.github.com/repos/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/latest");
+  String githubURL = F("https://api.github.com/repos/" CUSTOM_APP_MANUFACTURER "/" CUSTOM_APP_MODEL "/releases/latest");
 
   WiFiClientSecure clientSecure;
   HTTPClient http;
@@ -143,7 +143,7 @@ String Application::getLatestUpdateInfoJson()
     doc[F("title")] = title;
     doc[F("release_date")] = releaseDate;
     doc[F("release_summary")] = summary;
-    doc[F("release_url")] = String(F("https://github.com/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/tag/")) + version;
+    doc[F("release_url")] = String(F("https://github.com/" CUSTOM_APP_MANUFACTURER "/" CUSTOM_APP_MODEL "/releases/tag/")) + version;
   }
 
   String info;
@@ -163,8 +163,8 @@ bool Application::updateFirmware(const char *version, String &retMsg, std::funct
   WiFiClientSecure clientSecure;
   clientSecure.setInsecure();
 
-  String fwUrl(F("https://github.com/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/download/"));
-  fwUrl = fwUrl + version + '/' + F(APPLICATION1_MODEL) + '.' + version + F(".bin");
+  String fwUrl(F("https://github.com/" CUSTOM_APP_MANUFACTURER "/" CUSTOM_APP_MODEL "/releases/download/"));
+  fwUrl = fwUrl + version + '/' + F(CUSTOM_APP_MODEL) + '.' + version + F(".bin");
 
   LOG_SERIAL_PRINTF_P(PSTR("Trying to Update from URL: %s\n"), fwUrl.c_str());
 
@@ -191,7 +191,7 @@ bool Application::updateFirmware(const char *version, String &retMsg, std::funct
   WiFiClient *stream = https.getStreamPtr();
   int contentLength = https.getSize();
 
-  LOG_SERIAL_PRINTF_P(PSTR("Update Start: %s (Online Update)\n"), (String(F(APPLICATION1_MODEL)) + '.' + version + F(".bin")).c_str());
+  LOG_SERIAL_PRINTF_P(PSTR("Update Start: %s (Online Update)\n"), (String(F(CUSTOM_APP_MODEL)) + '.' + version + F(".bin")).c_str());
 
   if (progressCallback)
     Update.onProgress(progressCallback);

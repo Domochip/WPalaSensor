@@ -24,7 +24,7 @@ protected:
   {
     CoreApp,
     WifiManApp,
-    Application1
+    CustomApp
   } Applications;
 
   static Application *_applicationList[3]; // static list of all applications

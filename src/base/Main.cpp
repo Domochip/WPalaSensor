@@ -16,8 +16,8 @@ using WebServer = ESP8266WebServer;
 #include "Core.h"
 #include "WifiMan.h"
 
-// include Application header file
-#include APPLICATION1_HEADER
+// include Custom Application header file
+#include CUSTOM_APP_HEADER
 
 // WebServer
 WebServer server(80);
@@ -26,14 +26,14 @@ bool pauseApplication = false;
 // variable used by objects to indicate system reboot is required
 bool shouldReboot = false;
 
-// System
+// Core App
 Core core('0', "Core");
 
-// WifiMan
+// WifiMan App
 WifiMan wifiMan('w', "WiFi");
 
-// Application1 object
-APPLICATION1_CLASS application1('1', APPLICATION1_NAME);
+// Custom App
+CUSTOM_APP_CLASS custom('1', CUSTOM_APP_NAME);
 
 //-----------------------------------------------------------------------
 // Setup function
@@ -54,7 +54,7 @@ void setup()
   STATUS_LED_ERROR
 #endif
 
-  LOG_SERIAL_PRINTLN(F(APPLICATION1_MANUFACTURER " " APPLICATION1_MODEL " " VERSION));
+  LOG_SERIAL_PRINTLN(F(CUSTOM_APP_MANUFACTURER " " CUSTOM_APP_MODEL " " VERSION));
   LOG_SERIAL_PRINTLN(F("---Booting---"));
 
 #ifndef RESCUE_BUTTON_WAIT
@@ -106,14 +106,14 @@ void setup()
   // Init WiFi
   wifiMan.init(skipExistingConfig);
 
-  // Init Application
-  application1.init(skipExistingConfig);
+  // Init Custom Application
+  custom.init(skipExistingConfig);
 
   LOG_SERIAL_PRINT(F("Start WebServer : "));
 
   core.initWebServer(server, shouldReboot, pauseApplication);
   wifiMan.initWebServer(server, shouldReboot, pauseApplication);
-  application1.initWebServer(server, shouldReboot, pauseApplication);
+  custom.initWebServer(server, shouldReboot, pauseApplication);
 
   server.begin();
 
@@ -132,7 +132,7 @@ void loop(void)
 
   if (!pauseApplication)
   {
-    application1.run();
+    custom.run();
   }
 
   wifiMan.run();
