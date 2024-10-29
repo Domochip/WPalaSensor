@@ -58,7 +58,7 @@
 
             <div class="content">
                 <div id="content0"></div>
-                <div id="contentw"></div>
+                <div id="content1"></div>
                 <div id="content2"></div>
             </div>
         </div>
@@ -207,7 +207,7 @@
         function clearMenuAndContent() {
             unloadScripts();
             ["#menuStatus", "#menuConfig", "#menuFirmware"].forEach(item => { $(item).classList.remove("pure-menu-selected"); });
-            ["#content0", "#contentw", "#content2"].forEach(item => { $(item).innerHTML = ''; });
+            ["#content0", "#content1", "#content2"].forEach(item => { $(item).innerHTML = ''; });
         };
 
         function handleMenuClick(menuId, headerText, contentMappings, callback) {
@@ -225,7 +225,7 @@
 
         handleMenuClick("#menuStatus", "Status", {
             "#content0": "/status0.html",
-            "#contentw": "/statusw.html",
+            "#content1": "/status1.html",
             "#content2": "/status2.html"
         }, () => {
             const productNameElement = $("#productName");
@@ -240,7 +240,7 @@
 
         handleMenuClick("#menuConfig", "Config", {
             "#content0": "/config0.html",
-            "#contentw": "/configw.html",
+            "#content1": "/config1.html",
             "#content2": "/config2.html"
         });
 

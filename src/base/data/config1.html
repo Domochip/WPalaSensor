@@ -1,7 +1,7 @@
 <h2 class="content-subhead">WiFi<span id="l">
         <h6 style="display:inline"><b> Loading...</b></h6>
     </span></h2>
-<form class="pure-form pure-form-aligned" id='fw'>
+<form class="pure-form pure-form-aligned" id='f'>
     <fieldset>
         <div class="pure-control-group">
             <label for="s">SSID</label>
@@ -60,8 +60,8 @@
 <span id='r'></span>
 
 <script>
-    //QuerySelector Prefix is added by load function to know into what element queySelector need to look for
-    //var qsp = '#contentw ';
+    //QuerySelector Prefix is added by load function to know into what element querySelector need to look for
+    //var qsp = '#content1 ';
 
     $(qsp + "#staticip").addEventListener('change', function () {
         if ($(qsp + "#staticip").checked) {
@@ -78,7 +78,7 @@
         }
     });
 
-    $(qsp + "#fw").addEventListener('submit', function (event) {
+    $(qsp + "#f").addEventListener('submit', function (event) {
         event.preventDefault();
         if (!$(qsp + "#staticip").checked) {
             $(qsp + "#ip").value = '';
@@ -88,10 +88,10 @@
             $(qsp + "#dns2").value = '';
         }
         $(qsp + "#r").innerHTML = "Saving Configuration...";
-        post("/scw",
-            convertFormDataToJson(new FormData($(qsp + "#fw"))),
+        post("/sc" + qsp[8],
+            convertFormDataToJson(new FormData($(qsp + "#f"))),
             function () {
-                $(qsp + "#fw").style.display = 'none';
+                $(qsp + "#f").style.display = 'none';
 
                 let locationCommand = 'location.';
                 if (!$(qsp + "#s").value) locationCommand += 'assign("http://192.168.4.1");';
@@ -144,7 +144,7 @@
                 }
             }
 
-            $(qsp + "#fw input[type=submit]").disabled = false;
+            $(qsp + "#f input[type=submit]").disabled = false;
             fadeOut($(qsp + "#l"));
 
             getNetworkList();

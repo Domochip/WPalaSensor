@@ -334,10 +334,10 @@ const PROGMEM char *WifiMan::getHTMLContent(WebPageForPlaceHolder wp)
   switch (wp)
   {
   case status:
-    return statuswhtmlgz;
+    return status1htmlgz;
     break;
   case config:
-    return configwhtmlgz;
+    return config1htmlgz;
     break;
   default:
     return nullptr;
@@ -350,10 +350,10 @@ size_t WifiMan::getHTMLContentSize(WebPageForPlaceHolder wp)
   switch (wp)
   {
   case status:
-    return sizeof(statuswhtmlgz);
+    return sizeof(status1htmlgz);
     break;
   case config:
-    return sizeof(configwhtmlgz);
+    return sizeof(config1htmlgz);
     break;
   default:
     return 0;

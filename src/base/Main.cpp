@@ -30,7 +30,7 @@ bool shouldReboot = false;
 Core core('0', "Core");
 
 // WifiMan App
-WifiMan wifiMan('w', "WiFi");
+WifiMan wifiMan('1', "WiFi");
 
 // Custom App
 CUSTOM_APP_CLASS custom('2', CUSTOM_APP_NAME);

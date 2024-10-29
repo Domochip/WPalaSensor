@@ -11,8 +11,8 @@
 #include <ESPmDNS.h>
 #endif
 
-#include "data/statusw.html.gz.h"
-#include "data/configw.html.gz.h"
+#include "data/status1.html.gz.h"
+#include "data/config1.html.gz.h"
 
 const char predefPassword[] PROGMEM = "ewcXoCt4HHjZUvY0";
 
