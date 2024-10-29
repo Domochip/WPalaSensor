@@ -33,7 +33,7 @@ Core core('0', "Core");
 WifiMan wifiMan('w', "WiFi");
 
 // Custom App
-CUSTOM_APP_CLASS custom('1', CUSTOM_APP_NAME);
+CUSTOM_APP_CLASS custom('2', CUSTOM_APP_NAME);
 
 //-----------------------------------------------------------------------
 // Setup function
