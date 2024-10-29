@@ -830,44 +830,9 @@ String WPalaSensor::generateStatusJSON()
 
   // Home automation connection status
   if (_ha.protocol == HA_PROTO_HTTP)
-  {
     doc[F("hahttplastrespcode")] = _haRequestResult;
-  }
   else if (_ha.protocol == HA_PROTO_MQTT)
-  {
-    String hamqttstatus;
-    switch (_mqttMan.state())
-    {
-    case MQTT_CONNECTION_TIMEOUT:
-      hamqttstatus = F("Timed Out");
-      break;
-    case MQTT_CONNECTION_LOST:
-      hamqttstatus = F("Lost");
-      break;
-    case MQTT_CONNECT_FAILED:
-      hamqttstatus = F("Failed");
-      break;
-    case MQTT_CONNECTED:
-      hamqttstatus = F("Connected");
-      break;
-    case MQTT_CONNECT_BAD_PROTOCOL:
-      hamqttstatus = F("Bad Protocol Version");
-      break;
-    case MQTT_CONNECT_BAD_CLIENT_ID:
-      hamqttstatus = F("Incorrect ClientID ");
-      break;
-    case MQTT_CONNECT_UNAVAILABLE:
-      hamqttstatus = F("Server Unavailable");
-      break;
-    case MQTT_CONNECT_BAD_CREDENTIALS:
-      hamqttstatus = F("Bad Credentials");
-      break;
-    case MQTT_CONNECT_UNAUTHORIZED:
-      hamqttstatus = F("Connection Unauthorized");
-      break;
-    }
-    doc[F("hamqttstatus")] = hamqttstatus;
-  }
+    doc[F("hamqttstatus")] = _mqttMan.getStateString();
 
   // Home Automation last temperature and age
   if (_ha.protocol != HA_PROTO_DISABLED)
@@ -886,44 +851,9 @@ String WPalaSensor::generateStatusJSON()
 
   // WPalaControl/CBox connection status
   if (_ha.cboxProtocol == CBOX_PROTO_HTTP)
-  {
     doc[F("cboxhttplastrespcode")] = _stoveRequestResult;
-  }
   else if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
-  {
-    String cboxmqttstatus;
-    switch (_mqttMan.state())
-    {
-    case MQTT_CONNECTION_TIMEOUT:
-      cboxmqttstatus = F("Timed Out");
-      break;
-    case MQTT_CONNECTION_LOST:
-      cboxmqttstatus = F("Lost");
-      break;
-    case MQTT_CONNECT_FAILED:
-      cboxmqttstatus = F("Failed");
-      break;
-    case MQTT_CONNECTED:
-      cboxmqttstatus = F("Connected");
-      break;
-    case MQTT_CONNECT_BAD_PROTOCOL:
-      cboxmqttstatus = F("Bad Protocol Version");
-      break;
-    case MQTT_CONNECT_BAD_CLIENT_ID:
-      cboxmqttstatus = F("Incorrect ClientID ");
-      break;
-    case MQTT_CONNECT_UNAVAILABLE:
-      cboxmqttstatus = F("Server Unavailable");
-      break;
-    case MQTT_CONNECT_BAD_CREDENTIALS:
-      cboxmqttstatus = F("Bad Credentials");
-      break;
-    case MQTT_CONNECT_UNAUTHORIZED:
-      cboxmqttstatus = F("Connection Unauthorized");
-      break;
-    }
-    doc[F("cboxmqttstatus")] = cboxmqttstatus;
-  }
+    doc[F("cboxmqttstatus")] = _mqttMan.getStateString();
 
   // WPalaControl/CBox last temperature and age
   if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
