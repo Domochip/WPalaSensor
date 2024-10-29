@@ -1049,10 +1049,10 @@ const PROGMEM char *WPalaSensor::getHTMLContent(WebPageForPlaceHolder wp)
   switch (wp)
   {
   case status:
-    return status1htmlgz;
+    return status2htmlgz;
     break;
   case config:
-    return config1htmlgz;
+    return config2htmlgz;
     break;
   default:
     return nullptr;
@@ -1067,10 +1067,10 @@ size_t WPalaSensor::getHTMLContentSize(WebPageForPlaceHolder wp)
   switch (wp)
   {
   case status:
-    return sizeof(status1htmlgz);
+    return sizeof(status2htmlgz);
     break;
   case config:
-    return sizeof(config1htmlgz);
+    return sizeof(config2htmlgz);
     break;
   default:
     return 0;
