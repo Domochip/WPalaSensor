@@ -52,8 +52,8 @@ void WPalaSensor::timerTick()
     baseTopic.remove(baseTopic.length() - 1);
 
     JsonDocument doc;
-    doc[F("Core")] = serialized(_applicationList[Core]->getStatusJSON());
-    doc[F("Wifi")] = serialized(_applicationList[WifiMan]->getStatusJSON());
+    doc[F("Core")] = serialized(_applicationList[CoreApp]->getStatusJSON());
+    doc[F("Wifi")] = serialized(_applicationList[WifiManApp]->getStatusJSON());
     doc[_appName] = serialized(getStatusJSON());
 
     String strJson;
