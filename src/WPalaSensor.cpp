@@ -1192,11 +1192,12 @@ void WPalaSensor::appRun()
         _needPublishHassDiscovery = false;
         _needTick = true;
       }
-      if (_needPublishUpdate)
-      {
-        _needPublishUpdate = false;
-        mqttPublishUpdate();
-      }
+    }
+
+    if (_needPublishUpdate)
+    {
+      _needPublishUpdate = false;
+      mqttPublishUpdate();
     }
   }
 
