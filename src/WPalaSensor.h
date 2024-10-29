@@ -110,7 +110,7 @@ private:
   McpDigitalPot _mcp4151_5k;
   McpDigitalPot _mcp4151_50k;
 
-  bool _needRefresh = false;
+  bool _needRefresh = true; // will be refreshed next to setup
   Ticker _refreshTicker;
   byte _skipTick = 0;
   bool _needPublishHassDiscovery = false;

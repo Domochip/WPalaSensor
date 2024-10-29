@@ -1021,10 +1021,7 @@ bool WPalaSensor::appInit(bool reInit)
   _stoveTemperatureMillis = millis() - (1000 * _refreshPeriod); // delta is kept but will evolve only if a new value is received
   _stoveRequestResult = 0;
 
-  // first call to see immediate result
-  refresh();
-
-  // then next will be done by refreshTicker
+  // start refresh Ticker
 #ifdef ESP8266
   _refreshTicker.attach(_refreshPeriod, [this]()
                         { this->_needRefresh = true; });
@@ -1187,14 +1184,11 @@ void WPalaSensor::appRun()
   {
     _mqttMan.loop();
 
-    // if Home Assistant discovery enabled and publish is needed
-    if (_ha.mqtt.hassDiscoveryEnabled && _needPublishHassDiscovery)
+    // if Home Assistant discovery enabled and publish is needed (and publish is successful)
+    if (_ha.mqtt.hassDiscoveryEnabled && _needPublishHassDiscovery && mqttPublishHassDiscovery())
     {
-      if (mqttPublishHassDiscovery())
-      {
-        _needPublishHassDiscovery = false;
-        _needRefresh = true;
-      }
+      _needPublishHassDiscovery = false;
+      _needRefresh = true;
     }
 
     if (_needPublishUpdate && mqttPublishUpdate())
