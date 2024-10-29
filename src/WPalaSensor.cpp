@@ -36,12 +36,12 @@ void WPalaSensor::setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPo
 }
 
 //-----------------------------------------------------------------------
-// Main Timer Tick
+// Main Refresh method
 //-----------------------------------------------------------------------
-void WPalaSensor::timerTick()
+void WPalaSensor::refresh()
 {
   // LOG
-  LOG_SERIAL_PRINTLN(F("TimerTick"));
+  LOG_SERIAL_PRINTLN(F("refresh"));
 
   // if MQTT protocol is enabled and connected then publish Core, Wifi and WPalaControl status
   if ((_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT) && _mqttMan.connected())
@@ -268,8 +268,8 @@ void WPalaSensor::timerTick()
     _haTemperatureUsed = false;
   }
 
-  // if Connection Box protocol is defined and stove temperature arrived after last refresh and not first timer tick
-  if (_ha.cboxProtocol != CBOX_PROTO_DISABLED && (_stoveTemperatureMillis + _refreshPeriod * 1000) > millis() && !_firstTimerTick)
+  // if Connection Box protocol is defined and stove temperature arrived after last refresh and not first refresh tick
+  if (_ha.cboxProtocol != CBOX_PROTO_DISABLED && (_stoveTemperatureMillis + _refreshPeriod * 1000) > millis() && !_firstRefreshTick)
   {
     // adjust delta
     _stoveDelta += (_lastTemperatureUsed - _stoveTemperature) / 2.5F;
@@ -287,9 +287,9 @@ void WPalaSensor::timerTick()
 
   _pushedTemperature = temperatureToDisplay + _stoveDelta;
 
-  // if first timer tick then set flag to false
-  if (_firstTimerTick)
-    _firstTimerTick = false;
+  // if first refresh tick then set flag to false
+  if (_firstRefreshTick)
+    _firstRefreshTick = false;
 
 #if DEVELOPPER_MODE
 
@@ -1020,15 +1020,15 @@ bool WPalaSensor::appInit(bool reInit)
   _stoveRequestResult = 0;
 
   // first call to see immediate result
-  timerTick();
+  refresh();
 
   // then next will be done by refreshTicker
 #ifdef ESP8266
   _refreshTicker.attach(_refreshPeriod, [this]()
-                        { this->_needTick = true; });
+                        { this->_needRefresh = true; });
 #else
   _refreshTicker.attach<typeof this>(_refreshPeriod, [](typeof this palaSensor)
-                                     { palaSensor->_needTick = true; }, this);
+                                     { palaSensor->_needRefresh = true; }, this);
 #endif
 
 #ifdef ESP8266
@@ -1120,7 +1120,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
               {
                 // convert and set it
                 setDualDigiPot(jv.as<float>());
-                // go for timer tick skipped (time to look a value on stove)
+                // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
@@ -1129,7 +1129,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
               {
                 // go one step up
                 setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal + _digipotsNTC.rBW5KStep));
-                // go for timer tick skipped (time to look a value on stove)
+                // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
@@ -1138,7 +1138,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
               {
                 // go one step down
                 setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal - _digipotsNTC.rBW5KStep));
-                // go for timer tick skipped (time to look a value on stove)
+                // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
@@ -1149,7 +1149,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
               {
                 // convert and set it
                 _mcp4151_5k.setPosition(0, jv);
-                // go for timer tick skipped (time to look a value on stove)
+                // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
@@ -1158,7 +1158,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
               {
                 // convert and set it
                 _mcp4151_50k.setPosition(0, jv);
-                // go for timer tick skipped (time to look a value on stove)
+                // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
@@ -1167,7 +1167,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
               {
                 // convert resistance value and call right function
                 setDualDigiPot(0, jv);
-                // go for timer tick skipped (time to look a value on stove)
+                // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 #endif
@@ -1177,7 +1177,7 @@ void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &
 }
 
 //------------------------------------------
-// Run for timer
+// Run for application
 void WPalaSensor::appRun()
 {
   if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
@@ -1190,7 +1190,7 @@ void WPalaSensor::appRun()
       if (mqttPublishHassDiscovery())
       {
         _needPublishHassDiscovery = false;
-        _needTick = true;
+        _needRefresh = true;
       }
     }
 
@@ -1201,10 +1201,10 @@ void WPalaSensor::appRun()
     }
   }
 
-  if (_needTick)
+  if (_needRefresh)
   {
-    _needTick = false;
-    timerTick();
+    _needRefresh = false;
+    refresh();
   }
 }
 

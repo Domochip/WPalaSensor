@@ -110,17 +110,17 @@ private:
   McpDigitalPot _mcp4151_5k;
   McpDigitalPot _mcp4151_50k;
 
-  bool _needTick = false;
+  bool _needRefresh = false;
   Ticker _refreshTicker;
   byte _skipTick = 0;
   bool _needPublishHassDiscovery = false;
   bool _needPublishUpdate = true; // will be published at first
   Ticker _publishUpdateTicker;
 
-  // Used in TimerTick for logic and calculation
+  // Used in refresh method for logic and calculation
 
   // to avoid delta calculation on first call (then 20° is applied at first call and then delta is calculated at least during 2nd call)
-  bool _firstTimerTick = true;
+  bool _firstRefreshTick = true;
 
   float _haTemperature = 20.0;
   unsigned long _haTemperatureMillis = 0;
@@ -142,7 +142,7 @@ private:
   void setDualDigiPot(float temperature);
   void setDualDigiPot(int resistance);
   void setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPosition);
-  void timerTick();
+  void refresh();
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
   bool mqttPublishHassDiscovery();
