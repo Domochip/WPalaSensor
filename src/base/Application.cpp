@@ -49,6 +49,182 @@ bool Application::loadConfig()
   return result;
 }
 
+bool Application::getLastestUpdateInfo(char (*version)[10], char (*title)[64] /* = nullptr */, char (*releaseDate)[11] /* = nullptr */, char (*summary)[256] /* = nullptr */)
+{
+  // version is mandatory
+  if (!version)
+    return false;
+
+  String githubURL = F("https://api.github.com/repos/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/latest");
+
+  WiFiClientSecure clientSecure;
+  HTTPClient http;
+
+  clientSecure.setInsecure();
+  http.begin(clientSecure, githubURL);
+  int httpCode = http.GET();
+
+  // check for http error
+  if (httpCode != 200)
+  {
+    http.end();
+    return false;
+  }
+
+  // httpCode is 200, we can continue
+  WiFiClient *stream = http.getStreamPtr();
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, *stream);
+
+  // check for json error
+  if (error)
+  {
+    http.end();
+    return false;
+  }
+
+  // json is valid, we can continue
+  JsonVariant jv;
+
+  if ((jv = doc[F("tag_name")]).is<const char *>())
+    strlcpy(*version, jv.as<const char *>(), sizeof(*version));
+
+  // check if we got a version
+  if (!strlen(*version))
+  {
+    http.end();
+    return false;
+  }
+
+  // we got a version, we can continue
+  if (title && (jv = doc[F("name")]).is<const char *>())
+  {
+    // find the first space and copy the rest to title
+    if (const char *space = strchr(jv, ' '))
+      strlcpy(*title, space + 1, sizeof(*title));
+  }
+
+  if (releaseDate && (jv = doc[F("published_at")]).is<const char *>())
+    strlcpy(*releaseDate, jv.as<const char *>(), 11); // copy the part part only (10 chars)
+
+  if (summary && (jv = doc[F("body")]).is<const char *>())
+  {
+    // copy body to summary until "\r\n\r\n##"
+    const char *body = jv.as<const char *>();
+    const char *end = strstr(body, "\r\n\r\n##");
+    if (end)
+    {
+      size_t len = std::min<size_t>(end - body + 1, sizeof(*summary)); // +1 to include the null terminator
+      strlcpy(*summary, body, len);
+    }
+    else
+      strlcpy(*summary, body, sizeof(*summary));
+  }
+
+  http.end();
+
+  return true;
+}
+
+String Application::getLatestUpdateInfoJson()
+{
+  JsonDocument doc;
+
+  doc[F("installed_version")] = VERSION;
+
+  char version[10] = {0};
+  char title[64] = {0};
+  char releaseDate[11] = {0};
+  char summary[256] = {0};
+
+  if (getLastestUpdateInfo(&version, &title, &releaseDate, &summary))
+  {
+    doc[F("latest_version")] = version;
+    doc[F("title")] = title;
+    doc[F("release_date")] = releaseDate;
+    doc[F("release_summary")] = summary;
+    doc[F("release_url")] = String(F("https://github.com/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/tag/")) + version;
+  }
+
+  String info;
+  serializeJson(doc, info);
+
+  return info;
+}
+
+bool Application::updateFirmware(const char *version, String &retMsg, std::function<void(size_t, size_t)> progressCallback /* = nullptr */)
+{
+  if (!version || !version[0])
+  {
+    retMsg = F("No version provided");
+    return false;
+  }
+
+  WiFiClientSecure clientSecure;
+  clientSecure.setInsecure();
+
+  String fwUrl(F("https://github.com/" APPLICATION1_MANUFACTURER "/" APPLICATION1_MODEL "/releases/download/"));
+  fwUrl = fwUrl + version + '/' + F(APPLICATION1_MODEL) + '.' + version + F(".bin");
+
+  LOG_SERIAL_PRINTF_P(PSTR("Trying to Update from URL: %s\n"), fwUrl.c_str());
+
+  HTTPClient https;
+  https.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  https.begin(clientSecure, fwUrl);
+  int httpCode = https.GET();
+
+  if (httpCode != 200)
+  {
+    https.end();
+
+    retMsg = F("Failed to download file, httpCode: ");
+    retMsg += httpCode;
+
+    LOG_SERIAL_PRINTLN(retMsg);
+
+    return false;
+  }
+
+  // starting here we have a valid httpCode (200)
+
+  // get the stream
+  WiFiClient *stream = https.getStreamPtr();
+  int contentLength = https.getSize();
+
+  LOG_SERIAL_PRINTF_P(PSTR("Update Start: %s (Online Update)\n"), (String(F(APPLICATION1_MODEL)) + '.' + version + F(".bin")).c_str());
+
+  if (progressCallback)
+    Update.onProgress(progressCallback);
+
+#ifdef ESP8266
+  Update.begin(contentLength);
+#else
+  Update.begin();
+#endif
+
+  Update.writeStream(*stream);
+
+  Update.end();
+
+  https.end();
+
+  bool success = !Update.hasError();
+  if (success)
+    LOG_SERIAL_PRINTLN(F("Update successful"));
+  else
+  {
+#ifdef ESP8266
+    retMsg = Update.getErrorString();
+#else
+    retMsg = Update.errorString();
+#endif
+    LOG_SERIAL_PRINTF_P(PSTR("Update failed: %s\n"), retMsg.c_str());
+    Update.clearError();
+  }
+
+  return success;
+}
+
 String Application::getStatusJSON()
 {
   return generateStatusJSON();

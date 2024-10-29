@@ -7,9 +7,12 @@
 #include <ESP8266WebServer.h>
 using WebServer = ESP8266WebServer;
 #define SERVER_KEEPALIVE_FALSE() server.keepAlive(false);
+#include <ESP8266HTTPClient.h>
 #else
 #include <WebServer.h>
 #define SERVER_KEEPALIVE_FALSE()
+#include <HTTPClient.h>
+#include <Update.h>
 #endif
 #include <ArduinoJson.h>
 #include <Ticker.h>
@@ -39,6 +42,10 @@ protected:
   // already built methods
   bool saveConfig();
   bool loadConfig();
+
+  static bool getLastestUpdateInfo(char (*version)[10], char (*title)[64] = nullptr, char (*releaseDate)[11] = nullptr, char (*summary)[256] = nullptr);
+  static String getLatestUpdateInfoJson();
+  static bool updateFirmware(const char *version, String &retMsg, std::function<void(size_t, size_t)> progressCallback = nullptr);
 
   // specialization required from the application
   virtual void setConfigDefaultValues() = 0;
