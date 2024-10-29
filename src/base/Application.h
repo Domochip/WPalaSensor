@@ -19,8 +19,8 @@ class Application
 protected:
   typedef enum
   {
-    Core,
-    WifiMan,
+    CoreApp,
+    WifiManApp,
     Application1
   } Applications;
 

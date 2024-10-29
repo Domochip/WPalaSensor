@@ -413,3 +413,8 @@ void WifiMan::appRun()
   MDNS.update();
 #endif
 }
+
+WifiMan::WifiMan(char appId, String appName) : Application(appId, appName)
+{
+  _applicationList[WifiManApp] = this;
+}

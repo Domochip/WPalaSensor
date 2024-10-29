@@ -58,7 +58,7 @@ private:
   void appRun();
 
 public:
-  WifiMan(char appId, String appName) : Application(appId, appName) { _applicationList[Application::Applications::WifiMan] = this; }
+  WifiMan(char appId, String appName);
 };
 
 #endif

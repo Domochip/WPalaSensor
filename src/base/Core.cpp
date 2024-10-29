@@ -246,7 +246,7 @@ void Core::appRun()
 
 Core::Core(char appId, String appName) : Application(appId, appName)
 {
-  _applicationList[Application::Applications::Core] = this;
+  _applicationList[CoreApp] = this;
 }
 
 bool Core::getLastestUpdateInfo(char (*version)[10], char (*title)[64] /* = nullptr */, char (*releaseDate)[11] /* = nullptr */, char (*summary)[256] /* = nullptr */)
