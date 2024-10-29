@@ -491,10 +491,10 @@ bool WPalaSensor::mqttPublishHassDiscovery()
 
 //------------------------------------------
 // Publish update to MQTT
-void WPalaSensor::mqttPublishUpdate()
+bool WPalaSensor::mqttPublishUpdate()
 {
   if (!_mqttMan.connected())
-    return;
+    return false;
 
   // get update info from Core
   String updateInfo = getLatestUpdateInfoJson();
@@ -594,6 +594,8 @@ void WPalaSensor::mqttPublishUpdate()
   // publish update info
   topic = baseTopic + F("update");
   _mqttMan.publish(topic.c_str(), updateInfo.c_str(), true);
+
+  return true;
 }
 
 //------------------------------------------
@@ -1031,6 +1033,7 @@ bool WPalaSensor::appInit(bool reInit)
                                      { palaSensor->_needRefresh = true; }, this);
 #endif
 
+  // start publish update Ticker
 #ifdef ESP8266
   _publishUpdateTicker.attach(86400, [this]()
                               { this->_needPublishUpdate = true; });
@@ -1194,11 +1197,8 @@ void WPalaSensor::appRun()
       }
     }
 
-    if (_needPublishUpdate)
-    {
+    if (_needPublishUpdate && mqttPublishUpdate())
       _needPublishUpdate = false;
-      mqttPublishUpdate();
-    }
   }
 
   if (_needRefresh)
