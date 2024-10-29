@@ -1112,7 +1112,7 @@ void WPalaSensor::appRun()
 // Constructor
 WPalaSensor::WPalaSensor(char appId, String appName) : Application(appId, appName), _ds18b20(ONEWIRE_BUS_PIN), _mcp4151_5k(MCP4151_5k_SSPIN), _mcp4151_50k(MCP4151_50k_SSPIN)
 {
-  _applicationList[Application::Applications::Application1] = this;
+  _applicationList[Application1] = this;
 
   // Init SPI for DigiPot
   SPI.begin();
