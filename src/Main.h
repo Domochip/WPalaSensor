@@ -11,7 +11,7 @@
 #define APPLICATION1_MANUFACTURER "Domochip" // also used as Github user for OTA
 #define APPLICATION1_MODEL "WPalaSensor"     // also used as Github repository for OTA
 #define APPLICATION1_CLASS WPalaSensor
-#define VERSION_NUMBER "4.1.0"
+#define VERSION_NUMBER "4.1.1"
 
 #define APPLICATION1_NAME TOSTRING(APPLICATION1_CLASS)     // stringified class name
 #define APPLICATION1_HEADER TOSTRING(APPLICATION1_CLASS.h) // calculated header file "{APPLICATION1_NAME}.h"
