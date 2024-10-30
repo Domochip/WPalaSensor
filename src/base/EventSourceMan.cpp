@@ -59,10 +59,10 @@ void EventSourceMan::eventSourceKeepAlive()
 }
 #endif
 
-void EventSourceMan::initEventSourceServer(char appId, WebServer &server)
+void EventSourceMan::initEventSourceServer(char appIdChar, WebServer &server)
 {
     String url(F("/statusEvt"));
-    url += appId;
+    url += appIdChar;
     // register EventSource Uri
     server.on(url, HTTP_GET, [this, &server]()
               { eventSourceHandler(server); });

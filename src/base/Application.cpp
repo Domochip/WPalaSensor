@@ -2,9 +2,30 @@
 
 Application *Application::_applicationList[3] = {nullptr, nullptr, nullptr};
 
+Application::Application(AppId appId) : _appId(appId)
+{
+  _applicationList[_appId] = this;
+}
+
+char Application::getAppIdChar(AppId appId)
+{
+  return '0' + appId;
+}
+
+String Application::getAppIdName(AppId appId)
+{
+  if (appId == CoreApp)
+    return F("Core");
+
+  if (appId == WifiManApp)
+    return F("WiFi");
+
+  return F(CUSTOM_APP_NAME);
+}
+
 bool Application::saveConfig()
 {
-  File configFile = LittleFS.open(String('/') + _appName + F(".json"), "w");
+  File configFile = LittleFS.open(String('/') + getAppIdName(_appId) + F(".json"), "w");
   if (!configFile)
   {
     LOG_SERIAL_PRINTLN(F("Failed to open config file for writing"));
@@ -19,11 +40,11 @@ bool Application::saveConfig()
 bool Application::loadConfig()
 {
   // special exception for Core, there is no Core.json file to Load
-  if (_appId == '0')
+  if (_appId == CoreApp)
     return true;
 
   bool result = false;
-  File configFile = LittleFS.open(String('/') + _appName + F(".json"), "r");
+  File configFile = LittleFS.open(String('/') + getAppIdName(_appId) + F(".json"), "r");
   if (configFile)
   {
 
@@ -234,7 +255,7 @@ void Application::init(bool skipExistingConfig)
 {
   bool result = true;
 
-  LOG_SERIAL_PRINTF_P(PSTR("Start %s : "), _appName.c_str());
+  LOG_SERIAL_PRINTF_P(PSTR("Start %s : "), getAppIdName(_appId).c_str());
 
   setConfigDefaultValues();
 
@@ -252,7 +273,7 @@ void Application::initWebServer(WebServer &server, bool &shouldReboot, bool &pau
   char url[16];
 
   // HTML Status handler
-  sprintf_P(url, PSTR("/status%c.html"), _appId);
+  sprintf_P(url, PSTR("/status%c.html"), getAppIdChar(_appId));
   server.on(url, HTTP_GET,
             [this, &server]()
             {
@@ -262,7 +283,7 @@ void Application::initWebServer(WebServer &server, bool &shouldReboot, bool &pau
             });
 
   // HTML Config handler
-  sprintf_P(url, PSTR("/config%c.html"), _appId);
+  sprintf_P(url, PSTR("/config%c.html"), getAppIdChar(_appId));
   server.on(url, HTTP_GET,
             [this, &server]()
             {
@@ -272,7 +293,7 @@ void Application::initWebServer(WebServer &server, bool &shouldReboot, bool &pau
             });
 
   // JSON Status handler
-  sprintf_P(url, PSTR("/gs%c"), _appId);
+  sprintf_P(url, PSTR("/gs%c"), getAppIdChar(_appId));
   server.on(url, HTTP_GET,
             [this, &server]()
             {
@@ -282,7 +303,7 @@ void Application::initWebServer(WebServer &server, bool &shouldReboot, bool &pau
             });
 
   // JSON Config handler
-  sprintf_P(url, PSTR("/gc%c"), _appId);
+  sprintf_P(url, PSTR("/gc%c"), getAppIdChar(_appId));
   server.on(url, HTTP_GET,
             [this, &server]()
             {
@@ -291,7 +312,7 @@ void Application::initWebServer(WebServer &server, bool &shouldReboot, bool &pau
               server.send(200, F("text/json"), generateConfigJSON());
             });
 
-  sprintf_P(url, PSTR("/sc%c"), _appId);
+  sprintf_P(url, PSTR("/sc%c"), getAppIdChar(_appId));
   server.on(url, HTTP_POST,
             [this, &server]()
             {
@@ -336,7 +357,7 @@ void Application::run()
 {
   if (_reInit)
   {
-    LOG_SERIAL_PRINTF_P(PSTR("ReStart %s : "), _appName.c_str());
+    LOG_SERIAL_PRINTF_P(PSTR("ReStart %s : "), getAppIdName(_appId).c_str());
 
     if (appInit(true))
       LOG_SERIAL_PRINTLN(F("OK"));

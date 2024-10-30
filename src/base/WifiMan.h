@@ -58,7 +58,7 @@ private:
   void appRun();
 
 public:
-  WifiMan(char appId, String appName);
+  WifiMan() : Application(WifiManApp) {};
 };
 
 #endif

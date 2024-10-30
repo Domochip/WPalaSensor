@@ -63,7 +63,7 @@ void WifiMan::refreshWiFi()
     STATUS_LED_GOOD
 #endif
 
-    LOG_SERIAL_PRINTF_P(PSTR(" AP mode(%s - %s) "),_apSsid, WiFi.softAPIP().toString().c_str());
+    LOG_SERIAL_PRINTF_P(PSTR(" AP mode(%s - %s) "), _apSsid, WiFi.softAPIP().toString().c_str());
   }
 }
 
@@ -412,9 +412,4 @@ void WifiMan::appRun()
 #ifdef ESP8266
   MDNS.update();
 #endif
-}
-
-WifiMan::WifiMan(char appId, String appName) : Application(appId, appName)
-{
-  _applicationList[WifiManApp] = this;
 }

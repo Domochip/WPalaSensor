@@ -22,10 +22,10 @@ class Application
 protected:
   typedef enum
   {
-    CoreApp,
-    WifiManApp,
-    CustomApp
-  } Applications;
+    CoreApp = 0,
+    WifiManApp = 1,
+    CustomApp = 2
+  } AppId;
 
   static Application *_applicationList[3]; // static list of all applications
 
@@ -35,8 +35,7 @@ protected:
     config
   } WebPageForPlaceHolder;
 
-  char _appId;
-  String _appName;
+  AppId _appId;
   bool _reInit = false;
 
   // already built methods
@@ -59,9 +58,10 @@ protected:
   virtual void appRun() = 0;
 
 public:
-  // already built methods
-  Application(char appId, String appName) : _appId(appId), _appName(appName) {}
+  Application(AppId appId);
 
+  static char getAppIdChar(AppId appId);
+  static String getAppIdName(AppId appId);
   String getStatusJSON();
   void init(bool skipExistingConfig);
   void initWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication);

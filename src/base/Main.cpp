@@ -27,13 +27,13 @@ bool pauseApplication = false;
 bool shouldReboot = false;
 
 // Core App
-Core core('0', "Core");
+Core core;
 
 // WifiMan App
-WifiMan wifiMan('1', "WiFi");
+WifiMan wifiMan;
 
 // Custom App
-CUSTOM_APP_CLASS custom('2', CUSTOM_APP_NAME);
+CUSTOM_APP_CLASS custom;
 
 //-----------------------------------------------------------------------
 // Setup function
