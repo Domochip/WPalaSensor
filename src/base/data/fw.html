@@ -87,8 +87,8 @@
 
     function firmwareValidation() {
         const fileInput = $(qsp + '#fi');
-        const productName = sessionStorage.getItem("ProductName");
-        if (!fileInput || !productName) {
+        const model = $("#model").innerText; <!-- div available at top of index.html -->
+        if (!fileInput || !model) {
             return false;
         }
 
@@ -96,18 +96,18 @@
 
         // Define the patterns for the filename
         const versionPattern = '(\\.\\d+\\.\\d+\\.\\d+)?';
-        const filenamePattern1 = new RegExp(`^${productName}${versionPattern}\\.bin$`, 'i');
+        const filenamePattern1 = new RegExp(`^${model}${versionPattern}\\.bin$`, 'i');
         let filenamePattern2 = null;
 
-        // If product name starts with 'W', define an additional pattern
-        if (productName.startsWith('W')) {
-            const productNameWithoutFirstChar = productName.substring(1);
-            filenamePattern2 = new RegExp(`^Wireless${productNameWithoutFirstChar}${versionPattern}\\.bin$`, 'i');
+        // If model starts with 'W', define an additional pattern
+        if (model.startsWith('W')) {
+            const modelWithoutFirstChar = model.substring(1);
+            filenamePattern2 = new RegExp(`^Wireless${modelWithoutFirstChar}${versionPattern}\\.bin$`, 'i');
         }
 
         // Check if the filename matches either pattern
         if (!filenamePattern1.test(fn) && (!filenamePattern2 || !filenamePattern2.test(fn))) {
-            alert(`You didn't select a valid Firmware file for ${productName}`);
+            alert(`You didn't select a valid Firmware file for ${model}`);
             return false;
         }
         return confirm("Please do not power off the device during the update process.");

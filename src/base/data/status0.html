@@ -14,6 +14,7 @@ FreeHeap : <span id="freeheap"></span><br>
     getJSON("/gs" + qsp[8], function (GS) {
         for (k in GS) {
             if ((e = $(qsp + '#' + k)) != undefined) e.innerHTML = GS[k];
+            if (k == 'model') $('#model').innerHTML = GS[k]; // 'model' is a special value that need to be set for the global look and feel
         }
         fadeOut($(qsp + "#l"));
     }, function () {

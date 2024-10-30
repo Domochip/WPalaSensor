@@ -23,7 +23,9 @@ String Core::generateStatusJSON()
 #endif
   unsigned long minutes = millis() / 60000;
 
-  doc["sn"] = sn;
+  doc[F("manufacturer")] = CUSTOM_APP_MANUFACTURER;
+  doc[F("model")] = CUSTOM_APP_MODEL;
+  doc[F("sn")] = sn;
   doc[F("baseversion")] = BASE_VERSION;
   doc[F("version")] = VERSION;
   doc[F("uptime")] = String((byte)(minutes / 1440)) + 'd' + (byte)(minutes / 60 % 24) + 'h' + (byte)(minutes % 60) + 'm';

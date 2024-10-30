@@ -30,6 +30,7 @@
 </head>
 
 <body>
+    <div id="model" style="display: none;"></div> <!-- Should be filled in by status0.html -->
 
     <div id="layout">
         <!-- Menu toggle -->
@@ -41,7 +42,7 @@
         <div id="menu">
             <div class="pure-menu">
                 <div class="pure-menu-heading">Domochip</div>
-                <div class="pure-menu-heading" id="menuProductName"></div>
+                <div class="pure-menu-heading" id="menuModel">Loading</div>
 
                 <ul class="pure-menu-list">
                     <li class="pure-menu-item" id="menuStatus"><a href="" class="pure-menu-link">Status</a></li>
@@ -196,6 +197,21 @@
             }, 1000);
         }
 
+        function autoDispatchModel() {
+            const modelElement = $("#model");
+            const observer = new MutationObserver(() => {
+                const modelText = modelElement.innerText;
+                if (modelText && modelText.length !== 0) {
+                    document.title = `Domochip ${modelText}`;
+                    $("meta[name='description']").content = modelText;
+                    $("#menuModel").innerText = modelText;
+                }
+            });
+
+            observer.observe(modelElement, { childList: true, subtree: true });
+        }
+        autoDispatchModel();
+
         function triggerEvent(el, evtName) {
             var evt = new Event(evtName, {
                 bubbles: true,
@@ -210,15 +226,16 @@
             ["#content0", "#content1", "#content2"].forEach(item => { $(item).innerHTML = ''; });
         };
 
-        function handleMenuClick(menuId, headerText, contentMappings, callback) {
-            $(menuId).addEventListener("click", (evt) => {
+        function handleMenuClick(menuId, headerText, contentMappings) {
+            const menuElement = $(menuId);
+            menuElement.addEventListener("click", (evt) => {
                 evt.preventDefault();
                 clearMenuAndContent();
-                $(menuId).classList.add("pure-menu-selected");
+                menuElement.classList.add("pure-menu-selected");
                 $("#mainHeader").textContent = headerText;
 
                 for (const [contentId, url] of Object.entries(contentMappings)) {
-                    load($(contentId), url, callback);
+                    load($(contentId), url);
                 }
             });
         }
@@ -227,15 +244,6 @@
             "#content0": "/status0.html",
             "#content1": "/status1.html",
             "#content2": "/status2.html"
-        }, () => {
-            const productNameElement = $("#productName");
-            if (productNameElement && productNameElement.innerText.length !== 0) {
-                const productNameText = productNameElement.innerText;
-                document.title = `Domochip ${productNameText}`;
-                sessionStorage.setItem("ProductName", productNameText);
-                $("meta[name='description']").content = productNameText;
-                $("#menuProductName").innerText = productNameText;
-            }
         });
 
         handleMenuClick("#menuConfig", "Config", {
