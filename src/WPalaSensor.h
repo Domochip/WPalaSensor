@@ -159,7 +159,7 @@ private:
   void appRun();
 
 public:
-  WPalaSensor(char appId, String fileName);
+  WPalaSensor();
 };
 
 #endif

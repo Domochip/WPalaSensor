@@ -52,9 +52,9 @@ void WPalaSensor::refresh()
     baseTopic.remove(baseTopic.length() - 1);
 
     JsonDocument doc;
-    doc[F("Core")] = serialized(_applicationList[CoreApp]->getStatusJSON());
-    doc[F("Wifi")] = serialized(_applicationList[WifiManApp]->getStatusJSON());
-    doc[_appName] = serialized(getStatusJSON());
+    doc[getAppIdName(CoreApp)] = serialized(_applicationList[CoreApp]->getStatusJSON());
+    doc[getAppIdName(WifiManApp)] = serialized(_applicationList[WifiManApp]->getStatusJSON());
+    doc[getAppIdName(CustomApp)] = serialized(getStatusJSON());
 
     String strJson;
     serializeJson(doc, strJson);
@@ -1204,10 +1204,8 @@ void WPalaSensor::appRun()
 
 //------------------------------------------
 // Constructor
-WPalaSensor::WPalaSensor(char appId, String appName) : Application(appId, appName), _ds18b20(ONEWIRE_BUS_PIN), _mcp4151_5k(MCP4151_5k_SSPIN), _mcp4151_50k(MCP4151_50k_SSPIN)
+WPalaSensor::WPalaSensor() : Application(CustomApp), _ds18b20(ONEWIRE_BUS_PIN), _mcp4151_5k(MCP4151_5k_SSPIN), _mcp4151_50k(MCP4151_50k_SSPIN)
 {
-  _applicationList[CustomApp] = this;
-
   // Init SPI for DigiPot
   SPI.begin();
   // Init DigiPots @20°C
