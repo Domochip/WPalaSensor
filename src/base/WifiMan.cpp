@@ -5,7 +5,7 @@ void WifiMan::enableAP(bool force = false)
   if (!(WiFi.getMode() & WIFI_AP) || force)
   {
     WiFi.enableAP(true);
-    WiFi.softAP(_apSsid, DEFAULT_AP_PSK, _apChannel);
+    WiFi.softAP(F(DEFAULT_AP_SSID), F(DEFAULT_AP_PSK), _apChannel);
   }
 }
 
@@ -63,7 +63,7 @@ void WifiMan::refreshWiFi()
     STATUS_LED_GOOD
 #endif
 
-    LOG_SERIAL_PRINTF_P(PSTR(" AP mode(%s - %s) "), _apSsid, WiFi.softAPIP().toString().c_str());
+    LOG_SERIAL_PRINTF_P(PSTR(" AP mode(%s - %s) "), F(DEFAULT_AP_SSID), WiFi.softAPIP().toString().c_str());
   }
 }
 
@@ -213,17 +213,6 @@ String WifiMan::generateStatusJSON()
 
 bool WifiMan::appInit(bool reInit = false)
 {
-  if (!reInit)
-  {
-    // build "unique" AP name (DEFAULT_AP_SSID + 4 last digit of ChipId)
-    _apSsid[0] = 0;
-
-#ifdef ESP8266
-    sprintf_P(_apSsid, PSTR("%s%04X"), DEFAULT_AP_SSID, ESP.getChipId() & 0xFFFF);
-#else
-    sprintf_P(_apSsid, PSTR("%s%04X"), DEFAULT_AP_SSID, (uint32_t)(ESP.getEfuseMac() << 40 >> 40));
-#endif
-  }
 
   // make changes saved to flash
   WiFi.persistent(true);

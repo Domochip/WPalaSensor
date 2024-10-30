@@ -37,7 +37,6 @@ private:
   WiFiEventHandler _staDisconnectedHandler;
 #endif
   int _apChannel = 2;
-  char _apSsid[64];
   bool _needRefreshWifi = false;
   bool _stationConnectedToSoftAP = false;
   Ticker _refreshTicker;
