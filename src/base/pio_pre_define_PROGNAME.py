@@ -18,6 +18,6 @@ model = extract_macro_value(r'./src/Main.h', 'CUSTOM_APP_MODEL')
 version = extract_macro_value(r'./src/Main.h', 'VERSION_NUMBER')
 
 platform = env.GetProjectOption("platform")
-esp32suffix = "-32" if platform == "espressif32" else ""
+esp32suffix = ".esp32" if platform == "espressif32" else ""
 
 env.Replace(PROGNAME=f"{model}{esp32suffix}.{version}")

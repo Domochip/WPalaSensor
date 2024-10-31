@@ -185,7 +185,11 @@ bool Application::updateFirmware(const char *version, String &retMsg, std::funct
   clientSecure.setInsecure();
 
   String fwUrl(F("https://github.com/" CUSTOM_APP_MANUFACTURER "/" CUSTOM_APP_MODEL "/releases/download/"));
+#ifdef ESP8266
   fwUrl = fwUrl + version + '/' + F(CUSTOM_APP_MODEL) + '.' + version + F(".bin");
+#else
+  fwUrl = fwUrl + version + '/' + F(CUSTOM_APP_MODEL) + F(".esp32") + '.' + version + F(".bin");
+#endif
 
   LOG_SERIAL_PRINTF_P(PSTR("Trying to Update from URL: %s\n"), fwUrl.c_str());
 
@@ -217,12 +221,12 @@ bool Application::updateFirmware(const char *version, String &retMsg, std::funct
   if (progressCallback)
     Update.onProgress(progressCallback);
 
-#ifdef ESP8266
   Update.begin(contentLength);
-#else
-  Update.begin();
-#endif
 
+  // sometime the stream is not yet ready (no data available yet)
+  // and writeStream start by a peek which then fail
+  for (byte i = 0; i < 20 && stream->available() == 0; i++) // available include an optimistic_yield of 100us
+    ;
   Update.writeStream(*stream);
 
   Update.end();

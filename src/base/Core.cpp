@@ -135,7 +135,9 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
       {
         String msg;
 
-        server.chunkedResponseModeStart(200, PSTR("text/plain"));
+        // start chunked response
+        server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+        server.send(200, F("text/plain"), "");
 
         // Define the progress callback function
         std::function<void(size_t, size_t)> progressCallback = [&server](size_t progress, size_t total)
@@ -152,7 +154,8 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
         else
           server.sendContent(String(F("s:false\nm:")) + msg + '\n');
 
-        server.chunkedResponseFinalize();
+        // finalize chunked response
+        server.sendContent(emptyString);
       });
 
   // Firmware POST URL allows to push new firmware ----------------------------

@@ -95,14 +95,15 @@
         let fn = fileInput.value.split(/(\\|\/)/g).pop();
 
         // Define the patterns for the filename
+        const esp32Pattern = '(\\.esp32)?';
         const versionPattern = '(\\.\\d+\\.\\d+\\.\\d+)?';
-        const filenamePattern1 = new RegExp(`^${model}${versionPattern}\\.bin$`, 'i');
+        const filenamePattern1 = new RegExp(`^${model}${esp32Pattern}${versionPattern}\\.bin$`, 'i');
         let filenamePattern2 = null;
 
         // If model starts with 'W', define an additional pattern
         if (model.startsWith('W')) {
             const modelWithoutFirstChar = model.substring(1);
-            filenamePattern2 = new RegExp(`^Wireless${modelWithoutFirstChar}${versionPattern}\\.bin$`, 'i');
+            filenamePattern2 = new RegExp(`^Wireless${modelWithoutFirstChar}${esp32Pattern}${versionPattern}\\.bin$`, 'i');
         }
 
         // Check if the filename matches either pattern
