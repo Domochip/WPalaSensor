@@ -428,6 +428,7 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   {
     String version;
     String retMsg;
+    unsigned long lastProgressPublish = 0;
 
     // resTopic is topic without the last 8 characters ("install")
     String resTopic(topic);
@@ -441,8 +442,13 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
       version.concat((char *)payload, length);
 
       // Define the progress callback function
-      std::function<void(size_t, size_t)> progressCallback = [this, &resTopic](size_t progress, size_t total)
+      std::function<void(size_t, size_t)> progressCallback = [this, &resTopic, &lastProgressPublish](size_t progress, size_t total)
       {
+        // if last progress publish is less than 1 second ago then return
+        if (millis() - lastProgressPublish < 1000)
+          return;
+        lastProgressPublish = millis();
+
         uint8_t percent = (progress * 100) / total;
         LOG_SERIAL_PRINTF_P(PSTR("Progress: %d%%\n"), percent);
         String payload = String(F("{\"progress\":\"")) + percent + F("%\"}");
