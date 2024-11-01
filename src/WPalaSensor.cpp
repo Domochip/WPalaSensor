@@ -1076,6 +1076,9 @@ bool WPalaSensor::appInit(bool reInit)
   _stoveTemperatureMillis = millis() - (1000 * _refreshPeriod); // delta is kept but will evolve only if a new value is received
   _stoveRequestResult = 0;
 
+  // flag to force refresh to see immediate result (init and reinit)
+  _needRefresh = true;
+
   // start refresh Ticker
 #ifdef ESP8266
   _refreshTicker.attach(_refreshPeriod, [this]()
@@ -1084,6 +1087,9 @@ bool WPalaSensor::appInit(bool reInit)
   _refreshTicker.attach<typeof this>(_refreshPeriod, [](typeof this palaSensor)
                                      { palaSensor->_needRefresh = true; }, this);
 #endif
+
+  // flag to force publish update (init and reinit)
+  _needPublishUpdate = true;
 
   // start publish update Ticker
 #ifdef ESP8266
