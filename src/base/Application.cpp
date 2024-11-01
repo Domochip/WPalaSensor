@@ -272,7 +272,7 @@ void Application::init(bool skipExistingConfig)
   LOG_SERIAL_PRINTLN(result ? F("OK") : F("FAILED"));
 }
 
-void Application::initWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication)
+void Application::initWebServer(WebServer &server)
 {
   char url[16];
 
@@ -354,7 +354,7 @@ void Application::initWebServer(WebServer &server, bool &shouldReboot, bool &pau
             });
 
   // Execute Specific Application Web Server initialization
-  appInitWebServer(server, shouldReboot, pauseApplication);
+  appInitWebServer(server);
 }
 
 void Application::run()
