@@ -17,7 +17,7 @@ void MQTTMan::prepareTopic(String &topic)
         topic.replace(F("$mac$"), WiFi.macAddress());
 
     if (topic.indexOf(F("$model$")) != -1)
-        topic.replace(F("$model$"), CUSTOM_APP_NAME);
+        topic.replace(F("$model$"), CUSTOM_APP_MODEL);
 
     // check for final slash
     if (topic.length() && topic.charAt(topic.length() - 1) != '/')
@@ -34,7 +34,7 @@ bool MQTTMan::connect(bool firstConnection)
 #endif
 
     // generate clientID
-    String clientID(F(CUSTOM_APP_NAME));
+    String clientID(F(CUSTOM_APP_MODEL));
     clientID += sn;
 
     // Connect

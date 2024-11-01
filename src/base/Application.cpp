@@ -20,7 +20,7 @@ String Application::getAppIdName(AppId appId)
   if (appId == WifiManApp)
     return F("WiFi");
 
-  return F(CUSTOM_APP_NAME);
+  return F(CUSTOM_APP_MODEL);
 }
 
 bool Application::saveConfig()

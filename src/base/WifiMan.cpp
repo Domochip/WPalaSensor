@@ -313,7 +313,7 @@ bool WifiMan::appInit(bool reInit = false)
   WiFi.persistent(false);
 
   // start MDNS
-  MDNS.begin(CUSTOM_APP_NAME);
+  MDNS.begin(CUSTOM_APP_MODEL);
 
   return (ssid[0] ? WiFi.isConnected() : true);
 }
