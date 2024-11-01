@@ -342,16 +342,11 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
     mqttMan->subscribe(_ha.mqtt.cboxT1Topic);
   }
 
-  // if MQTT is used
-  if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
-  {
-    // subscribe to update/install topic
-
-    String topic(_ha.mqtt.baseTopic);
-    MQTTMan::prepareTopic(topic);
-    topic += F("update/install");
-    mqttMan->subscribe(topic.c_str());
-  }
+  // subscribe to update/install topic
+  String topic(_ha.mqtt.baseTopic);
+  MQTTMan::prepareTopic(topic);
+  topic += F("update/install");
+  mqttMan->subscribe(topic.c_str());
 
   // raise flag to publish Home Assistant discovery data
   _needPublishHassDiscovery = true;
@@ -423,8 +418,8 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
     }
   }
 
-  // if MQTT is used and topic ends with "/update/install"
-  if ((_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT) && String(topic).endsWith(F("/update/install")))
+  // if topic ends with "/update/install"
+  if (String(topic).endsWith(F("/update/install")))
   {
     String version;
     String retMsg;
