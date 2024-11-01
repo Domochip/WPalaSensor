@@ -458,15 +458,10 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
       SystemState::shouldReboot = updateFirmware(version.c_str(), retMsg, progressCallback);
     }
 
-    LOG_SERIAL_PRINT(F("Update result:"));
-    LOG_SERIAL_PRINTLN(SystemState::shouldReboot);
-
     if (SystemState::shouldReboot)
       retMsg = F("{\"progress\":\"Update successful\"}");
     else
       retMsg = String(F("{\"progress\":\"Update failed: ")) + retMsg + F("\"}");
-
-    LOG_SERIAL_PRINTF_P(PSTR("retMsg: %s\n"), retMsg.c_str());
 
     // publish result
     _mqttMan.publish(resTopic.c_str(), retMsg.c_str(), true);
