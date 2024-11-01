@@ -16,7 +16,7 @@
 #define CUSTOM_APP_NAME TOSTRING(CUSTOM_APP_CLASS)     // stringified class name
 #define CUSTOM_APP_HEADER TOSTRING(CUSTOM_APP_CLASS.h) // calculated header file "{CUSTOM_APP_NAME}.h"
 #define DEFAULT_AP_SSID CUSTOM_APP_MODEL               // Default Access Point SSID "{CUSTOM_APP_MODEL}"
-#define DEFAULT_AP_PSK "pass"                          // Default Access Point Password
+#define DEFAULT_AP_PSK "password"                      // Default Access Point Password
 
 // Control EventSourceMan code (To be used by Application if EventSource server is needed)
 #define EVTSRC_ENABLED 0
