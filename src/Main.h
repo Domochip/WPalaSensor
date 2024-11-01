@@ -13,8 +13,7 @@
 #define CUSTOM_APP_CLASS WPalaSensor
 #define VERSION_NUMBER "4.1.2"
 
-#define CUSTOM_APP_NAME TOSTRING(CUSTOM_APP_CLASS)     // stringified class name
-#define CUSTOM_APP_HEADER TOSTRING(CUSTOM_APP_CLASS.h) // calculated header file "{CUSTOM_APP_NAME}.h"
+#define CUSTOM_APP_HEADER TOSTRING(CUSTOM_APP_CLASS.h) // calculated header file "{CUSTOM_APP_CLASS}.h"
 #define DEFAULT_AP_SSID CUSTOM_APP_MODEL               // Default Access Point SSID "{CUSTOM_APP_MODEL}"
 #define DEFAULT_AP_PSK "password"                      // Default Access Point Password
 
