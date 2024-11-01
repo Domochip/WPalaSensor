@@ -342,6 +342,17 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
     mqttMan->subscribe(_ha.mqtt.cboxT1Topic);
   }
 
+  // if MQTT is used
+  if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
+  {
+    // subscribe to update/install topic
+
+    String topic(_ha.mqtt.baseTopic);
+    MQTTMan::prepareTopic(topic);
+    topic += F("update/install");
+    mqttMan->subscribe(topic.c_str());
+  }
+
   // raise flag to publish Home Assistant discovery data
   _needPublishHassDiscovery = true;
 }
@@ -410,6 +421,50 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
       _stoveTemperature = stoveTemperature;
       _stoveTemperatureMillis = millis();
     }
+  }
+
+  // if MQTT is used and topic ends with "/update/install"
+  if ((_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT) && String(topic).endsWith(F("/update/install")))
+  {
+    String version;
+    String retMsg;
+    unsigned long lastProgressPublish = 0;
+
+    // resTopic is topic without the last 8 characters ("install")
+    String resTopic(topic);
+    resTopic.remove(resTopic.length() - 8);
+
+    if (length > 10)
+      retMsg = F("Version is too long");
+    else
+    {
+      // convert payload to String
+      version.concat((char *)payload, length);
+
+      // Define the progress callback function
+      std::function<void(size_t, size_t)> progressCallback = [this, &resTopic, &lastProgressPublish](size_t progress, size_t total)
+      {
+        // if last progress publish is less than 1 second ago then return
+        if (millis() - lastProgressPublish < 1000)
+          return;
+        lastProgressPublish = millis();
+
+        uint8_t percent = (progress * 100) / total;
+        LOG_SERIAL_PRINTF_P(PSTR("Progress: %d%%\n"), percent);
+        String payload = String(F("{\"progress\":\"")) + percent + F("%\"}");
+        _mqttMan.publish(resTopic.c_str(), payload.c_str(), true);
+      };
+
+      SystemState::shouldReboot = updateFirmware(version.c_str(), retMsg, progressCallback);
+    }
+
+    if (SystemState::shouldReboot)
+      retMsg = F("{\"progress\":\"Update successful\"}");
+    else
+      retMsg = String(F("{\"progress\":\"Update failed: ")) + retMsg + F("\"}");
+
+    // publish result
+    _mqttMan.publish(resTopic.c_str(), retMsg.c_str(), true);
   }
 }
 
