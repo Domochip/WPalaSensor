@@ -426,7 +426,6 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   // if MQTT is used and topic ends with "/update/install"
   if ((_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT) && String(topic).endsWith(F("/update/install")))
   {
-    bool updateRes = false;
     String version;
     String retMsg;
 
@@ -450,16 +449,14 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
         _mqttMan.publish(resTopic.c_str(), payload.c_str(), true);
       };
 
-      updateRes = updateFirmware(version.c_str(), retMsg, progressCallback);
+      SystemState::shouldReboot = updateFirmware(version.c_str(), retMsg, progressCallback);
     }
 
     LOG_SERIAL_PRINT(F("Update result:"));
-    LOG_SERIAL_PRINTLN(updateRes);
+    LOG_SERIAL_PRINTLN(SystemState::shouldReboot);
 
-    if (updateRes)
-    {
+    if (SystemState::shouldReboot)
       retMsg = F("{\"progress\":\"Update successful\"}");
-    }
     else
       retMsg = String(F("{\"progress\":\"Update failed: ")) + retMsg + F("\"}");
 
@@ -467,15 +464,6 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
 
     // publish result
     _mqttMan.publish(resTopic.c_str(), retMsg.c_str(), true);
-
-    LOG_SERIAL_PRINTLN(F("Restarting..."));
-
-    // if update was successful then restart
-    if (updateRes)
-    {
-      delay(200);
-      ESP.restart();
-    }
   }
 }
 
