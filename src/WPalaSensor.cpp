@@ -425,7 +425,7 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
     String retMsg;
     unsigned long lastProgressPublish = 0;
 
-    // resTopic is topic without the last 8 characters ("install")
+    // result topic is topic without the last 8 characters ("/install")
     String resTopic(topic);
     resTopic.remove(resTopic.length() - 8);
 
@@ -492,7 +492,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   // ---------- Device ----------
 
   // prepare device JSON
-  jsonDoc[F("configuration_url")] = F("http://wpalasensor.local");
+  jsonDoc[F("configuration_url")] = F("http://" CUSTOM_APP_MODEL ".local");
   jsonDoc[F("identifiers")][0] = uniqueIdPrefix;
   jsonDoc[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
   jsonDoc[F("model")] = F(CUSTOM_APP_MODEL);
@@ -521,7 +521,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   jsonDoc[F("device_class")] = F("connectivity");
   jsonDoc[F("device")] = serialized(device);
   jsonDoc[F("entity_category")] = F("diagnostic");
-  jsonDoc[F("object_id")] = F("wpalasensor_connectivity");
+  jsonDoc[F("object_id")] = F(CUSTOM_APP_MODEL "_connectivity");
   jsonDoc[F("state_topic")] = F("~/connected");
   jsonDoc[F("unique_id")] = uniqueId;
   jsonDoc[F("value_template")] = F("{{ iif(int(value) > 0, 'ON', 'OFF') }}");
@@ -583,15 +583,15 @@ bool WPalaSensor::mqttPublishUpdate()
       String uniqueIdPrefix;
       String uniqueId;
 
-      // prepare unique id prefix for WPalaSensor
-      uniqueIdPrefix = F("WPalaSensor_");
+      // prepare unique id prefix
+      uniqueIdPrefix = F(CUSTOM_APP_MODEL "_");
       uniqueIdPrefix += WiFi.macAddress();
       uniqueIdPrefix.replace(":", "");
 
-      // ---------- WPalaSensor Device ----------
+      // ---------- Device ----------
 
-      // prepare WPalaSensor device JSON
-      jsonDoc[F("configuration_url")] = F("http://wpalasensor.local");
+      // prepare device JSON
+      jsonDoc[F("configuration_url")] = F("http://" CUSTOM_APP_MODEL ".local");
       jsonDoc[F("identifiers")][0] = uniqueIdPrefix;
       jsonDoc[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
       jsonDoc[F("model")] = F(CUSTOM_APP_MODEL);
@@ -600,19 +600,19 @@ bool WPalaSensor::mqttPublishUpdate()
       serializeJson(jsonDoc, device); // serialize to device String
       jsonDoc.clear();                // clean jsonDoc
 
-      // prepare availability JSON for Stove entities
+      // prepare availability JSON for entities
       jsonDoc[F("topic")] = F("~/connected");
       jsonDoc[F("value_template")] = F("{{ iif(int(value) > 0, 'online', 'offline') }}");
       serializeJson(jsonDoc, availability); // serialize to availability String
       jsonDoc.clear();                      // clean jsonDoc
 
-      // ----- WPalaSensor Entities -----
+      // ----- Entities -----
 
       //
       // Update entity
       //
 
-      // prepare uniqueId, topic and payload for WPalaSensor update sensor
+      // prepare uniqueId, topic and payload for update sensor
       uniqueId = uniqueIdPrefix;
       uniqueId += F("_Update");
 
@@ -621,14 +621,14 @@ bool WPalaSensor::mqttPublishUpdate()
       topic += uniqueId;
       topic += F("/config");
 
-      // prepare payload for WPalaSensor update sensor
+      // prepare payload for update sensor
       jsonDoc[F("~")] = baseTopic.substring(0, baseTopic.length() - 1); // remove ending '/'
       jsonDoc[F("availability")] = serialized(availability);
       jsonDoc[F("command_topic")] = F("~/update/install");
       jsonDoc[F("device")] = serialized(device);
       jsonDoc[F("device_class")] = F("firmware");
       jsonDoc[F("entity_category")] = F("config");
-      jsonDoc[F("object_id")] = F("wpalasensor");
+      jsonDoc[F("object_id")] = F(CUSTOM_APP_MODEL);
       jsonDoc[F("payload_install")] = version;
       jsonDoc[F("state_topic")] = F("~/update");
       jsonDoc[F("unique_id")] = uniqueId;
