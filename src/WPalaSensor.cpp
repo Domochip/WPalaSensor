@@ -422,6 +422,61 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
       _stoveTemperatureMillis = millis();
     }
   }
+
+  // if MQTT is used and topic ends with "/update/install"
+  if ((_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT) && String(topic).endsWith(F("/update/install")))
+  {
+    bool updateRes = false;
+    String version;
+    String retMsg;
+
+    // resTopic is topic without the last 8 characters ("install")
+    String resTopic(topic);
+    resTopic.remove(resTopic.length() - 8);
+
+    if (length > 10)
+      retMsg = F("Version is too long");
+    else
+    {
+      // convert payload to String
+      version.concat((char *)payload, length);
+
+      // Define the progress callback function
+      std::function<void(size_t, size_t)> progressCallback = [this, &resTopic](size_t progress, size_t total)
+      {
+        uint8_t percent = (progress * 100) / total;
+        LOG_SERIAL_PRINTF_P(PSTR("Progress: %d%%\n"), percent);
+        String payload = String(F("{\"progress\":\"")) + percent + F("%\"}");
+        _mqttMan.publish(resTopic.c_str(), payload.c_str(), true);
+      };
+
+      updateRes = updateFirmware(version.c_str(), retMsg, progressCallback);
+    }
+
+    LOG_SERIAL_PRINT(F("Update result:"));
+    LOG_SERIAL_PRINTLN(updateRes);
+
+    if (updateRes)
+    {
+      retMsg = F("{\"progress\":\"Update successful\"}");
+    }
+    else
+      retMsg = String(F("{\"progress\":\"Update failed: ")) + retMsg + F("\"}");
+
+    LOG_SERIAL_PRINTF_P(PSTR("retMsg: %s\n"), retMsg.c_str());
+
+    // publish result
+    _mqttMan.publish(resTopic.c_str(), retMsg.c_str(), true);
+
+    LOG_SERIAL_PRINTLN(F("Restarting..."));
+
+    // if update was successful then restart
+    if (updateRes)
+    {
+      delay(200);
+      ESP.restart();
+    }
+  }
 }
 
 //------------------------------------------
