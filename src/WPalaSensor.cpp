@@ -1147,7 +1147,7 @@ size_t WPalaSensor::getHTMLContentSize(WebPageForPlaceHolder wp)
 
 //------------------------------------------
 // code to register web request answer to the web server
-void WPalaSensor::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication)
+void WPalaSensor::appInitWebServer(WebServer &server)
 {
   // GetDigiPot
   server.on(F("/gdp"), HTTP_GET,

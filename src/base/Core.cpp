@@ -72,7 +72,7 @@ size_t Core::getHTMLContentSize(WebPageForPlaceHolder wp)
   };
   return 0;
 }
-void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication)
+void Core::appInitWebServer(WebServer &server)
 {
   // root is index
   server.on("/", HTTP_GET,
@@ -131,7 +131,7 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
   // Update Firmware from Github ----------------------------------------------
   server.on(
       F("/update"), HTTP_POST,
-      [this, &shouldReboot, &server]()
+      [this, &server]()
       {
         String msg;
 
@@ -148,8 +148,8 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
         };
 
         // Call the updateFirmware function with the progress callback
-        shouldReboot = updateFirmware(server.arg(F("plain")).c_str(), msg, progressCallback);
-        if (shouldReboot)
+        SystemState::shouldReboot = updateFirmware(server.arg(F("plain")).c_str(), msg, progressCallback);
+        if (SystemState::shouldReboot)
           server.sendContent(F("s:true\n"));
         else
           server.sendContent(String(F("s:false\nm:")) + msg + '\n');
@@ -161,13 +161,13 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
   // Firmware POST URL allows to push new firmware ----------------------------
   server.on(
       F("/fw"), HTTP_POST,
-      [&shouldReboot, &pauseApplication, &server]()
+      [&server]()
       {
-        shouldReboot = !Update.hasError();
+        SystemState::shouldReboot = !Update.hasError();
 
         String msg;
 
-        if (shouldReboot)
+        if (SystemState::shouldReboot)
           msg = F("Update successful");
         else
         {
@@ -178,23 +178,23 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
           msg = Update.errorString();
 #endif
           Update.clearError();
-          // Update failed so restart to Run Application in loop
-          pauseApplication = false;
+          // Update failed so restart to Run custom Application in loop
+          SystemState::pauseCustomApp = false;
         }
 
         LOG_SERIAL_PRINTLN(msg);
 
         SERVER_KEEPALIVE_FALSE()
-        server.send(shouldReboot ? 200 : 500, F("text/html"), msg);
+        server.send(SystemState::shouldReboot ? 200 : 500, F("text/html"), msg);
       },
-      [&pauseApplication, &server]()
+      [&server]()
       {
         HTTPUpload &upload = server.upload();
 
         if (upload.status == UPLOAD_FILE_START)
         {
-          // stop to Run Application in loop
-          pauseApplication = true;
+          // stop to Run custom Application in loop
+          SystemState::pauseCustomApp = true;
 
           LOG_SERIAL_PRINTF_P(PSTR("Update Start: %s\n"), upload.filename.c_str());
 
@@ -222,7 +222,7 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
 
   // reboot POST --------------------------------------------------------------
   server.on(F("/rbt"), HTTP_POST,
-            [&shouldReboot, &server]()
+            [&server]()
             {
               if (server.hasArg(F("rescue")))
               {
@@ -233,7 +233,7 @@ void Core::appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseAp
               }
               SERVER_KEEPALIVE_FALSE()
               server.send_P(200, PSTR("text/html"), PSTR("Reboot command received"));
-              shouldReboot = true;
+              SystemState::shouldReboot = true;
             });
 
   // 404 on not found ---------------------------------------------------------

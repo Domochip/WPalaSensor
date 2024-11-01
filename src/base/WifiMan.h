@@ -53,7 +53,7 @@ private:
   bool appInit(bool reInit);
   const PROGMEM char *getHTMLContent(WebPageForPlaceHolder wp);
   size_t getHTMLContentSize(WebPageForPlaceHolder wp);
-  void appInitWebServer(WebServer &server, bool &shouldReboot, bool &pauseApplication);
+  void appInitWebServer(WebServer &server);
   void appRun();
 
 public:

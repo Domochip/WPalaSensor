@@ -12,6 +12,7 @@ using WebServer = ESP8266WebServer;
 
 #include "Version.h"
 #include "../Main.h"
+#include "SystemState.h"
 #include "Application.h"
 #include "Core.h"
 #include "WifiMan.h"
@@ -21,10 +22,6 @@ using WebServer = ESP8266WebServer;
 
 // WebServer
 WebServer server(80);
-// flag to pause application Run during Firmware Update
-bool pauseApplication = false;
-// variable used by objects to indicate system reboot is required
-bool shouldReboot = false;
 
 // Core App
 Core core;
@@ -111,9 +108,9 @@ void setup()
 
   LOG_SERIAL_PRINT(F("Start WebServer : "));
 
-  core.initWebServer(server, shouldReboot, pauseApplication);
-  wifiMan.initWebServer(server, shouldReboot, pauseApplication);
-  custom.initWebServer(server, shouldReboot, pauseApplication);
+  core.initWebServer(server);
+  wifiMan.initWebServer(server);
+  custom.initWebServer(server);
 
   server.begin();
 
@@ -130,14 +127,14 @@ void loop(void)
   // Handle WebServer
   server.handleClient();
 
-  if (!pauseApplication)
+  if (!SystemState::pauseCustomApp)
   {
     custom.run();
   }
 
   wifiMan.run();
 
-  if (shouldReboot)
+  if (SystemState::shouldReboot)
   {
 #ifdef LOG_SERIAL
     LOG_SERIAL_PRINTLN(F("Rebooting..."));
