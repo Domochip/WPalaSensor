@@ -125,7 +125,7 @@ void Core::appInitWebServer(WebServer &server)
       [this, &server]()
       {
         SERVER_KEEPALIVE_FALSE()
-        server.send(200, F("application/json"), getLatestUpdateInfoJson());
+        server.send(200, F("application/json"), getLatestUpdateInfoJson(true));
       });
 
   // Update Firmware from Github ----------------------------------------------

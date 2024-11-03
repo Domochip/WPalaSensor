@@ -147,7 +147,7 @@ bool Application::getLastestUpdateInfo(char (*version)[10], char (*title)[64] /*
   return true;
 }
 
-String Application::getLatestUpdateInfoJson()
+String Application::getLatestUpdateInfoJson(bool forWebPage /* = false */)
 {
   JsonDocument doc;
 
@@ -162,9 +162,11 @@ String Application::getLatestUpdateInfoJson()
   {
     doc[F("latest_version")] = version;
     doc[F("title")] = title;
-    doc[F("release_date")] = releaseDate;
     doc[F("release_summary")] = summary;
     doc[F("release_url")] = String(F("https://github.com/" CUSTOM_APP_MANUFACTURER "/" CUSTOM_APP_MODEL "/releases/tag/")) + version;
+
+    if (forWebPage)
+      doc[F("release_date")] = releaseDate;
   }
 
   String info;
