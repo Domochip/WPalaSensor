@@ -94,52 +94,115 @@ bool Application::getLastestUpdateInfo(char (*version)[10], char (*title)[64] /*
 
   // httpCode is 200, we can continue
   WiFiClient *stream = http.getStreamPtr();
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, *stream);
 
-  // check for json error
-  if (error)
+  // We need to parse the JSON response without loading the whole response in memory
+
+  char keyBuffer[16] = {0}; // Shifting buffer used to find keys (longest one is "\"published_at\":"" =>15 chars)
+  String valueBuffer;       // used to store the value before copying it to the target array
+  uint8_t treeLevel = 0;    // used to skip unwanted data
+  bool keyFound = false;    // used to know if we found a key we are looking for
+  char *targetArray = nullptr;
+  size_t targetArraySize = 0;
+
+  // while there is data to read
+  while (http.connected() && stream->available())
   {
-    http.end();
-    return false;
-  }
+    // read the next character
+    char c = stream->read();
 
-  // json is valid, we can continue
-  JsonVariant jv;
+    // if c is a brace or bracket, increment or decrement the treeLevel
+    if (c == '{' || c == '[')
+      treeLevel++;
+    else if (c == '}' || c == ']')
+      treeLevel--;
 
-  if ((jv = doc[F("tag_name")]).is<const char *>())
-    strlcpy(*version, jv.as<const char *>(), sizeof(*version));
+    // if we are not at the first treeLevel, skip the character
+    // (there is some "name" key in assets that we don't want to parse)
+    if (treeLevel > 1)
+      continue;
 
-  // check if we got a version
-  if (!strlen(*version))
-  {
-    http.end();
-    return false;
-  }
+    // if keyBuffer is full, shift it to the left by one character
+    if (strlen(keyBuffer) == sizeof(keyBuffer) - 1)
+      memmove(keyBuffer, keyBuffer + 1, sizeof(keyBuffer) - 1);
 
-  // we got a version, we can continue
-  if (title && (jv = doc[F("name")]).is<const char *>())
-  {
-    // find the first space and copy the rest to title
-    if (const char *space = strchr(jv, ' '))
-      strlcpy(*title, space + 1, sizeof(*title));
-  }
+    // add the new character at the end
+    keyBuffer[strlen(keyBuffer) + 1] = 0;
+    keyBuffer[strlen(keyBuffer)] = c;
 
-  if (releaseDate && (jv = doc[F("published_at")]).is<const char *>())
-    strlcpy(*releaseDate, jv.as<const char *>(), 11); // copy the part part only (10 chars)
+    keyFound = false;
 
-  if (summary && (jv = doc[F("body")]).is<const char *>())
-  {
-    // copy body to summary until "\r\n\r\n##"
-    const char *body = jv.as<const char *>();
-    const char *end = strstr(body, "\r\n\r\n##");
-    if (end)
+    // if we found the key "tag_name"
+    if (c == ':' && strlen(keyBuffer) >= 11 && !strcmp_P(keyBuffer + strlen(keyBuffer) - 11, PSTR("\"tag_name\":")))
     {
-      size_t len = std::min<size_t>(end - body + 1, sizeof(*summary)); // +1 to include the null terminator
-      strlcpy(*summary, body, len);
+      keyFound = true;
+      targetArray = (char *)version;
+      targetArraySize = sizeof(*version);
     }
-    else
-      strlcpy(*summary, body, sizeof(*summary));
+
+    // if we found the key "name"
+    if (c == ':' && title && strlen(keyBuffer) >= 7 && !strcmp_P(keyBuffer + strlen(keyBuffer) - 7, PSTR("\"name\":")))
+    {
+      keyFound = true;
+      targetArray = (char *)title;
+      targetArraySize = sizeof(*title);
+    }
+
+    // if we found the key "published_at"
+    if (c == ':' && releaseDate && strlen(keyBuffer) >= 15 && !strcmp_P(keyBuffer + strlen(keyBuffer) - 15, PSTR("\"published_at\":")))
+    {
+      keyFound = true;
+      targetArray = (char *)releaseDate;
+      targetArraySize = sizeof(*releaseDate);
+    }
+
+    // if we found the key "body"
+    if (c == ':' && summary && strlen(keyBuffer) >= 7 && !strcmp_P(keyBuffer + strlen(keyBuffer) - 7, PSTR("\"body\":")))
+    {
+      keyFound = true;
+      targetArray = (char *)summary;
+      targetArraySize = sizeof(*summary);
+    }
+
+    if (keyFound)
+    {
+      valueBuffer.clear();
+
+      // read until the next quote (should be next to semicolon)
+      stream->readStringUntil('"');
+
+      // for name/title key, skip text until the first space
+      if (targetArray == (char *)title)
+        stream->readStringUntil(' ');
+
+      // read the value
+      while (stream->available())
+      {
+        c = stream->read();
+        if (c == '"' && valueBuffer[valueBuffer.length() - 1] != '\\')
+          break;
+
+        if (valueBuffer[valueBuffer.length() - 1] == '\\' && c == 'n')
+          valueBuffer[valueBuffer.length() - 1] = '\n';
+        else if (valueBuffer[valueBuffer.length() - 1] == '\\' && c == 'r')
+          valueBuffer[valueBuffer.length() - 1] = '\r';
+        else
+          valueBuffer.concat(c);
+
+        // for summary, stop at "\r\n\r\n##"
+        if (targetArray == (char *)summary && valueBuffer.endsWith(F("\r\n\r\n##")))
+        {
+          // remove the last 6 characters
+          valueBuffer.remove(valueBuffer.length() - 6);
+          break;
+        }
+      }
+    }
+
+    // if we found the key and the value is not empty, copy it to the target array
+    if (keyFound && valueBuffer.length() > 0)
+    {
+      strlcpy(targetArray, valueBuffer.c_str(), targetArraySize);
+    }
   }
 
   http.end();
