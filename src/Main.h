@@ -11,7 +11,7 @@
 #define CUSTOM_APP_MANUFACTURER "Domochip" // also used as Github user for OTA
 #define CUSTOM_APP_MODEL "WPalaSensor"     // also used as Github repository for OTA
 #define CUSTOM_APP_CLASS WPalaSensor
-#define VERSION_NUMBER "4.1.3"
+#define VERSION_NUMBER "4.1.4"
 
 #define CUSTOM_APP_HEADER TOSTRING(CUSTOM_APP_CLASS.h) // calculated header file "{CUSTOM_APP_CLASS}.h"
 #define DEFAULT_AP_SSID CUSTOM_APP_MODEL               // Default Access Point SSID "{CUSTOM_APP_MODEL}"
