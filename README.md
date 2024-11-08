@@ -1,3 +1,6 @@
+![GitHub Release](https://img.shields.io/github/v/release/Domochip/WPalaSensor)
+![Home Assistant](https://img.shields.io/badge/home_assistant-2024.11-blue.svg?logo=homeassistant)
+
 # WPalaSensor
 
 This project aims to replace the Palazzetti (Fumis) room temperature sensor by an electronic simulator.  
