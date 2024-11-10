@@ -1986,6 +1986,18 @@
 		)
 		(uuid "f0b1d946-6cc0-489d-948c-f578e1ba9bc2")
 	)
+	(text "V3.0"
+		(exclude_from_sim no)
+		(at 30.734 24.13 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.508)
+				(bold yes)
+			)
+		)
+		(uuid "9aac65f8-f6b8-4a8d-8ad9-9460d6c9424e")
+	)
 	(symbol
 		(lib_id "power:VCC")
 		(at 88.9 22.86 0)
