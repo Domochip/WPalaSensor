@@ -1141,15 +1141,14 @@ size_t WPalaSensor::getHTMLContentSize(WebPageForPlaceHolder wp)
 // code to register web request answer to the web server
 void WPalaSensor::appInitWebServer(WebServer &server)
 {
-  // GetDigiPot
-  server.on(F("/gdp"), HTTP_GET,
+  // GetDAC
+  server.on(F("/gdac"), HTTP_GET,
             [this, &server]()
             {
               String dpJSON('{');
-              dpJSON = dpJSON + F("\"r\":") + (_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal);
+              dpJSON = dpJSON + F("\"res\":") + (((10400 * 4096) / _dac.getValue()) - 8200);
 #if DEVELOPPER_MODE
-              dpJSON = dpJSON + F(",\"dp5k\":") + _mcp4151_5k.getPosition(0);
-              dpJSON = dpJSON + F(",\"dp50k\":") + _mcp4151_50k.getPosition(0);
+              dpJSON = dpJSON + F(",\"dac\":") + _dac.getValue();
 #endif
               dpJSON += '}';
 
@@ -1157,8 +1156,8 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               server.send(200, F("text/json"), dpJSON);
             });
 
-  // SetDigiPot
-  server.on(F("/sdp"), HTTP_POST,
+  // SetDAC
+  server.on(F("/sdac"), HTTP_POST,
             [this, &server]()
             {
 #define TICK_TO_SKIP 20
@@ -1182,40 +1181,31 @@ void WPalaSensor::appInitWebServer(WebServer &server)
                 _skipTick = TICK_TO_SKIP;
               }
 
-              // look for increase of digipots
+              // look for increase of dac
               if (doc[F("up")].is<JsonVariant>())
               {
                 // go one step up
-                setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal + _digipotsNTC.rBW5KStep));
+                _dac.setValue(_dac.getValue() + 1);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
-              // look for decrease of digipots
+              // look for decrease of dac
               if (doc[F("down")].is<JsonVariant>())
               {
                 // go one step down
-                setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal - _digipotsNTC.rBW5KStep));
+                _dac.setValue(_dac.getValue() - 1);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
 #if DEVELOPPER_MODE
 
-              // look for 5k digipot requested position
-              if ((jv = doc[F("dp5k")]).is<JsonVariant>())
+              // look for dac requested position
+              if ((jv = doc[F("dac")]).is<JsonVariant>())
               {
                 // convert and set it
-                _mcp4151_5k.setPosition(0, jv);
-                // go for refresh tick skipped (time to look a value on stove)
-                _skipTick = TICK_TO_SKIP;
-              }
-
-              // look for 50k digipot requested position
-              if ((jv = doc[F("dp50k")]).is<JsonVariant>())
-              {
-                // convert and set it
-                _mcp4151_50k.setPosition(0, jv);
+                _dac.setValue(jv);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
@@ -1224,7 +1214,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               if ((jv = doc[F("resistance")]).is<JsonVariant>())
               {
                 // convert resistance value and call right function
-                setDualDigiPot(0, jv);
+                setDac(jv.as<int>());
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
