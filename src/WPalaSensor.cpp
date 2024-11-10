@@ -3,7 +3,7 @@
 //-----------------------------------------------------------------------
 // Steinhart–Hart reverse function
 //-----------------------------------------------------------------------
-void WPalaSensor::setDualDigiPot(float temperature)
+void WPalaSensor::setDac(float temperature)
 {
   // convert temperature from Celsius to Kevin degrees
   float temperatureK = temperature + 273.15;
@@ -11,28 +11,19 @@ void WPalaSensor::setDualDigiPot(float temperature)
   // calculate and return resistance value based on provided temperature
   double x = (1 / _digipotsNTC.steinhartHartCoeffs[2]) * (_digipotsNTC.steinhartHartCoeffs[0] - (1 / temperatureK));
   double y = sqrt(pow(_digipotsNTC.steinhartHartCoeffs[1] / (3 * _digipotsNTC.steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
-  setDualDigiPot((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))));
+  setDac((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))));
 }
 //-----------------------------------------------------------------------
-// Set Dual DigiPot resistance (serial rBW)
+// Set DAC equivalent resistance
 //-----------------------------------------------------------------------
-void WPalaSensor::setDualDigiPot(int resistance)
+void WPalaSensor::setDac(int resistance)
 {
-  float adjustedResistance = resistance - _digipotsNTC.rWTotal - (_digipotsNTC.rBW5KStep * _digipotsNTC.dp5kOffset);
+  // calculate DAC value
+  uint32_t value = 8200 + 2200;
+  value *= 4096;
+  value /= 8200 + resistance;
 
-  // DigiPot positions calculation
-  int digiPot50k_position = floor((adjustedResistance) / (_digipotsNTC.rBW50KStep * _digipotsNTC.dp50kStepSize)) * _digipotsNTC.dp50kStepSize;
-  int digiPot5k_position = round((adjustedResistance - (digiPot50k_position * _digipotsNTC.rBW50KStep)) / _digipotsNTC.rBW5KStep);
-  setDualDigiPot(digiPot50k_position, digiPot5k_position + _digipotsNTC.dp5kOffset);
-}
-
-void WPalaSensor::setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPosition)
-{
-  // Set DigiPot position
-  if (_mcp4151_50k.getPosition(0) != dp50kPosition)
-    _mcp4151_50k.setPosition(0, dp50kPosition);
-  if (_mcp4151_5k.getPosition(0) != dp5kPosition)
-    _mcp4151_5k.setPosition(0, dp5kPosition);
+  _dac.setValue(value);
 }
 
 //-----------------------------------------------------------------------

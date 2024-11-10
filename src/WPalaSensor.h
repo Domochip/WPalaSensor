@@ -138,9 +138,8 @@ private:
   WiFiClient _wifiClient; // used by _mqttMan
   MQTTMan _mqttMan;
 
-  void setDualDigiPot(float temperature);
-  void setDualDigiPot(int resistance);
-  void setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPosition);
+  void setDac(float temperature);
+  void setDac(int resistance);
   void refresh();
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
