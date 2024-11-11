@@ -324,16 +324,16 @@
     }
 
     addClickListener("#set10", "{\"temperature\":10}", "#R1");
-    addClickListener("#set10d", "{\"up\":1}", "#R1");
-    addClickListener("#set10u", "{\"down\":1}", "#R1");
+    addClickListener("#set10d", "{\"down\":1}", "#R1");
+    addClickListener("#set10u", "{\"up\":1}", "#R1");
 
     addClickListener("#set20", "{\"temperature\":20}", "#R2");
-    addClickListener("#set20d", "{\"up\":1}", "#R2");
-    addClickListener("#set20u", "{\"down\":1}", "#R2");
+    addClickListener("#set20d", "{\"down\":1}", "#R2");
+    addClickListener("#set20u", "{\"up\":1}", "#R2");
 
     addClickListener("#set30", "{\"temperature\":30}", "#R3");
-    addClickListener("#set30d", "{\"up\":1}", "#R3");
-    addClickListener("#set30u", "{\"down\":1}", "#R3");
+    addClickListener("#set30d", "{\"down\":1}", "#R3");
+    addClickListener("#set30u", "{\"up\":1}", "#R3");
 
     $(qsp + "#calc").addEventListener('click', function () {
         var coeffs = getSteinhartHart($(qsp + "#R1").value, 10.0, $(qsp + "#R2").value, 20.0, $(qsp + "#R3").value, 30.0);
