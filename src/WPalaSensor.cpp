@@ -1052,6 +1052,9 @@ bool WPalaSensor::appInit(bool reInit)
   // Stop MQTT
   _mqttMan.disconnect();
 
+  // configure DAC EEPROM for next boot (will be set only if EEPROM value is not the same)
+  setDac(20.0F, true);
+
   // if MQTT used so configure it
   if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
