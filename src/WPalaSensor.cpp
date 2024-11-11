@@ -26,13 +26,13 @@ void WPalaSensor::setDac(int resistance, bool EEPROM /* = false*/)
   // if EEPROM is true
   if (EEPROM)
   {
-    if (_dac.readEEPROM() != resistance)
-      _dac.writeDAC(resistance, true);
+    if (_dac.readEEPROM() != value)
+      _dac.writeDAC(value, true);
   }
   else
   {
-    if (_dac.getValue() != resistance)
-      _dac.setValue(resistance);
+    if (_dac.getValue() != value)
+      _dac.setValue(value);
   }
 }
 
