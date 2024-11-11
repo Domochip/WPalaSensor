@@ -3378,6 +3378,15 @@
 				(hide yes)
 			)
 		)
+		(property "JlcRotOffset" "180"
+			(at 20.32 36.83 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "25c00883-ea4e-4ffa-a1df-4c6fc0aa0663")
 		)
@@ -3671,7 +3680,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6_Handsoldering"
 			(at 53.34 40.64 0)
 			(effects
 				(font
@@ -3699,6 +3708,15 @@
 			)
 		)
 		(property "LCSC" "C144198"
+			(at 53.34 34.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "JlcRotOffset" "90"
 			(at 53.34 34.29 0)
 			(effects
 				(font
@@ -3971,7 +3989,7 @@
 				)
 			)
 		)
-		(property "Value" "2.2K"
+		(property "Value" "2.2K 1%"
 			(at 30.48 31.75 90)
 			(effects
 				(font
