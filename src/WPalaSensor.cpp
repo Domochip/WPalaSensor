@@ -1260,7 +1260,6 @@ WPalaSensor::WPalaSensor() : Application(CustomApp), _ds18b20(ONEWIRE_BUS_PIN), 
 {
   // Init I2c for DAC
   Wire.begin();
-  // Init DigiPots @20°C
-  _mcp4151_50k.setPosition(0, 61);
-  _mcp4151_5k.setPosition(0, 5);
+  // Init DAC
+  _dac.begin();
 }
