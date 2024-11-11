@@ -317,8 +317,8 @@
 
     function addClickListener(selector, payload, resultSelector) {
         $(qsp + selector).addEventListener('click', function () {
-            post("/sdp", payload, function () {
-                getJSON("/gdp", function (data) { $(qsp + resultSelector).value = data.r })
+            post("/sdac", payload, function () {
+                getJSON("/gdac", function (data) { $(qsp + resultSelector).value = data.res })
             })
         });
     }
