@@ -24,17 +24,6 @@ const char appDataPredefPassword[] PROGMEM = "ewcXoCt4HHjZUvY1";
 class WPalaSensor : public Application
 {
 private:
-  // -------------------- DigiPots Classes--------------------
-  typedef struct
-  {
-    float rWTotal = 0;
-    double steinhartHartCoeffs[3] = {0, 0, 0};
-    float rBW5KStep = 0;
-    float rBW50KStep = 0;
-    byte dp50kStepSize = 0;
-    byte dp5kOffset = 0;
-  } DigiPotsNTC;
-
   // -------------------- HomeAutomation Classes --------------------
 
 #define HA_HTTP_JEEDOM 0
@@ -101,7 +90,7 @@ private:
   // --------------------
 
   uint8_t _refreshPeriod;
-  DigiPotsNTC _digipotsNTC;
+  double _steinhartHartCoeffs[3] = {0, 0, 0};
   HomeAutomation _ha;
 
   // Run variables

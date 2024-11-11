@@ -9,8 +9,8 @@ void WPalaSensor::setDac(float temperature)
   float temperatureK = temperature + 273.15;
 
   // calculate and return resistance value based on provided temperature
-  double x = (1 / _digipotsNTC.steinhartHartCoeffs[2]) * (_digipotsNTC.steinhartHartCoeffs[0] - (1 / temperatureK));
-  double y = sqrt(pow(_digipotsNTC.steinhartHartCoeffs[1] / (3 * _digipotsNTC.steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
+  double x = (1 / _steinhartHartCoeffs[2]) * (_steinhartHartCoeffs[0] - (1 / temperatureK));
+  double y = sqrt(pow(_steinhartHartCoeffs[1] / (3 * _steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
   setDac((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))));
 }
 //-----------------------------------------------------------------------
@@ -656,14 +656,9 @@ void WPalaSensor::setConfigDefaultValues()
 {
   _refreshPeriod = 30;
 
-  _digipotsNTC.rWTotal = 240.0;
-  _digipotsNTC.steinhartHartCoeffs[0] = 0.001067860568;
-  _digipotsNTC.steinhartHartCoeffs[1] = 0.0002269969431;
-  _digipotsNTC.steinhartHartCoeffs[2] = 0.0000002641627999;
-  _digipotsNTC.rBW5KStep = 19.0;
-  _digipotsNTC.rBW50KStep = 190.0;
-  _digipotsNTC.dp50kStepSize = 1;
-  _digipotsNTC.dp5kOffset = 10;
+  _steinhartHartCoeffs[0] = 0.001067860568;
+  _steinhartHartCoeffs[1] = 0.0002269969431;
+  _steinhartHartCoeffs[2] = 0.0000002641627999;
 
   _ha.maxFailedRequest = 10;
   _ha.protocol = HA_PROTO_DISABLED;
@@ -702,11 +697,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
     _refreshPeriod = jv;
 
   if ((jv = doc[F("sha")]).is<JsonVariant>())
-    _digipotsNTC.steinhartHartCoeffs[0] = jv;
+    _steinhartHartCoeffs[0] = jv;
   if ((jv = doc[F("shb")]).is<JsonVariant>())
-    _digipotsNTC.steinhartHartCoeffs[1] = jv;
+    _steinhartHartCoeffs[1] = jv;
   if ((jv = doc[F("shc")]).is<JsonVariant>())
-    _digipotsNTC.steinhartHartCoeffs[2] = jv;
+    _steinhartHartCoeffs[2] = jv;
 
   // Parse Home Automation config
 
@@ -886,9 +881,9 @@ String WPalaSensor::generateConfigJSON(bool forSaveFile = false)
 
   doc["rp"] = _refreshPeriod;
 
-  doc[F("sha")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[0], 16));
-  doc[F("shb")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[1], 16));
-  doc[F("shc")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[2], 16));
+  doc[F("sha")] = serialized(String(_steinhartHartCoeffs[0], 16));
+  doc[F("shb")] = serialized(String(_steinhartHartCoeffs[1], 16));
+  doc[F("shc")] = serialized(String(_steinhartHartCoeffs[2], 16));
 
   doc[F("hamfr")] = _ha.maxFailedRequest;
   doc[F("haproto")] = _ha.protocol;
