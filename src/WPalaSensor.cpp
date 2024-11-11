@@ -271,8 +271,8 @@ void WPalaSensor::refresh()
     _stoveDelta = 0;
   }
 
-  // Set DigiPot position according to resistance calculated from temperature to display with delta
-  setDualDigiPot(temperatureToDisplay + _stoveDelta);
+  // Set DAC position according to resistance calculated from temperature to display with delta
+  setDac(temperatureToDisplay + _stoveDelta);
 
   _lastTemperatureUsed = temperatureToDisplay;
 
@@ -1027,8 +1027,7 @@ String WPalaSensor::generateStatusJSON()
   doc[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
 
   doc[F("pushedtemp")] = String(_pushedTemperature, 2);
-  doc[F("dgp50k")] = _mcp4151_50k.getPosition(0);
-  doc[F("dgp5k")] = _mcp4151_5k.getPosition(0);
+  doc[F("dac")] = _dac.getValue();
 
   String gs;
   doc.shrinkToFit();
@@ -1176,7 +1175,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               if ((jv = doc[F("temperature")]).is<JsonVariant>())
               {
                 // convert and set it
-                setDualDigiPot(jv.as<float>());
+                setDac(jv.as<float>());
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
