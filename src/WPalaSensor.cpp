@@ -1052,6 +1052,8 @@ bool WPalaSensor::appInit(bool reInit)
   // Stop MQTT
   _mqttMan.disconnect();
 
+  // Init DAC
+  _dac.begin();
   // configure DAC EEPROM for next boot (will be set only if EEPROM value is not the same)
   setDac(20.0F, true);
 
@@ -1263,6 +1265,4 @@ WPalaSensor::WPalaSensor() : Application(CustomApp), _ds18b20(ONEWIRE_BUS_PIN), 
 {
   // Init I2c for DAC
   Wire.begin();
-  // Init DAC
-  _dac.begin();
 }
