@@ -127,8 +127,8 @@ private:
   WiFiClient _wifiClient; // used by _mqttMan
   MQTTMan _mqttMan;
 
-  void setDac(float temperature);
-  void setDac(int resistance);
+  void setDac(float temperature, bool EEPROM = false);
+  void setDac(int resistance, bool EEPROM = false);
   void refresh();
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);

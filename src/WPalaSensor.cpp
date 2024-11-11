@@ -3,7 +3,7 @@
 //-----------------------------------------------------------------------
 // Steinhart–Hart reverse function
 //-----------------------------------------------------------------------
-void WPalaSensor::setDac(float temperature)
+void WPalaSensor::setDac(float temperature, bool EEPROM /* = false*/)
 {
   // convert temperature from Celsius to Kevin degrees
   float temperatureK = temperature + 273.15;
@@ -11,19 +11,29 @@ void WPalaSensor::setDac(float temperature)
   // calculate and return resistance value based on provided temperature
   double x = (1 / _steinhartHartCoeffs[2]) * (_steinhartHartCoeffs[0] - (1 / temperatureK));
   double y = sqrt(pow(_steinhartHartCoeffs[1] / (3 * _steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
-  setDac((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))));
+  setDac((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))), EEPROM);
 }
 //-----------------------------------------------------------------------
 // Set DAC equivalent resistance
 //-----------------------------------------------------------------------
-void WPalaSensor::setDac(int resistance)
+void WPalaSensor::setDac(int resistance, bool EEPROM /* = false*/)
 {
   // calculate DAC value
   uint32_t value = 8200 + 2200;
   value *= 4096;
   value /= 8200 + resistance;
 
-  _dac.setValue(value);
+  // if EEPROM is true
+  if (EEPROM)
+  {
+    if (_dac.readEEPROM() != resistance)
+      _dac.writeDAC(resistance, true);
+  }
+  else
+  {
+    if (_dac.getValue() != resistance)
+      _dac.setValue(resistance);
+  }
 }
 
 //-----------------------------------------------------------------------
