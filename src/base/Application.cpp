@@ -207,7 +207,7 @@ bool Application::getLastestUpdateInfo(char (*version)[10], char (*title)[64] /*
 
   http.end();
 
-  return true;
+  return strlen(*version) > 0;
 }
 
 String Application::getLatestUpdateInfoJson(bool forWebPage /* = false */)
