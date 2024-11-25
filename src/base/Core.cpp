@@ -236,11 +236,14 @@ void Core::appInitWebServer(WebServer &server)
               SystemState::shouldReboot = true;
             });
 
-  // 404 on not found ---------------------------------------------------------
+  // 302 on not found ---------------------------------------------------------
   server.onNotFound(
       [&server]()
       {
+        // redirect to my IP receiving the request
         SERVER_KEEPALIVE_FALSE()
-        server.send(404);
+        server.sendHeader(F("Location"), String(F("http://")) + server.client().localIP().toString(), true);
+        server.send(302, F("text/plain"), ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+        server.client().stop();
       });
 }
