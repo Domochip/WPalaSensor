@@ -22,16 +22,11 @@
 #define EVTSRC_MAX_CLIENTS 2
 #define EVTSRC_KEEPALIVE_ENABLED 0
 
+// Pin for 1Wire DS18B20 bus
 #ifdef ESP8266
-
-// Pin for 1Wire DS18B20 bus
 #define ONEWIRE_BUS_PIN D4
-
 #else
-
-// Pin for 1Wire DS18B20 bus
 #define ONEWIRE_BUS_PIN 16
-
 #endif
 
 // Enable developper mode
