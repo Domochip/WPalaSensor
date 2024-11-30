@@ -666,9 +666,9 @@ void WPalaSensor::setConfigDefaultValues()
 {
   _refreshPeriod = 30;
 
-  _steinhartHartCoeffs[0] = 0.001067860568;
-  _steinhartHartCoeffs[1] = 0.0002269969431;
-  _steinhartHartCoeffs[2] = 0.0000002641627999;
+  _steinhartHartCoeffs[0] = 0.0010418107149703;
+  _steinhartHartCoeffs[1] = 0.0002249955839098;
+  _steinhartHartCoeffs[2] = 0.0000003246246447;
 
   _ha.maxFailedRequest = 10;
   _ha.protocol = HA_PROTO_DISABLED;
