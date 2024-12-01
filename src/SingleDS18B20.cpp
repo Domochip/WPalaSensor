@@ -102,7 +102,7 @@ SingleDS18B20::SingleDS18B20(uint8_t owPin) : OneWire(owPin)
     copyScratchPad(_owROMCode); // so we finally can copy scratchpad to memory
   }
 
-  _tempSensorFound = (readTemp() != 12.3456);
+  _tempSensorFound = true;
 }
 
 //------------------------------------------
