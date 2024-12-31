@@ -1,5 +1,5 @@
 (sym_lib_table
   (version 7)
   (lib (name "wemos_mini")(type "KiCad")(uri "${KIPRJMOD}/lib/wemos_mini.kicad_sym")(options "")(descr ""))
-  (lib (name "MCP4725")(type "KiCad")(uri "${KIPRJMOD}/lib/MCP4725.kicad_sym")(options "")(descr ""))
+  (lib (name "MCP47X6")(type "KiCad")(uri "${KIPRJMOD}/lib/MCP47X6.kicad_sym")(options "")(descr ""))
 )
