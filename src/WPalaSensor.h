@@ -19,7 +19,7 @@ const char appDataPredefPassword[] PROGMEM = "ewcXoCt4HHjZUvY1";
 #include <math.h>
 #include <Ticker.h>
 #include "SingleDS18B20.h"
-#include <MCP4725.h>
+#include "MCP4725.h"
 
 class WPalaSensor : public Application
 {
