@@ -1,32 +1,32 @@
 #pragma once
 //
-//    FILE: MCP4725.h
+//    FILE: MCP4726.h
 //  AUTHOR: Rob Tillaart
-// PURPOSE: Arduino library for 12 bit I2C DAC - MCP4725
+// PURPOSE: Arduino library for 12 bit I2C DAC - MCP4726
 // VERSION: 0.4.0
-//     URL: https://github.com/RobTillaart/MCP4725
+//     URL: https://github.com/RobTillaart/MCP4726
 
 #include "Wire.h"
 #include "Arduino.h"
 
-#define MCP4725_VERSION (F("0.4.0"))
+#define MCP4726_VERSION (F("0.0.1"))
 
 //  CONSTANTS
-#define MCP4725_MAXVALUE 4095
+#define MCP4726_MAXVALUE 4095
 
 //  ERRORS
-#define MCP4725_OK 0
-#define MCP4725_VALUE_ERROR -999
-#define MCP4725_REG_ERROR -998
-#define MCP4725_NOT_CONNECTED -997
+#define MCP4726_OK 0
+#define MCP4726_VALUE_ERROR -999
+#define MCP4726_REG_ERROR -998
+#define MCP4726_NOT_CONNECTED -997
 
-#define MCP4725_MIDPOINT 2048
+#define MCP4726_MIDPOINT 2048
 
-class MCP4725
+class MCP4726
 {
 public:
   //  address = 0x60..0x67
-  explicit MCP4725(const uint8_t deviceAddress, TwoWire *wire = &Wire);
+  explicit MCP4726(const uint8_t deviceAddress, TwoWire *wire = &Wire);
 
   bool begin();
   bool isConnected();
@@ -41,7 +41,7 @@ public:
   //  to the DAC and EEPROM simultaneously or write EEPROM only.
   int writeDAC(const uint16_t value, const bool EEPROM = false);
   //  ready checks if the last write to EEPROM has been written.
-  //  until ready all writes to the MCP4725 are ignored!
+  //  until ready all writes to the MCP4726 are ignored!
   bool ready();
   uint16_t readDAC();
   uint16_t readEEPROM();

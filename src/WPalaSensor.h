@@ -19,7 +19,7 @@ const char appDataPredefPassword[] PROGMEM = "ewcXoCt4HHjZUvY1";
 #include <math.h>
 #include <Ticker.h>
 #include "SingleDS18B20.h"
-#include "MCP4725.h"
+#include "MCP4726.h"
 
 class WPalaSensor : public Application
 {
@@ -96,7 +96,7 @@ private:
   // Run variables
 
   SingleDS18B20 _ds18b20;
-  MCP4725 _dac;
+  MCP4726 _dac;
 
   bool _needRefresh = false;
   Ticker _refreshTicker;

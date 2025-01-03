@@ -1,17 +1,17 @@
 //
-//    FILE: MCP4725.cpp
+//    FILE: MCP4726.cpp
 //  AUTHOR: Rob Tillaart
-// PURPOSE: Arduino library for 12 bit I2C DAC - MCP4725
+// PURPOSE: Arduino library for 12 bit I2C DAC - MCP4726
 // VERSION: 0.4.0
-//     URL: https://github.com/RobTillaart/MCP4725
+//     URL: https://github.com/RobTillaart/MCP4726
 
-#include "MCP4725.h"
+#include "MCP4726.h"
 
 //  registerMode
-#define MCP4725_DAC 0x40
-#define MCP4725_DACEEPROM 0x60
+#define MCP4726_DAC 0x40
+#define MCP4726_DACEEPROM 0x60
 
-MCP4725::MCP4725(const uint8_t deviceAddress, TwoWire *wire)
+MCP4726::MCP4726(const uint8_t deviceAddress, TwoWire *wire)
 {
   _deviceAddress = deviceAddress;
   _wire = wire;
@@ -19,7 +19,7 @@ MCP4725::MCP4725(const uint8_t deviceAddress, TwoWire *wire)
   _lastWriteEEPROM = 0;
 }
 
-bool MCP4725::begin()
+bool MCP4726::begin()
 {
   if ((_deviceAddress < 0x60) || (_deviceAddress > 0x67))
     return false;
@@ -30,51 +30,51 @@ bool MCP4725::begin()
   return true;
 }
 
-bool MCP4725::isConnected()
+bool MCP4726::isConnected()
 {
   _wire->beginTransmission(_deviceAddress);
   return (_wire->endTransmission() == 0);
 }
 
-uint8_t MCP4725::getAddress()
+uint8_t MCP4726::getAddress()
 {
   return _deviceAddress;
 }
 
-int MCP4725::setValue(const uint16_t value)
+int MCP4726::setValue(const uint16_t value)
 {
   if (value == _lastValue)
-    return MCP4725_OK;
-  if (value > MCP4725_MAXVALUE)
-    return MCP4725_VALUE_ERROR;
+    return MCP4726_OK;
+  if (value > MCP4726_MAXVALUE)
+    return MCP4726_VALUE_ERROR;
   int rv = _writeFastMode(value);
   if (rv == 0)
     _lastValue = value;
   return rv;
 }
 
-uint16_t MCP4725::getValue()
+uint16_t MCP4726::getValue()
 {
   return _lastValue;
 }
 
 //  unfortunately it is not possible to write a different value
 //  to the DAC and EEPROM simultaneously or write EEPROM only.
-int MCP4725::writeDAC(const uint16_t value, const bool EEPROM)
+int MCP4726::writeDAC(const uint16_t value, const bool EEPROM)
 {
-  if (value > MCP4725_MAXVALUE)
-    return MCP4725_VALUE_ERROR;
+  if (value > MCP4726_MAXVALUE)
+    return MCP4726_VALUE_ERROR;
   while (!ready())
     ;
-  int rv = _writeRegisterMode(value, EEPROM ? MCP4725_DACEEPROM : MCP4725_DAC);
+  int rv = _writeRegisterMode(value, EEPROM ? MCP4726_DACEEPROM : MCP4726_DAC);
   if (rv == 0)
     _lastValue = value;
   return rv;
 }
 
 //  ready checks if the last write to EEPROM has been written.
-//  until ready all writes to the MCP4725 are ignored!
-bool MCP4725::ready()
+//  until ready all writes to the MCP4726 are ignored!
+bool MCP4726::ready()
 {
   yield();
   uint8_t buffer[1];
@@ -82,7 +82,7 @@ bool MCP4725::ready()
   return ((buffer[0] & 0x80) > 0);
 }
 
-uint16_t MCP4725::readDAC()
+uint16_t MCP4726::readDAC()
 {
   while (!ready())
     ;
@@ -94,7 +94,7 @@ uint16_t MCP4725::readDAC()
   return value;
 }
 
-uint16_t MCP4725::readEEPROM()
+uint16_t MCP4726::readEEPROM()
 {
   while (!ready())
     ;
@@ -106,13 +106,13 @@ uint16_t MCP4725::readEEPROM()
   return value;
 }
 
-uint32_t MCP4725::getLastWriteEEPROM()
+uint32_t MCP4726::getLastWriteEEPROM()
 {
   return _lastWriteEEPROM;
 };
 
 //  PAGE 18 DATASHEET
-int MCP4725::_writeFastMode(const uint16_t value)
+int MCP4726::_writeFastMode(const uint16_t value)
 {
   uint8_t l = value & 0xFF;
   uint8_t h = ((value / 256) & 0x0F); //  set C0 = C1 = 0, no PDmode
@@ -124,10 +124,10 @@ int MCP4725::_writeFastMode(const uint16_t value)
 }
 
 //  PAGE 19 DATASHEET
-//  reg = MCP4725_DAC | MCP4725_EEPROM
-int MCP4725::_writeRegisterMode(const uint16_t value, uint8_t reg)
+//  reg = MCP4726_DAC | MCP4726_EEPROM
+int MCP4726::_writeRegisterMode(const uint16_t value, uint8_t reg)
 {
-  if (reg & MCP4725_DACEEPROM)
+  if (reg & MCP4726_DACEEPROM)
   {
     _lastWriteEEPROM = millis();
   }
@@ -142,7 +142,7 @@ int MCP4725::_writeRegisterMode(const uint16_t value, uint8_t reg)
 
 //  PAGE 20 DATASHEET
 //  typical 3 or 5 bytes
-uint8_t MCP4725::_readRegister(uint8_t *buffer, const uint8_t length)
+uint8_t MCP4726::_readRegister(uint8_t *buffer, const uint8_t length)
 {
   _wire->beginTransmission(_deviceAddress);
   int rv = _wire->endTransmission();
