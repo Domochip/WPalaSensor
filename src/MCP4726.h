@@ -43,7 +43,6 @@ public:
   //  to the DAC and EEPROM simultaneously or write EEPROM only.
   int writeDAC(const uint16_t value, const bool EEPROM = false);
   //  ready checks if the last write to EEPROM has been written.
-  //  until ready all writes to the MCP4726 are ignored!
   bool ready();
   uint16_t readDAC();
   uint16_t readEEPROM();
