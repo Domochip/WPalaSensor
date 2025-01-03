@@ -97,11 +97,11 @@ uint16_t MCP4726::readEEPROM()
 {
   while (!ready())
     ;
-  uint8_t buffer[5];
-  _readRegister(buffer, 5);
-  uint16_t value = buffer[3] & 0x0F;
-  value = value << 8;
-  value = value + buffer[4];
+  uint8_t buffer[6];
+  _readRegister(buffer, 6);
+  uint16_t value = buffer[4];
+  value = value << 4;
+  value = value + (buffer[5] >> 4);
   return value;
 }
 
