@@ -17,7 +17,6 @@ MCP4725::MCP4725(const uint8_t deviceAddress, TwoWire *wire)
   _wire = wire;
   _lastValue = 0;
   _lastWriteEEPROM = 0;
-  _maxVoltage = 5.0;
 }
 
 bool MCP4725::begin()
@@ -69,26 +68,6 @@ int MCP4725::setPercentage(float percentage)
 float MCP4725::getPercentage()
 {
   return getValue() * (100.0 / MCP4725_MAXVALUE);
-}
-
-void MCP4725::setMaxVoltage(float v)
-{
-  _maxVoltage = v;
-}
-
-float MCP4725::getMaxVoltage()
-{
-  return _maxVoltage;
-}
-
-int MCP4725::setVoltage(float v)
-{
-  return setValue(round((v * MCP4725_MAXVALUE) / _maxVoltage));
-}
-
-float MCP4725::getVoltage()
-{
-  return getValue() * (_maxVoltage / MCP4725_MAXVALUE);
 }
 
 //  unfortunately it is not possible to write a different value

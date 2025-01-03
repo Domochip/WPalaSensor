@@ -43,14 +43,6 @@ public:
   //  due to rounding the returned value can differ slightly.
   float getPercentage();
 
-  //  typical and default value = 5.0 V
-  void setMaxVoltage(float v = 5.0);
-  float getMaxVoltage();
-  //  will set 0..5V to the closest integer value in range 0..4095
-  int setVoltage(float v);
-  // returns (approximation of) the set voltage. Assumes linear mapping.
-  float getVoltage();
-
   //  unfortunately it is not possible to write a different value
   //  to the DAC and EEPROM simultaneously or write EEPROM only.
   int writeDAC(const uint16_t value, const bool EEPROM = false);
@@ -69,8 +61,6 @@ private:
 
   int _writeRegisterMode(const uint16_t value, uint8_t reg);
   uint8_t _readRegister(uint8_t *buffer, const uint8_t length);
-
-  float _maxVoltage;
 
   TwoWire *_wire;
 };
