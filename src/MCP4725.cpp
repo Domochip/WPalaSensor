@@ -11,10 +11,6 @@
 #define MCP4725_DAC 0x40
 #define MCP4725_DACEEPROM 0x60
 
-//  page 22
-#define MCP4725_GC_RESET 0x06
-#define MCP4725_GC_WAKEUP 0x09
-
 MCP4725::MCP4725(const uint8_t deviceAddress, TwoWire *wire)
 {
   _deviceAddress = deviceAddress;
