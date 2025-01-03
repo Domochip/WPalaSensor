@@ -102,7 +102,7 @@ uint16_t MCP4726::readEEPROM()
 int MCP4726::_writeFastMode(const uint16_t value)
 {
   uint8_t l = value & 0xFF;
-  uint8_t h = ((value / 256) & 0x0F); //  set C0 = C1 = 0, no PDmode
+  uint8_t h = ((value >> 8) & 0x0F); //  set C0 = C1 = 0, no PDmode
 
   _wire->beginTransmission(_deviceAddress);
   _wire->write(h);
@@ -112,7 +112,7 @@ int MCP4726::_writeFastMode(const uint16_t value)
 
 int MCP4726::_writeRegisterMode(const uint16_t value, uint8_t reg)
 {
-  uint8_t h = (value / 16);
+  uint8_t h = (value >> 4);
   uint8_t l = (value & 0x0F) << 4;
   _wire->beginTransmission(_deviceAddress);
   _wire->write(reg);
