@@ -130,8 +130,8 @@ int MCP4726::_writeRegisterMode(const uint16_t value, uint8_t reg)
   return _wire->endTransmission();
 }
 
-//  PAGE 20 DATASHEET
-//  typical 3 or 5 bytes
+//  PAGE 54 DATASHEET
+//  typical 3 or 6 bytes
 uint8_t MCP4726::_readRegister(uint8_t *buffer, const uint8_t length)
 {
   _wire->beginTransmission(_deviceAddress);
