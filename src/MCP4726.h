@@ -6,7 +6,7 @@
 // VERSION: 0.4.0
 //     URL: https://github.com/RobTillaart/MCP4725
 
-// Adapted for MCP4726 by Domochip
+// Simplified and Adapted for MCP4726 by Domochip
 
 #include "Wire.h"
 #include "Arduino.h"
