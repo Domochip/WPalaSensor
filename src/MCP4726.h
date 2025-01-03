@@ -33,6 +33,9 @@ public:
   bool begin();
   bool isConnected();
 
+  //  ready checks if the last write to EEPROM has been written.
+  bool ready();
+
   //  uses writeFastMode
   int setValue(const uint16_t value = 0);
   //  returns last value set - cached - much faster than readDAC();
@@ -41,8 +44,7 @@ public:
   //  unfortunately it is not possible to write a different value
   //  to the DAC and EEPROM simultaneously or write EEPROM only.
   int writeDAC(const uint16_t value, const bool EEPROM = false);
-  //  ready checks if the last write to EEPROM has been written.
-  bool ready();
+
   uint16_t readDAC();
   uint16_t readEEPROM();
 

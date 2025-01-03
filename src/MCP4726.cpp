@@ -35,6 +35,15 @@ bool MCP4726::isConnected()
   return (_wire->endTransmission() == 0);
 }
 
+//  ready checks if the last write to EEPROM has been written.
+bool MCP4726::ready()
+{
+  yield();
+  uint8_t buffer[1];
+  _readRegister(buffer, 1);
+  return ((buffer[0] & 0x80) > 0);
+}
+
 int MCP4726::setValue(const uint16_t value)
 {
   if (value == _lastValue)
@@ -64,16 +73,6 @@ int MCP4726::writeDAC(const uint16_t value, const bool EEPROM)
   if (rv == 0)
     _lastValue = value;
   return rv;
-}
-
-//  ready checks if the last write to EEPROM has been written.
-//  until ready all writes to the MCP4726 are ignored!
-bool MCP4726::ready()
-{
-  yield();
-  uint8_t buffer[1];
-  _readRegister(buffer, 1);
-  return ((buffer[0] & 0x80) > 0);
 }
 
 uint16_t MCP4726::readDAC()
