@@ -58,18 +58,6 @@ uint16_t MCP4725::getValue()
   return _lastValue;
 }
 
-int MCP4725::setPercentage(float percentage)
-{
-  if ((percentage > 100) || (percentage < 0))
-    return MCP4725_VALUE_ERROR;
-  return setValue(round(percentage * (0.01 * MCP4725_MAXVALUE)));
-}
-
-float MCP4725::getPercentage()
-{
-  return getValue() * (100.0 / MCP4725_MAXVALUE);
-}
-
 //  unfortunately it is not possible to write a different value
 //  to the DAC and EEPROM simultaneously or write EEPROM only.
 int MCP4725::writeDAC(const uint16_t value, const bool EEPROM)

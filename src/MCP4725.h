@@ -37,12 +37,6 @@ public:
   //  returns last value set - cached - much faster than readDAC();
   uint16_t getValue();
 
-  //  0..100.0% - input checked.
-  //  will set the closest integer value in range 0..4095
-  int setPercentage(float percentage = 0);
-  //  due to rounding the returned value can differ slightly.
-  float getPercentage();
-
   //  unfortunately it is not possible to write a different value
   //  to the DAC and EEPROM simultaneously or write EEPROM only.
   int writeDAC(const uint16_t value, const bool EEPROM = false);
