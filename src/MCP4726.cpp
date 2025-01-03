@@ -112,6 +112,7 @@ int MCP4726::_writeFastMode(const uint16_t value)
 
 int MCP4726::_writeRegisterMode(const uint16_t value, uint8_t reg)
 {
+  reg = reg | (MCP4726_VREF_VREF_UNBUFFERED << 3); //  WPalaSensor uses VREF_UNBUFFERED
   uint8_t h = (value >> 4);
   uint8_t l = (value & 0x0F) << 4;
   _wire->beginTransmission(_deviceAddress);
