@@ -16,7 +16,6 @@ MCP4726::MCP4726(const uint8_t deviceAddress, TwoWire *wire)
   _deviceAddress = deviceAddress;
   _wire = wire;
   _lastValue = 0;
-  _lastWriteEEPROM = 0;
 }
 
 bool MCP4726::begin()
@@ -106,11 +105,6 @@ uint16_t MCP4726::readEEPROM()
   return value;
 }
 
-uint32_t MCP4726::getLastWriteEEPROM()
-{
-  return _lastWriteEEPROM;
-};
-
 //  PAGE 18 DATASHEET
 int MCP4726::_writeFastMode(const uint16_t value)
 {
@@ -127,10 +121,6 @@ int MCP4726::_writeFastMode(const uint16_t value)
 //  reg = MCP4726_DAC | MCP4726_EEPROM
 int MCP4726::_writeRegisterMode(const uint16_t value, uint8_t reg)
 {
-  if (reg & MCP4726_DACEEPROM)
-  {
-    _lastWriteEEPROM = millis();
-  }
   uint8_t h = (value / 16);
   uint8_t l = (value & 0x0F) << 4;
   _wire->beginTransmission(_deviceAddress);

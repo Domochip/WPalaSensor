@@ -1,10 +1,12 @@
 #pragma once
 //
-//    FILE: MCP4726.h
+//    FILE: MCP4725.h
 //  AUTHOR: Rob Tillaart
-// PURPOSE: Arduino library for 12 bit I2C DAC - MCP4726
+// PURPOSE: Arduino library for 12 bit I2C DAC - MCP4725
 // VERSION: 0.4.0
-//     URL: https://github.com/RobTillaart/MCP4726
+//     URL: https://github.com/RobTillaart/MCP4725
+
+// Adapted for MCP4726 by Domochip
 
 #include "Wire.h"
 #include "Arduino.h"
@@ -45,13 +47,11 @@ public:
   bool ready();
   uint16_t readDAC();
   uint16_t readEEPROM();
-  uint32_t getLastWriteEEPROM(); //  returns timestamp
 
 private:
   uint8_t _deviceAddress;
   uint16_t _lastValue;
   int _writeFastMode(const uint16_t value);
-  uint32_t _lastWriteEEPROM;
 
   int _writeRegisterMode(const uint16_t value, uint8_t reg);
   uint8_t _readRegister(uint8_t *buffer, const uint8_t length);
