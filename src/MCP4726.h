@@ -32,9 +32,7 @@ public:
 
   bool begin();
   bool isConnected();
-
-  //  ready checks if the last write to EEPROM has been written.
-  bool ready();
+  bool ready(); //  ready checks if the last write to EEPROM has been written.
 
   //  uses writeFastMode
   int setValue(const uint16_t value = 0);
