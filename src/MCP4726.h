@@ -32,7 +32,6 @@ public:
 
   bool begin();
   bool isConnected();
-  uint8_t getAddress();
 
   //  uses writeFastMode
   int setValue(const uint16_t value = 0);

@@ -35,11 +35,6 @@ bool MCP4726::isConnected()
   return (_wire->endTransmission() == 0);
 }
 
-uint8_t MCP4726::getAddress()
-{
-  return _deviceAddress;
-}
-
 int MCP4726::setValue(const uint16_t value)
 {
   if (value == _lastValue)
