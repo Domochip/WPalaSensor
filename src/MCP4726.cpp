@@ -99,7 +99,6 @@ uint16_t MCP4726::readEEPROM()
   return value;
 }
 
-//  PAGE 18 DATASHEET
 int MCP4726::_writeFastMode(const uint16_t value)
 {
   uint8_t l = value & 0xFF;
@@ -111,8 +110,6 @@ int MCP4726::_writeFastMode(const uint16_t value)
   return _wire->endTransmission();
 }
 
-//  PAGE 19 DATASHEET
-//  reg = MCP4726_DAC | MCP4726_EEPROM
 int MCP4726::_writeRegisterMode(const uint16_t value, uint8_t reg)
 {
   uint8_t h = (value / 16);
@@ -124,7 +121,6 @@ int MCP4726::_writeRegisterMode(const uint16_t value, uint8_t reg)
   return _wire->endTransmission();
 }
 
-//  PAGE 54 DATASHEET
 //  typical 3 or 6 bytes
 uint8_t MCP4726::_readRegister(uint8_t *buffer, const uint8_t length)
 {
