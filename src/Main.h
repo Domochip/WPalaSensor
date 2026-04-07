@@ -22,24 +22,11 @@
 #define EVTSRC_MAX_CLIENTS 2
 #define EVTSRC_KEEPALIVE_ENABLED 0
 
+// Pin for 1Wire DS18B20 bus
 #ifdef ESP8266
-
-// Pin 12, 13 and 14 are used by DigiPot Bus
-// Pins used for DigiPot Select
-#define MCP4151_5k_SSPIN D2
-#define MCP4151_50k_SSPIN D1
-// Pin for 1Wire DS18B20 bus
 #define ONEWIRE_BUS_PIN D4
-
 #else
-
-// Pin 19, 23 and 18 are used by DigiPot Bus
-// Pins used for DigiPot Select
-#define MCP4151_5k_SSPIN 21
-#define MCP4151_50k_SSPIN 22
-// Pin for 1Wire DS18B20 bus
 #define ONEWIRE_BUS_PIN 16
-
 #endif
 
 // Enable developper mode

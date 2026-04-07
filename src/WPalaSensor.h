@@ -19,22 +19,11 @@ const char appDataPredefPassword[] PROGMEM = "ewcXoCt4HHjZUvY1";
 #include <math.h>
 #include <Ticker.h>
 #include "SingleDS18B20.h"
-#include "McpDigitalPot.h"
+#include <MCP4725.h>
 
 class WPalaSensor : public Application
 {
 private:
-  // -------------------- DigiPots Classes--------------------
-  typedef struct
-  {
-    float rWTotal = 0;
-    double steinhartHartCoeffs[3] = {0, 0, 0};
-    float rBW5KStep = 0;
-    float rBW50KStep = 0;
-    byte dp50kStepSize = 0;
-    byte dp5kOffset = 0;
-  } DigiPotsNTC;
-
   // -------------------- HomeAutomation Classes --------------------
 
 #define HA_HTTP_JEEDOM 0
@@ -101,14 +90,13 @@ private:
   // --------------------
 
   uint8_t _refreshPeriod;
-  DigiPotsNTC _digipotsNTC;
+  double _steinhartHartCoeffs[3] = {0, 0, 0};
   HomeAutomation _ha;
 
   // Run variables
 
   SingleDS18B20 _ds18b20;
-  McpDigitalPot _mcp4151_5k;
-  McpDigitalPot _mcp4151_50k;
+  MCP4725 _dac;
 
   bool _needRefresh = false;
   Ticker _refreshTicker;
@@ -139,9 +127,8 @@ private:
   WiFiClient _wifiClient; // used by _mqttMan
   MQTTMan _mqttMan;
 
-  void setDualDigiPot(float temperature);
-  void setDualDigiPot(int resistance);
-  void setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPosition);
+  void setDac(float temperature, bool EEPROM = false);
+  void setDac(int resistance, bool EEPROM = false);
   void refresh();
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);

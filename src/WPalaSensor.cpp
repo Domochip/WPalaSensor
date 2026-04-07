@@ -3,36 +3,37 @@
 //-----------------------------------------------------------------------
 // Steinhart–Hart reverse function
 //-----------------------------------------------------------------------
-void WPalaSensor::setDualDigiPot(float temperature)
+void WPalaSensor::setDac(float temperature, bool EEPROM /* = false*/)
 {
   // convert temperature from Celsius to Kevin degrees
   float temperatureK = temperature + 273.15;
 
   // calculate and return resistance value based on provided temperature
-  double x = (1 / _digipotsNTC.steinhartHartCoeffs[2]) * (_digipotsNTC.steinhartHartCoeffs[0] - (1 / temperatureK));
-  double y = sqrt(pow(_digipotsNTC.steinhartHartCoeffs[1] / (3 * _digipotsNTC.steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
-  setDualDigiPot((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))));
+  double x = (1 / _steinhartHartCoeffs[2]) * (_steinhartHartCoeffs[0] - (1 / temperatureK));
+  double y = sqrt(pow(_steinhartHartCoeffs[1] / (3 * _steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
+  setDac((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))), EEPROM);
 }
 //-----------------------------------------------------------------------
-// Set Dual DigiPot resistance (serial rBW)
+// Set DAC equivalent resistance
 //-----------------------------------------------------------------------
-void WPalaSensor::setDualDigiPot(int resistance)
+void WPalaSensor::setDac(int resistance, bool EEPROM /* = false*/)
 {
-  float adjustedResistance = resistance - _digipotsNTC.rWTotal - (_digipotsNTC.rBW5KStep * _digipotsNTC.dp5kOffset);
+  // calculate DAC value
+  uint32_t value = 8200 + 2200;
+  value *= 4096;
+  value /= 8200 + resistance;
 
-  // DigiPot positions calculation
-  int digiPot50k_position = floor((adjustedResistance) / (_digipotsNTC.rBW50KStep * _digipotsNTC.dp50kStepSize)) * _digipotsNTC.dp50kStepSize;
-  int digiPot5k_position = round((adjustedResistance - (digiPot50k_position * _digipotsNTC.rBW50KStep)) / _digipotsNTC.rBW5KStep);
-  setDualDigiPot(digiPot50k_position, digiPot5k_position + _digipotsNTC.dp5kOffset);
-}
-
-void WPalaSensor::setDualDigiPot(unsigned int dp50kPosition, unsigned int dp5kPosition)
-{
-  // Set DigiPot position
-  if (_mcp4151_50k.getPosition(0) != dp50kPosition)
-    _mcp4151_50k.setPosition(0, dp50kPosition);
-  if (_mcp4151_5k.getPosition(0) != dp5kPosition)
-    _mcp4151_5k.setPosition(0, dp5kPosition);
+  // if EEPROM is true
+  if (EEPROM)
+  {
+    if (_dac.readEEPROM() != value)
+      _dac.writeDAC(value, true);
+  }
+  else
+  {
+    if (_dac.getValue() != value)
+      _dac.setValue(value);
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -280,8 +281,8 @@ void WPalaSensor::refresh()
     _stoveDelta = 0;
   }
 
-  // Set DigiPot position according to resistance calculated from temperature to display with delta
-  setDualDigiPot(temperatureToDisplay + _stoveDelta);
+  // Set DAC position according to resistance calculated from temperature to display with delta
+  setDac(temperatureToDisplay + _stoveDelta);
 
   _lastTemperatureUsed = temperatureToDisplay;
 
@@ -665,14 +666,9 @@ void WPalaSensor::setConfigDefaultValues()
 {
   _refreshPeriod = 30;
 
-  _digipotsNTC.rWTotal = 240.0;
-  _digipotsNTC.steinhartHartCoeffs[0] = 0.001067860568;
-  _digipotsNTC.steinhartHartCoeffs[1] = 0.0002269969431;
-  _digipotsNTC.steinhartHartCoeffs[2] = 0.0000002641627999;
-  _digipotsNTC.rBW5KStep = 19.0;
-  _digipotsNTC.rBW50KStep = 190.0;
-  _digipotsNTC.dp50kStepSize = 1;
-  _digipotsNTC.dp5kOffset = 10;
+  _steinhartHartCoeffs[0] = 0.0010418107149703;
+  _steinhartHartCoeffs[1] = 0.0002249955839098;
+  _steinhartHartCoeffs[2] = 0.0000003246246447;
 
   _ha.maxFailedRequest = 10;
   _ha.protocol = HA_PROTO_DISABLED;
@@ -711,11 +707,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
     _refreshPeriod = jv;
 
   if ((jv = doc[F("sha")]).is<JsonVariant>())
-    _digipotsNTC.steinhartHartCoeffs[0] = jv;
+    _steinhartHartCoeffs[0] = jv;
   if ((jv = doc[F("shb")]).is<JsonVariant>())
-    _digipotsNTC.steinhartHartCoeffs[1] = jv;
+    _steinhartHartCoeffs[1] = jv;
   if ((jv = doc[F("shc")]).is<JsonVariant>())
-    _digipotsNTC.steinhartHartCoeffs[2] = jv;
+    _steinhartHartCoeffs[2] = jv;
 
   // Parse Home Automation config
 
@@ -895,9 +891,9 @@ String WPalaSensor::generateConfigJSON(bool forSaveFile = false)
 
   doc["rp"] = _refreshPeriod;
 
-  doc[F("sha")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[0], 16));
-  doc[F("shb")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[1], 16));
-  doc[F("shc")] = serialized(String(_digipotsNTC.steinhartHartCoeffs[2], 16));
+  doc[F("sha")] = serialized(String(_steinhartHartCoeffs[0], 16));
+  doc[F("shb")] = serialized(String(_steinhartHartCoeffs[1], 16));
+  doc[F("shc")] = serialized(String(_steinhartHartCoeffs[2], 16));
 
   doc[F("hamfr")] = _ha.maxFailedRequest;
   doc[F("haproto")] = _ha.protocol;
@@ -1036,8 +1032,7 @@ String WPalaSensor::generateStatusJSON()
   doc[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
 
   doc[F("pushedtemp")] = String(_pushedTemperature, 2);
-  doc[F("dgp50k")] = _mcp4151_50k.getPosition(0);
-  doc[F("dgp5k")] = _mcp4151_5k.getPosition(0);
+  doc[F("dac")] = _dac.getValue();
 
   String gs;
   doc.shrinkToFit();
@@ -1056,6 +1051,11 @@ bool WPalaSensor::appInit(bool reInit)
 
   // Stop MQTT
   _mqttMan.disconnect();
+
+  // Init DAC
+  _dac.begin();
+  // configure DAC EEPROM for next boot (will be set only if EEPROM value is not the same)
+  setDac(20.0F, true);
 
   // if MQTT used so configure it
   if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
@@ -1150,15 +1150,14 @@ size_t WPalaSensor::getHTMLContentSize(WebPageForPlaceHolder wp)
 // code to register web request answer to the web server
 void WPalaSensor::appInitWebServer(WebServer &server)
 {
-  // GetDigiPot
-  server.on(F("/gdp"), HTTP_GET,
+  // GetDAC
+  server.on(F("/gdac"), HTTP_GET,
             [this, &server]()
             {
               String dpJSON('{');
-              dpJSON = dpJSON + F("\"r\":") + (_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal);
+              dpJSON = dpJSON + F("\"res\":") + (((10400 * 4096) / _dac.getValue()) - 8200);
 #if DEVELOPPER_MODE
-              dpJSON = dpJSON + F(",\"dp5k\":") + _mcp4151_5k.getPosition(0);
-              dpJSON = dpJSON + F(",\"dp50k\":") + _mcp4151_50k.getPosition(0);
+              dpJSON = dpJSON + F(",\"dac\":") + _dac.getValue();
 #endif
               dpJSON += '}';
 
@@ -1166,8 +1165,8 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               server.send(200, F("text/json"), dpJSON);
             });
 
-  // SetDigiPot
-  server.on(F("/sdp"), HTTP_POST,
+  // SetDAC
+  server.on(F("/sdac"), HTTP_POST,
             [this, &server]()
             {
 #define TICK_TO_SKIP 20
@@ -1186,45 +1185,36 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               if ((jv = doc[F("temperature")]).is<JsonVariant>())
               {
                 // convert and set it
-                setDualDigiPot(jv.as<float>());
+                setDac(jv.as<float>());
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
-              // look for increase of digipots
+              // look for increase of dac
               if (doc[F("up")].is<JsonVariant>())
               {
                 // go one step up
-                setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal + _digipotsNTC.rBW5KStep));
+                _dac.setValue(_dac.getValue() + 1);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
-              // look for decrease of digipots
+              // look for decrease of dac
               if (doc[F("down")].is<JsonVariant>())
               {
                 // go one step down
-                setDualDigiPot((int)(_mcp4151_50k.getPosition(0) * _digipotsNTC.rBW50KStep + _mcp4151_5k.getPosition(0) * _digipotsNTC.rBW5KStep + _digipotsNTC.rWTotal - _digipotsNTC.rBW5KStep));
+                _dac.setValue(_dac.getValue() - 1);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
 
 #if DEVELOPPER_MODE
 
-              // look for 5k digipot requested position
-              if ((jv = doc[F("dp5k")]).is<JsonVariant>())
+              // look for dac requested position
+              if ((jv = doc[F("dac")]).is<JsonVariant>())
               {
                 // convert and set it
-                _mcp4151_5k.setPosition(0, jv);
-                // go for refresh tick skipped (time to look a value on stove)
-                _skipTick = TICK_TO_SKIP;
-              }
-
-              // look for 50k digipot requested position
-              if ((jv = doc[F("dp50k")]).is<JsonVariant>())
-              {
-                // convert and set it
-                _mcp4151_50k.setPosition(0, jv);
+                _dac.setValue(jv);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
@@ -1233,7 +1223,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               if ((jv = doc[F("resistance")]).is<JsonVariant>())
               {
                 // convert resistance value and call right function
-                setDualDigiPot(0, jv);
+                setDac(jv.as<int>());
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
@@ -1271,11 +1261,8 @@ void WPalaSensor::appRun()
 
 //------------------------------------------
 // Constructor
-WPalaSensor::WPalaSensor() : Application(CustomApp), _ds18b20(ONEWIRE_BUS_PIN), _mcp4151_5k(MCP4151_5k_SSPIN), _mcp4151_50k(MCP4151_50k_SSPIN)
+WPalaSensor::WPalaSensor() : Application(CustomApp), _ds18b20(ONEWIRE_BUS_PIN), _dac(0x60)
 {
-  // Init SPI for DigiPot
-  SPI.begin();
-  // Init DigiPots @20°C
-  _mcp4151_50k.setPosition(0, 61);
-  _mcp4151_5k.setPosition(0, 5);
+  // Init I2c for DAC
+  Wire.begin();
 }
