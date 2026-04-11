@@ -49,3 +49,9 @@ Box project (Fusion 360 & STL) can be found into `box` folder
 Source code can be compiled using VisualStudioCode/Platformio and flashed onto a D1 Mini  
 Or  
 Download latest release in Release section
+
+### Connect
+
+⚠️To connect WPalaSensor to your stove, you need to be very carefull about the polarity⚠️.  
+Here is the polarity of two possible temperature sensors on Fumis motherboard:  
+![WPalaSensor polarity](img/polarityOfTempSensors.png)
