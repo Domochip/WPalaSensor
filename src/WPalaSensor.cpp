@@ -187,12 +187,11 @@ void WPalaSensor::refresh()
       if (nb)
       {
         // convert to float
-        float haTemperature = atof(payload);
-        String strHATemperature(payload);
-        strHATemperature.replace("0", "");
+        char *endPtr;
+        float haTemperature = strtof(payload, &endPtr);
 
-        // if we got a correct value
-        if (haTemperature != 0.0F || strHATemperature == ".")
+        // if we got a correct value (at least one character was parsed)
+        if (endPtr != payload)
         {
           // round it to tenth
           haTemperature *= 10;
@@ -244,12 +243,11 @@ void WPalaSensor::refresh()
             posTRW++;
 
           // convert to float
-          float stoveTemperature = atof(payload + posTRW);
-          String strStoveTemperature(payload + posTRW);
-          strStoveTemperature.replace("0", "");
+          char *endPtr;
+          float stoveTemperature = strtof(payload + posTRW, &endPtr);
 
-          // if we got a correct value
-          if (stoveTemperature != 0.0F || strStoveTemperature == ".")
+          // if we got a correct value (at least one character was parsed)
+          if (endPtr != payload + posTRW)
           {
             // place it in global _stoveTemperature and store millis
             _stoveTemperature = stoveTemperature;
@@ -372,13 +370,11 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
       strHATemperature += (char)payload[i];
 
     // convert
-    float haTemperature = strHATemperature.toFloat();
+    char *endPtr;
+    float haTemperature = strtof(strHATemperature.c_str(), &endPtr);
 
-    // remove all 0 from str for conversion verification
-    // (remove all 0 from the string, then only one dot should remain like "0.00")
-    strHATemperature.replace("0", "");
-
-    if (haTemperature != 0.0F || strHATemperature == ".")
+    // if we got a correct value (at least one character was parsed)
+    if (endPtr != strHATemperature.c_str())
     {
       // round it to tenth
       haTemperature *= 10;
@@ -410,13 +406,11 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
     }
 
     // convert
-    float stoveTemperature = strStoveTemperature.toFloat();
+    char *endPtr;
+    float stoveTemperature = strtof(strStoveTemperature.c_str(), &endPtr);
 
-    // remove all 0 from str for conversion verification
-    // (remove all 0 from the string, then only one dot should remain like "0.00")
-    strStoveTemperature.replace("0", "");
-
-    if (stoveTemperature != 0.0F || strStoveTemperature == ".")
+    // if we got a correct value (at least one character was parsed)
+    if (endPtr != strStoveTemperature.c_str())
     {
       _stoveTemperature = stoveTemperature;
       _stoveTemperatureMillis = millis();
