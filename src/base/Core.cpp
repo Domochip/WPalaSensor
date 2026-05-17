@@ -10,11 +10,9 @@
 
 void Core::setConfigDefaultValues() {};
 bool Core::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false) { return true; };
-String Core::generateConfigJSON(bool forSaveFile = false) { return String(); };
-String Core::generateStatusJSON()
+void Core::fillConfigJSON(JsonDocument &doc, bool forSaveFile) {};
+void Core::fillStatusJSON(JsonDocument &doc)
 {
-  JsonDocument doc;
-
   char sn[9];
 #ifdef ESP8266
   sprintf_P(sn, PSTR("%08x"), ESP.getChipId());
@@ -28,19 +26,20 @@ String Core::generateStatusJSON()
   doc[F("sn")] = sn;
   doc[F("baseversion")] = BASE_VERSION;
   doc[F("version")] = VERSION;
-  doc[F("uptime")] = String((byte)(minutes / 1440)) + 'd' + (byte)(minutes / 60 % 24) + 'h' + (byte)(minutes % 60) + 'm';
+  char uptime[12];
+  snprintf_P(uptime, sizeof(uptime), PSTR("%dd%dh%dm"), (byte)(minutes / 1440), (byte)(minutes / 60 % 24), (byte)(minutes % 60));
+  doc[F("uptime")] = uptime;
   doc[F("freeheap")] = ESP.getFreeHeap();
 #ifdef ESP8266
   doc[F("freestack")] = ESP.getFreeContStack();
   doc[F("flashsize")] = ESP.getFlashChipRealSize();
+
+  uint32_t crashCount = CrashSaver::count();
+  doc[F("crashcount")] = crashCount;
 #else
   doc[F("freestack")] = uxTaskGetStackHighWaterMark(nullptr);
+  doc[F("crashcount")] = 0;
 #endif
-
-  String gs;
-  serializeJson(doc, gs);
-
-  return gs;
 }
 bool Core::appInit(bool reInit = false)
 {
@@ -125,7 +124,12 @@ void Core::appInitWebServer(WebServer &server)
       [this, &server]()
       {
         SERVER_KEEPALIVE_FALSE()
-        server.send(200, F("application/json"), getLatestUpdateInfoJson(true));
+        JsonDocument doc;
+        fillLatestUpdateInfoJson(doc, true);
+        server.setContentLength(measureJson(doc));
+        server.send(200, F("application/json"), "");
+        WiFiClient client = server.client();
+        serializeJson(doc, client);
       });
 
   // Update Firmware from Github ----------------------------------------------
@@ -144,7 +148,9 @@ void Core::appInitWebServer(WebServer &server)
         {
           uint8_t percent = (progress * 100) / total;
           LOG_SERIAL_PRINTF_P(PSTR("Progress: %d%%\n"), percent);
-          server.sendContent((String(F("p:")) + percent + '\n').c_str());
+          char pct[10];
+          snprintf_P(pct, sizeof(pct), PSTR("p:%d\n"), percent);
+          server.sendContent(pct);
         };
 
         // Call the updateFirmware function with the progress callback
@@ -152,7 +158,11 @@ void Core::appInitWebServer(WebServer &server)
         if (SystemState::shouldReboot)
           server.sendContent(F("s:true\n"));
         else
-          server.sendContent(String(F("s:false\nm:")) + msg + '\n');
+        {
+          server.sendContent(F("s:false\nm:"));
+          server.sendContent(msg);
+          server.sendContent("\n");
+        }
 
         // finalize chunked response
         server.sendContent(emptyString);
@@ -173,9 +183,9 @@ void Core::appInitWebServer(WebServer &server)
         {
           msg = F("Update failed: ");
 #ifdef ESP8266
-          msg = Update.getErrorString();
+          msg += Update.getErrorString();
 #else
-          msg = Update.errorString();
+          msg += Update.errorString();
 #endif
           Update.clearError();
           // Update failed so restart to Run custom Application in loop
@@ -236,13 +246,62 @@ void Core::appInitWebServer(WebServer &server)
               SystemState::shouldReboot = true;
             });
 
+#ifdef ESP8266
+  // Download all crash logs as text attachment -------------------------------
+  server.on(F("/crashdl"), HTTP_GET,
+            [&server]()
+            {
+              SERVER_KEEPALIVE_FALSE()
+              server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+              server.sendHeader(F("Content-Disposition"), F("attachment; filename=\"crashes.txt\""));
+              server.send(200, F("text/plain"), "");
+              CrashSaver::iterateCrashLogFiles([&server](uint32_t, const char *fileName)
+                                                   {
+                File f = LittleFS.open(fileName, "r");
+                if (f) {
+                  server.sendContent(F("--- "));
+                  server.sendContent(fileName);
+                  server.sendContent(F(" ---\n"));
+                  server.sendContent(f.readString());
+                  f.close();
+                } });
+              server.sendContent(emptyString);
+            });
+
+  // Clear all crash logs -----------------------------------------------------
+  server.on(F("/crashclr"), HTTP_POST,
+            [&server]()
+            {
+              SERVER_KEEPALIVE_FALSE()
+              CrashSaver::clearAllLogs();
+              server.send_P(200, PSTR("text/plain"), PSTR("OK"));
+            });
+
+#if DEVELOPPER_MODE
+  // dbz endpoint try to do a division by 0 to trigger a crash for testing purposes
+  server.on(F("/dbz"), HTTP_GET,
+            [&server]()
+            {
+              SERVER_KEEPALIVE_FALSE()
+              volatile int a = 1;
+              volatile int b = 0;
+              volatile int c = a / b;
+              (void)c; // avoid unused variable warning
+              server.send_P(200, PSTR("text/html"), PSTR("This should never be seen"));
+            });
+#endif
+#endif
+
   // 302 on not found ---------------------------------------------------------
   server.onNotFound(
       [&server]()
       {
         // redirect to my IP receiving the request
         SERVER_KEEPALIVE_FALSE()
-        server.sendHeader(F("Location"), String(F("http://")) + server.client().localIP().toString(), true);
+        char redirectUrl[32];
+        IPAddress ip = server.client().localIP();
+        snprintf_P(redirectUrl, sizeof(redirectUrl), PSTR("http://%d.%d.%d.%d"), ip[0], ip[1], ip[2], ip[3]);
+        server.sendHeader(F("Location"), redirectUrl, true);
         server.send(302, F("text/plain"), ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
         server.client().stop();
       });
