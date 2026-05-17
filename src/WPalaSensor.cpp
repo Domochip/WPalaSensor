@@ -362,19 +362,18 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   // if Home Automation is configured for MQTT and topic match
   if (_ha.protocol == HA_PROTO_MQTT && !strcmp(topic, _ha.mqtt.temperatureTopic))
   {
-    String strHATemperature;
-    strHATemperature.reserve(length + 1);
-
-    // convert payload to string
-    for (unsigned int i = 0; i < length; i++)
-      strHATemperature += (char)payload[i];
+    // copy payload into a null-terminated buffer
+    char haTemperatureBuffer[7];
+    unsigned int len = min(length, 6u);
+    memcpy(haTemperatureBuffer, payload, len);
+    haTemperatureBuffer[len] = 0;
 
     // convert
     char *endPtr;
-    float haTemperature = strtof(strHATemperature.c_str(), &endPtr);
+    float haTemperature = strtof(haTemperatureBuffer, &endPtr);
 
     // if we got a correct value (at least one character was parsed)
-    if (endPtr != strHATemperature.c_str())
+    if (endPtr != haTemperatureBuffer)
     {
       // round it to tenth
       haTemperature *= 10;
@@ -389,31 +388,47 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   // if Home Automation is configured for MQTT and topic match
   if (_ha.cboxProtocol == CBOX_PROTO_MQTT && !strcmp(topic, _ha.mqtt.cboxT1Topic))
   {
-    String strStoveTemperature;
-    strStoveTemperature.reserve(length + 1);
-
-    // convert payload to string
-    for (unsigned int i = 0; i < length; i++)
-      strStoveTemperature += (char)payload[i];
+    const uint8_t *valueStart = payload;
+    unsigned int valueLen = length;
 
     // if payload contains JSON, isolate T1 value
-    if (strStoveTemperature[0] == '{')
+    if (length > 0 && payload[0] == '{')
     {
-      strStoveTemperature = strStoveTemperature.substring(strStoveTemperature.indexOf(F("\"T1\":")) + 5);
-      strStoveTemperature.trim();
-      strStoveTemperature = strStoveTemperature.substring(0, strStoveTemperature.indexOf(','));
-      strStoveTemperature.trim();
+      // search for "T1": in payload
+      for (unsigned int i = 0; i + 5 <= length; i++)
+      {
+        if (memcmp(payload + i, "\"T1\":", 5) == 0)
+        {
+          valueStart = payload + i + 5;
+          valueLen = length - (i + 5);
+
+          // find end at comma, '}', or whitespace
+          while (valueLen > 0 && (valueStart[valueLen - 1] == ' ' || valueStart[valueLen - 1] == '\t' || valueStart[valueLen - 1] == '\r' || valueStart[valueLen - 1] == '\n'))
+            valueLen--;
+
+          break;
+        }
+      }
     }
 
-    // convert
-    char *endPtr;
-    float stoveTemperature = strtof(strStoveTemperature.c_str(), &endPtr);
-
-    // if we got a correct value (at least one character was parsed)
-    if (endPtr != strStoveTemperature.c_str())
+    if (valueLen > 0)
     {
-      _stoveTemperature = stoveTemperature;
-      _stoveTemperatureMillis = millis();
+      // copy into null-terminated buffer for strtof
+      char stoveBuffer[7];
+      unsigned int bufLen = min(valueLen, 6u);
+      memcpy(stoveBuffer, valueStart, bufLen);
+      stoveBuffer[bufLen] = 0;
+
+      // convert
+      char *endPtr;
+      float stoveTemperature = strtof(stoveBuffer, &endPtr);
+
+      // if we got a correct value (at least one character was parsed)
+      if (endPtr != stoveBuffer)
+      {
+        _stoveTemperature = stoveTemperature;
+        _stoveTemperatureMillis = millis();
+      }
     }
   }
 
