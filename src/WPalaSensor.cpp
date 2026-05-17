@@ -400,11 +400,22 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
         if (memcmp(payload + i, "\"T1\":", 5) == 0)
         {
           valueStart = payload + i + 5;
-          valueLen = length - (i + 5);
 
-          // find end at comma, '}', or whitespace
-          while (valueLen > 0 && (valueStart[valueLen - 1] == ' ' || valueStart[valueLen - 1] == '\t' || valueStart[valueLen - 1] == '\r' || valueStart[valueLen - 1] == '\n'))
-            valueLen--;
+          // skip whitespace before value
+          while (valueStart < (payload + length) && (*valueStart == ' ' || *valueStart == '\t' || *valueStart == '\r' || *valueStart == '\n'))
+            valueStart++;
+
+          valueLen = 0;
+
+          // count float text until first non-float char
+          while ((valueStart + valueLen) < (payload + length))
+          {
+            char c = valueStart[valueLen];
+            if ((c >= '0' && c <= '9') || c == '+' || c == '-' || c == '.' || c == 'e' || c == 'E')
+              valueLen++;
+            else
+              break;
+          }
 
           break;
         }
