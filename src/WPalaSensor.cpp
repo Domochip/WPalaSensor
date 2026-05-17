@@ -57,10 +57,7 @@ void WPalaSensor::refresh()
     doc[getAppIdName(WifiManApp)] = serialized(_applicationList[WifiManApp]->getStatusJSON());
     doc[getAppIdName(CustomApp)] = serialized(getStatusJSON());
 
-    String strJson;
-    serializeJson(doc, strJson);
-
-    _mqttMan.publish(baseTopic.c_str(), strJson.c_str(), true);
+    _mqttMan.publish(baseTopic.c_str(), doc, true);
   }
 
   if (_skipTick)
