@@ -992,9 +992,10 @@ void WPalaSensor::fillStatusJSON(JsonDocument &doc)
     doc[F("hamqttstatus")] = _mqttMan.getStateString();
 
   // Home Automation last temperature and age
+  char buf[10];
   if (_ha.protocol != HA_PROTO_DISABLED)
   {
-    doc[F("haslasttemp")] = String(_haTemperature, 2);
+    doc[F("haslasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
     doc[F("haslasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
   }
 
@@ -1015,14 +1016,14 @@ void WPalaSensor::fillStatusJSON(JsonDocument &doc)
   // WPalaControl/CBox last temperature and age
   if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
   {
-    doc[F("cboxlasttemp")] = String(_stoveTemperature, 2);
+    doc[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
     doc[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
   }
 
-  doc[F("onewiretemp")] = String(_owTemperature, 2);
+  doc[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
   doc[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
 
-  doc[F("pushedtemp")] = String(_pushedTemperature, 2);
+  doc[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
   doc[F("dac")] = _dac.getValue();
 }
 
