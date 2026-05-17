@@ -215,7 +215,11 @@ void WPalaSensor::refresh()
     http.setTimeout(5000);
 
     // try to get current stove temperature info ----------------------
-    http.begin(client, String(F("http://")) + IPAddress(_ha.http.cboxIp).toString() + F("/cgi-bin/sendmsg.lua?cmd=GET%20TMPS"));
+    char cboxUrl[64];
+    IPAddress cboxIp(_ha.http.cboxIp);
+    snprintf_P(cboxUrl, sizeof(cboxUrl), PSTR("http://%d.%d.%d.%d/cgi-bin/sendmsg.lua?cmd=GET%%20TMPS"),
+               cboxIp[0], cboxIp[1], cboxIp[2], cboxIp[3]);
+    http.begin(client, cboxUrl);
 
     // send request
     _stoveRequestResult = http.GET();
@@ -441,7 +445,8 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   }
 
   // if topic ends with "/update/install"
-  if (String(topic).endsWith(F("/update/install")))
+  const size_t topicLen = strlen(topic);
+  if (topicLen >= 15 && memcmp_P(topic + topicLen - 15, PSTR("/update/install"), 15) == 0)
   {
     String version;
     String retMsg;
