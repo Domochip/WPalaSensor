@@ -91,6 +91,7 @@ void WPalaSensor::refresh()
     WiFiClientSecure clientSecure;
 
     HTTPClient http;
+    char httpBuffer[320];
 
     // set timeOut
     http.setTimeout(5000);
@@ -98,27 +99,29 @@ void WPalaSensor::refresh()
     // try to get HomeAutomation sensor value -----------------
 
     // build the complete URI
-    String completeURI = String(F("http")) + (_ha.http.tls ? F("s") : F("")) + F("://") + _ha.http.hostname;
     switch (_ha.http.type)
     {
     case HA_HTTP_JEEDOM:
-      completeURI = completeURI + F("/core/api/jeeApi.php?apikey=") + _ha.http.secret + F("&type=cmd&id=") + _ha.http.temperatureId;
+      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/core/api/jeeApi.php?apikey=%s&type=cmd&id=%d"),
+                 _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.secret, _ha.http.temperatureId);
       break;
     case HA_HTTP_FIBARO:
-      completeURI = completeURI + F("/api/devices?id=") + _ha.http.temperatureId;
+      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/devices?id=%d"),
+                 _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.temperatureId);
       break;
     case HA_HTTP_HOMEASSISTANT:
-      completeURI = completeURI + F("/api/states/") + _ha.http.homeassistant.entityId;
+      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/states/%s"),
+                 _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.homeassistant.entityId);
       break;
     }
 
     // if not TLS then use client, else use clientSecure
     if (!_ha.http.tls)
-      http.begin(client, completeURI);
+      http.begin(client, httpBuffer);
     else
     {
       clientSecure.setInsecure();
-      http.begin(clientSecure, completeURI);
+      http.begin(clientSecure, httpBuffer);
     }
 
     // For Fibaro, Pass authentication if specified in configuration
@@ -128,7 +131,8 @@ void WPalaSensor::refresh()
     // For HomeAssistant, Pass long-lived access token and set content type
     if (_ha.http.type == HA_HTTP_HOMEASSISTANT)
     {
-      http.addHeader(F("Authorization"), String(F("Bearer ")) + _ha.http.secret);
+      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("Bearer %s"), _ha.http.secret);
+      http.addHeader(F("Authorization"), httpBuffer);
       http.addHeader(F("Content-Type"), F("application/json"));
     }
 
