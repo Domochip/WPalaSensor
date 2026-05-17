@@ -885,10 +885,8 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
 
 //------------------------------------------
 // Generate JSON from configuration properties
-String WPalaSensor::generateConfigJSON(bool forSaveFile = false)
+void WPalaSensor::fillConfigJSON(JsonDocument &doc, bool forSaveFile)
 {
-  JsonDocument doc;
-
   doc["rp"] = _refreshPeriod;
 
   doc[F("sha")] = serialized(String(_steinhartHartCoeffs[0], 16));
@@ -972,20 +970,12 @@ String WPalaSensor::generateConfigJSON(bool forSaveFile = false)
     doc[F("hamhassde")] = _ha.mqtt.hassDiscoveryEnabled;
     doc[F("hamhassdp")] = _ha.mqtt.hassDiscoveryPrefix;
   }
-
-  String gc;
-  doc.shrinkToFit();
-  serializeJson(doc, gc);
-
-  return gc;
 }
 
 //------------------------------------------
 // Generate JSON of application status
-String WPalaSensor::generateStatusJSON()
+void WPalaSensor::fillStatusJSON(JsonDocument &doc)
 {
-  JsonDocument doc;
-
   // Home automation protocol
   if (_ha.protocol == HA_PROTO_HTTP)
     doc[F("haprotocol")] = F("HTTP");
@@ -1033,12 +1023,6 @@ String WPalaSensor::generateStatusJSON()
 
   doc[F("pushedtemp")] = String(_pushedTemperature, 2);
   doc[F("dac")] = _dac.getValue();
-
-  String gs;
-  doc.shrinkToFit();
-  serializeJson(doc, gs);
-
-  return gs;
 }
 
 //------------------------------------------
