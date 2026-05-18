@@ -344,15 +344,11 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
   // Subscribe to needed topic
   // if Home Automation is configured for MQTT
   if (_ha.protocol == HA_PROTO_MQTT)
-  {
     mqttMan->subscribe(_ha.mqtt.temperatureTopic);
-  }
 
   // if Connection Box/PalaControl is configured for MQTT
   if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
-  {
     mqttMan->subscribe(_ha.mqtt.cboxT1Topic);
-  }
 
   // subscribe to update/install topic
   String topic(_preparedMqttBaseTopic);
