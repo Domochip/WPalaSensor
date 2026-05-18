@@ -45,19 +45,14 @@ void WPalaSensor::refresh()
   LOG_SERIAL_PRINTLN(F("refresh"));
 
   // if MQTT protocol is enabled and connected then publish Core, Wifi and WPalaControl status
-  if ((_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT) && _mqttMan.connected())
+  if (_ha.protocol == HA_PROTO_MQTT && _mqttMan.connected())
   {
-    String baseTopic = _ha.mqtt.baseTopic;
-    MQTTMan::prepareTopic(baseTopic);
-    // remove the last char of baseTopic which is a '/'
-    baseTopic.remove(baseTopic.length() - 1);
-
     JsonDocument doc;
     doc[getAppIdName(CoreApp)] = serialized(_applicationList[CoreApp]->getStatusJSON());
     doc[getAppIdName(WifiManApp)] = serialized(_applicationList[WifiManApp]->getStatusJSON());
     doc[getAppIdName(CustomApp)] = serialized(getStatusJSON());
 
-    _mqttMan.publish(baseTopic.c_str(), doc, true);
+    _mqttMan.publish(_preparedMqttBaseTopic, doc, true);
   }
 
   if (_skipTick)
@@ -301,29 +296,28 @@ void WPalaSensor::refresh()
   if (_mqttMan.connected())
   {
     // prepare base topic
-    String baseTopic = _ha.mqtt.baseTopic;
-    MQTTMan::prepareTopic(baseTopic);
+    String baseTopic = _preparedMqttBaseTopic;
 
     // publish oneWire temperature
-    _mqttMan.publish((baseTopic + F("OWTemp")).c_str(), String(_owTemperature).c_str(), true);
+    _mqttMan.publish((baseTopic + F("/OWTemp")).c_str(), String(_owTemperature).c_str(), true);
 
     // publish Home Automation temperature
-    _mqttMan.publish((baseTopic + F("HATemp")).c_str(), String(_haTemperature).c_str(), true);
+    _mqttMan.publish((baseTopic + F("/HATemp")).c_str(), String(_haTemperature).c_str(), true);
 
     // publish temperature to display
-    _mqttMan.publish((baseTopic + F("TempToDisplay")).c_str(), String(temperatureToDisplay).c_str(), true);
+    _mqttMan.publish((baseTopic + F("/TempToDisplay")).c_str(), String(temperatureToDisplay).c_str(), true);
 
     // publish last used temperature
-    _mqttMan.publish((baseTopic + F("LastTempUsed")).c_str(), String(_lastTemperatureUsed).c_str(), true);
+    _mqttMan.publish((baseTopic + F("/LastTempUsed")).c_str(), String(_lastTemperatureUsed).c_str(), true);
 
     // publish Stove temperature
-    _mqttMan.publish((baseTopic + F("StoveTemp")).c_str(), String(_stoveTemperature).c_str(), true);
+    _mqttMan.publish((baseTopic + F("/StoveTemp")).c_str(), String(_stoveTemperature).c_str(), true);
 
     // publish Delta
-    _mqttMan.publish((baseTopic + F("Delta")).c_str(), String(_stoveDelta).c_str(), true);
+    _mqttMan.publish((baseTopic + F("/Delta")).c_str(), String(_stoveDelta).c_str(), true);
 
     // publish Pushed temperature
-    _mqttMan.publish((baseTopic + F("PushedTemp")).c_str(), String(_pushedTemperature).c_str(), true);
+    _mqttMan.publish((baseTopic + F("/PushedTemp")).c_str(), String(_pushedTemperature).c_str(), true);
   }
 #endif
 }
@@ -347,9 +341,8 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
   }
 
   // subscribe to update/install topic
-  String topic(_ha.mqtt.baseTopic);
-  MQTTMan::prepareTopic(topic);
-  topic += F("update/install");
+  String topic(_preparedMqttBaseTopic);
+  topic += F("/update/install");
   mqttMan->subscribe(topic.c_str());
 
   // raise flag to publish Home Assistant discovery data
@@ -505,14 +498,9 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   // variables
   JsonDocument jsonDoc;
   String device, availability, payload;
-  String baseTopic;
   String uniqueIdPrefix;
   String uniqueId;
   String topic;
-
-  // prepare base topic
-  baseTopic = _ha.mqtt.baseTopic;
-  MQTTMan::prepareTopic(baseTopic);
 
   // prepare unique id prefix
   uniqueIdPrefix = F(CUSTOM_APP_MODEL "_");
@@ -547,7 +535,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   topic += F("/config");
 
   // prepare payload for connectivity sensor
-  jsonDoc[F("~")] = baseTopic.substring(0, baseTopic.length() - 1); // remove ending '/'
+  jsonDoc[F("~")] = _preparedMqttBaseTopic;
   jsonDoc[F("device_class")] = F("connectivity");
   jsonDoc[F("device")] = serialized(device);
   jsonDoc[F("entity_category")] = F("diagnostic");
@@ -580,12 +568,7 @@ bool WPalaSensor::mqttPublishUpdate()
   JsonDocument updateInfo;
   fillLatestUpdateInfoJson(updateInfo);
 
-  String baseTopic;
   String topic;
-
-  // prepare base topic
-  baseTopic = _ha.mqtt.baseTopic;
-  MQTTMan::prepareTopic(baseTopic);
 
   // This part of code is necessary because "payload_install" is not a template
   // and we need to get the version to install pushed from Home Assistant
@@ -649,7 +632,7 @@ bool WPalaSensor::mqttPublishUpdate()
       topic += F("/config");
 
       // prepare payload for update sensor
-      jsonDoc[F("~")] = baseTopic.substring(0, baseTopic.length() - 1); // remove ending '/'
+      jsonDoc[F("~")] = _preparedMqttBaseTopic;
       jsonDoc[F("availability")] = serialized(availability);
       jsonDoc[F("command_topic")] = F("~/update/install");
       jsonDoc[F("device")] = serialized(device);
@@ -669,7 +652,8 @@ bool WPalaSensor::mqttPublishUpdate()
   }
 
   // calculate topic
-  topic = baseTopic + F("update");
+  topic = _preparedMqttBaseTopic;
+  topic += F("/update");
 
   // publish install in_progress (new in 2024.11)
   // I keep it here because I want to separate the two publish for retrocompatibility
@@ -1068,10 +1052,12 @@ bool WPalaSensor::appInit(bool reInit)
   // if MQTT used so configure it
   if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
+    // prepare base topic
+    MQTTMan::prepareTopic(_ha.mqtt.baseTopic, _preparedMqttBaseTopic, sizeof(_preparedMqttBaseTopic));
+
     // prepare will topic
-    String willTopic = _ha.mqtt.baseTopic;
-    MQTTMan::prepareTopic(willTopic);
-    willTopic += F("connected");
+    String willTopic = _preparedMqttBaseTopic;
+    willTopic += F("/connected");
 
     // setup MQTT
     _mqttMan.setBufferSize(600); // max JSON size (Connectivity HAss discovery ~450)
