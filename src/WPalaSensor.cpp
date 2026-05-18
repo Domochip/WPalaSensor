@@ -497,7 +497,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
 
   // variables
   JsonDocument jsonDoc;
-  String device, availability, payload;
+  String device, availability;
   String uniqueIdPrefix;
   String uniqueId;
   String topic;
@@ -544,15 +544,11 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   jsonDoc[F("unique_id")] = uniqueId;
   jsonDoc[F("value_template")] = F("{{ iif(int(value) > 0, 'ON', 'OFF') }}");
 
-  jsonDoc.shrinkToFit();
-  serializeJson(jsonDoc, payload);
-
   // publish
-  _mqttMan.publish(topic.c_str(), payload.c_str(), true);
+  _mqttMan.publish(topic.c_str(), jsonDoc, true);
 
   // clean
   jsonDoc.clear();
-  payload = "";
 
   return true;
 }
@@ -588,7 +584,7 @@ bool WPalaSensor::mqttPublishUpdate()
 
       // variables
       JsonDocument jsonDoc;
-      String device, availability, payload;
+      String device, availability;
 
       String uniqueIdPrefix;
       String uniqueId;
@@ -643,11 +639,8 @@ bool WPalaSensor::mqttPublishUpdate()
       jsonDoc[F("state_topic")] = F("~/update");
       jsonDoc[F("unique_id")] = uniqueId;
 
-      jsonDoc.shrinkToFit();
-      serializeJson(jsonDoc, payload);
-
       // publish
-      _mqttMan.publish(topic.c_str(), payload.c_str(), true);
+      _mqttMan.publish(topic.c_str(), jsonDoc, true);
     }
   }
 
