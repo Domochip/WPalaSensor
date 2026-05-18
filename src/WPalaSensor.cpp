@@ -546,6 +546,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
 
   // prepare payload for connectivity sensor
   jsonDoc[F("~")] = _preparedMqttBaseTopic;
+  jsonDoc[F("default_entity_id")] = F("binary_sensor." CUSTOM_APP_MODEL "_connectivity");
   jsonDoc[F("device_class")] = F("connectivity");
   jsonDoc[F("device")] = serialized(device);
   jsonDoc[F("entity_category")] = F("diagnostic");
@@ -641,6 +642,7 @@ bool WPalaSensor::mqttPublishUpdate()
       jsonDoc[F("~")] = _preparedMqttBaseTopic;
       jsonDoc[F("availability")] = serialized(availability);
       jsonDoc[F("command_topic")] = F("~/update/install");
+      jsonDoc[F("default_entity_id")] = F("update." CUSTOM_APP_MODEL);
       jsonDoc[F("device")] = serialized(device);
       jsonDoc[F("device_class")] = F("firmware");
       jsonDoc[F("entity_category")] = F("config");
