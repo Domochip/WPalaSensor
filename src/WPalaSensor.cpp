@@ -295,29 +295,43 @@ void WPalaSensor::refresh()
   // publish to MQTT
   if (_mqttMan.connected())
   {
-    // prepare base topic
-    String baseTopic = _preparedMqttBaseTopic;
+    char topic[sizeof(_preparedMqttBaseTopic) + 14]; // 14 = len("/TempToDisplay")
+    char val[9];
 
     // publish oneWire temperature
-    _mqttMan.publish((baseTopic + F("/OWTemp")).c_str(), String(_owTemperature).c_str(), true);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/OWTemp"), _preparedMqttBaseTopic);
+    dtostrf(_owTemperature, 1, 2, val);
+    _mqttMan.publish(topic, val, true);
 
     // publish Home Automation temperature
-    _mqttMan.publish((baseTopic + F("/HATemp")).c_str(), String(_haTemperature).c_str(), true);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/HATemp"), _preparedMqttBaseTopic);
+    dtostrf(_haTemperature, 1, 2, val);
+    _mqttMan.publish(topic, val, true);
 
     // publish temperature to display
-    _mqttMan.publish((baseTopic + F("/TempToDisplay")).c_str(), String(temperatureToDisplay).c_str(), true);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/TempToDisplay"), _preparedMqttBaseTopic);
+    dtostrf(temperatureToDisplay, 1, 2, val);
+    _mqttMan.publish(topic, val, true);
 
     // publish last used temperature
-    _mqttMan.publish((baseTopic + F("/LastTempUsed")).c_str(), String(_lastTemperatureUsed).c_str(), true);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/LastTempUsed"), _preparedMqttBaseTopic);
+    dtostrf(_lastTemperatureUsed, 1, 2, val);
+    _mqttMan.publish(topic, val, true);
 
     // publish Stove temperature
-    _mqttMan.publish((baseTopic + F("/StoveTemp")).c_str(), String(_stoveTemperature).c_str(), true);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/StoveTemp"), _preparedMqttBaseTopic);
+    dtostrf(_stoveTemperature, 1, 2, val);
+    _mqttMan.publish(topic, val, true);
 
     // publish Delta
-    _mqttMan.publish((baseTopic + F("/Delta")).c_str(), String(_stoveDelta).c_str(), true);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/Delta"), _preparedMqttBaseTopic);
+    dtostrf(_stoveDelta, 1, 2, val);
+    _mqttMan.publish(topic, val, true);
 
     // publish Pushed temperature
-    _mqttMan.publish((baseTopic + F("/PushedTemp")).c_str(), String(_pushedTemperature).c_str(), true);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/PushedTemp"), _preparedMqttBaseTopic);
+    dtostrf(_pushedTemperature, 1, 2, val);
+    _mqttMan.publish(topic, val, true);
   }
 #endif
 }
