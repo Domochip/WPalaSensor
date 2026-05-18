@@ -11,7 +11,7 @@ void WPalaSensor::setDac(float temperature, bool EEPROM /* = false*/)
   // calculate and return resistance value based on provided temperature
   double x = (1 / _steinhartHartCoeffs[2]) * (_steinhartHartCoeffs[0] - (1 / temperatureK));
   double y = sqrt(pow(_steinhartHartCoeffs[1] / (3 * _steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
-  setDac((int)(exp(pow(y - (x / 2), 1.0F / 3) - pow(y + (x / 2), 1.0F / 3))), EEPROM);
+  setDac((int)(exp(cbrt(y - (x / 2)) - cbrt(y + (x / 2)))), EEPROM);
 }
 //-----------------------------------------------------------------------
 // Set DAC equivalent resistance
