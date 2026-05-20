@@ -947,7 +947,7 @@ void WPalaSensor::fillConfigJSON(JsonDocument &doc, bool forSaveFile)
   if (!forSaveFile || _ha.cboxProtocol == CBOX_PROTO_HTTP)
   {
     if (_ha.http.cboxIp)
-      doc[F("cbhip")] = IPAddress(_ha.http.cboxIp).toString();
+      doc[F("cbhip")] = WifiMan::ipToCString(_ha.http.cboxIp);
   }
 
   // if for WebPage or CBox protocol selected is MQTT

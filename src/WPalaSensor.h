@@ -2,6 +2,7 @@
 #define WPalaSensor_h
 
 #include "Main.h"
+#include "base/WifiMan.h"
 #include "base/MQTTMan.h"
 #include "base/Application.h"
 
