@@ -713,7 +713,6 @@ void WPalaSensor::setConfigDefaultValues()
 bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
 {
   JsonVariant jv;
-  char tempPassword[183 + 1] = {0};
 
   if ((jv = doc[F("rp")]).is<JsonVariant>())
     _refreshPeriod = jv;
@@ -762,14 +761,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
     if ((jv = doc[F("hamu")]).is<const char *>())
       strlcpy(_ha.mqtt.username, jv, sizeof(_ha.mqtt.username));
 
-    // put MQTT password into tempPassword
     if ((jv = doc[F("hamp")]).is<const char *>())
     {
-      strlcpy(tempPassword, jv, sizeof(_ha.mqtt.password));
-
-      // if not from web page or password is not the predefined one then copy it to _ha.mqtt.password
-      if (!fromWebPage || strcmp_P(tempPassword, appDataPredefPassword))
-        strcpy(_ha.mqtt.password, tempPassword);
+      // if not from web page or value is not the predefined one
+      if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
+        strlcpy(_ha.mqtt.password, jv, sizeof(_ha.mqtt.password));
     }
     if ((jv = doc[F("hambt")]).is<const char *>())
       strlcpy(_ha.mqtt.baseTopic, jv, sizeof(_ha.mqtt.baseTopic));
@@ -796,14 +792,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
     {
     case HA_HTTP_JEEDOM:
 
-      // put apiKey into tempPassword
       if ((jv = doc[F("hahjak")]).is<const char *>())
       {
-        strlcpy(tempPassword, jv, sizeof(_ha.http.secret));
-
-        // if not from web page or received apiKey is not the predefined one then copy it to _ha.http.secret
-        if (!fromWebPage || strcmp_P(tempPassword, appDataPredefPassword))
-          strcpy(_ha.http.secret, tempPassword);
+        // if not from web page or value is not the predefined one
+        if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
+          strlcpy(_ha.http.secret, jv, sizeof(_ha.http.secret));
       }
 
       if (!_ha.http.hostname[0] || !_ha.http.secret[0])
@@ -815,14 +808,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
       if ((jv = doc[F("hahfuser")]).is<const char *>())
         strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
 
-      // put Fibaropassword into tempPassword
       if ((jv = doc[F("hahfpass")]).is<const char *>())
       {
-        strlcpy(tempPassword, jv, sizeof(_ha.http.secret));
-
-        // if not from web page or password is not the predefined one then copy it to _ha.http.secret
-        if (!fromWebPage || strcmp_P(tempPassword, appDataPredefPassword))
-          strcpy(_ha.http.secret, tempPassword);
+        // if not from web page or value is not the predefined one
+        if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
+          strlcpy(_ha.http.secret, jv, sizeof(_ha.http.secret));
       }
 
       if (!_ha.http.hostname[0])
@@ -838,14 +828,11 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
       if ((jv = doc[F("hahhaei")]).is<const char *>())
         strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
 
-      // put longLivedAccessToken into tempPassword
       if ((jv = doc[F("hahhallat")]).is<const char *>())
       {
-        strlcpy(tempPassword, jv, sizeof(_ha.http.secret));
-
-        // if not from web page or long-lived access token is not the predefined one then copy it to _ha.http.secret
-        if (!fromWebPage || strcmp_P(tempPassword, appDataPredefPassword))
-          strcpy(_ha.http.secret, tempPassword);
+        // if not from web page or value is not the predefined one
+        if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
+          strlcpy(_ha.http.secret, jv, sizeof(_ha.http.secret));
       }
 
       if (!_ha.http.hostname[0] || !_ha.http.homeassistant.entityId[0] || !_ha.http.secret[0])
