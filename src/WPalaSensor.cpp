@@ -506,7 +506,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   LOG_SERIAL_PRINTLN(F("Publish Home Assistant Discovery data"));
 
   // variables
-  JsonDocument jsonDoc;
+  JsonDocument json;
   String device, availability;
   String uniqueIdPrefix;
   String uniqueId;
@@ -520,14 +520,14 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   // ---------- Device ----------
 
   // prepare device JSON
-  jsonDoc[F("configuration_url")] = F("http://" CUSTOM_APP_MODEL ".local");
-  jsonDoc[F("identifiers")][0] = uniqueIdPrefix;
-  jsonDoc[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
-  jsonDoc[F("model")] = F(CUSTOM_APP_MODEL);
-  jsonDoc[F("name")] = WiFi.getHostname();
-  jsonDoc[F("sw_version")] = VERSION;
-  serializeJson(jsonDoc, device); // serialize to device String
-  jsonDoc.clear();                // clean jsonDoc
+  json[F("configuration_url")] = F("http://" CUSTOM_APP_MODEL ".local");
+  json[F("identifiers")][0] = uniqueIdPrefix;
+  json[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
+  json[F("model")] = F(CUSTOM_APP_MODEL);
+  json[F("name")] = WiFi.getHostname();
+  json[F("sw_version")] = VERSION;
+  serializeJson(json, device); // serialize to device String
+  json.clear();                // clean json
 
   // ----- Entities -----
 
@@ -545,21 +545,21 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   topic += F("/config");
 
   // prepare payload for connectivity sensor
-  jsonDoc[F("~")] = _preparedMqttBaseTopic;
-  jsonDoc[F("default_entity_id")] = F("binary_sensor." CUSTOM_APP_MODEL "_connectivity");
-  jsonDoc[F("device_class")] = F("connectivity");
-  jsonDoc[F("device")] = serialized(device);
-  jsonDoc[F("entity_category")] = F("diagnostic");
-  jsonDoc[F("object_id")] = F(CUSTOM_APP_MODEL "_connectivity");
-  jsonDoc[F("state_topic")] = F("~/connected");
-  jsonDoc[F("unique_id")] = uniqueId;
-  jsonDoc[F("value_template")] = F("{{ iif(int(value) > 0, 'ON', 'OFF') }}");
+  json[F("~")] = _preparedMqttBaseTopic;
+  json[F("default_entity_id")] = F("binary_sensor." CUSTOM_APP_MODEL "_connectivity");
+  json[F("device_class")] = F("connectivity");
+  json[F("device")] = serialized(device);
+  json[F("entity_category")] = F("diagnostic");
+  json[F("object_id")] = F(CUSTOM_APP_MODEL "_connectivity");
+  json[F("state_topic")] = F("~/connected");
+  json[F("unique_id")] = uniqueId;
+  json[F("value_template")] = F("{{ iif(int(value) > 0, 'ON', 'OFF') }}");
 
   // publish
-  _mqttMan.publish(topic.c_str(), jsonDoc, true);
+  _mqttMan.publish(topic.c_str(), json, true);
 
   // clean
-  jsonDoc.clear();
+  json.clear();
 
   return true;
 }
@@ -594,7 +594,7 @@ bool WPalaSensor::mqttPublishUpdate()
       // then publish updated Update autodiscovery
 
       // variables
-      JsonDocument jsonDoc;
+      JsonDocument json;
       String device, availability;
 
       String uniqueIdPrefix;
@@ -608,20 +608,20 @@ bool WPalaSensor::mqttPublishUpdate()
       // ---------- Device ----------
 
       // prepare device JSON
-      jsonDoc[F("configuration_url")] = F("http://" CUSTOM_APP_MODEL ".local");
-      jsonDoc[F("identifiers")][0] = uniqueIdPrefix;
-      jsonDoc[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
-      jsonDoc[F("model")] = F(CUSTOM_APP_MODEL);
-      jsonDoc[F("name")] = WiFi.getHostname();
-      jsonDoc[F("sw_version")] = VERSION;
-      serializeJson(jsonDoc, device); // serialize to device String
-      jsonDoc.clear();                // clean jsonDoc
+      json[F("configuration_url")] = F("http://" CUSTOM_APP_MODEL ".local");
+      json[F("identifiers")][0] = uniqueIdPrefix;
+      json[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
+      json[F("model")] = F(CUSTOM_APP_MODEL);
+      json[F("name")] = WiFi.getHostname();
+      json[F("sw_version")] = VERSION;
+      serializeJson(json, device); // serialize to device String
+      json.clear();                // clean json
 
       // prepare availability JSON for entities
-      jsonDoc[F("topic")] = F("~/connected");
-      jsonDoc[F("value_template")] = F("{{ iif(int(value) > 0, 'online', 'offline') }}");
-      serializeJson(jsonDoc, availability); // serialize to availability String
-      jsonDoc.clear();                      // clean jsonDoc
+      json[F("topic")] = F("~/connected");
+      json[F("value_template")] = F("{{ iif(int(value) > 0, 'online', 'offline') }}");
+      serializeJson(json, availability); // serialize to availability String
+      json.clear();                      // clean json
 
       // ----- Entities -----
 
@@ -639,20 +639,20 @@ bool WPalaSensor::mqttPublishUpdate()
       topic += F("/config");
 
       // prepare payload for update sensor
-      jsonDoc[F("~")] = _preparedMqttBaseTopic;
-      jsonDoc[F("availability")] = serialized(availability);
-      jsonDoc[F("command_topic")] = F("~/update/install");
-      jsonDoc[F("default_entity_id")] = F("update." CUSTOM_APP_MODEL);
-      jsonDoc[F("device")] = serialized(device);
-      jsonDoc[F("device_class")] = F("firmware");
-      jsonDoc[F("entity_category")] = F("config");
-      jsonDoc[F("object_id")] = F(CUSTOM_APP_MODEL);
-      jsonDoc[F("payload_install")] = version;
-      jsonDoc[F("state_topic")] = F("~/update");
-      jsonDoc[F("unique_id")] = uniqueId;
+      json[F("~")] = _preparedMqttBaseTopic;
+      json[F("availability")] = serialized(availability);
+      json[F("command_topic")] = F("~/update/install");
+      json[F("default_entity_id")] = F("update." CUSTOM_APP_MODEL);
+      json[F("device")] = serialized(device);
+      json[F("device_class")] = F("firmware");
+      json[F("entity_category")] = F("config");
+      json[F("object_id")] = F(CUSTOM_APP_MODEL);
+      json[F("payload_install")] = version;
+      json[F("state_topic")] = F("~/update");
+      json[F("unique_id")] = uniqueId;
 
       // publish
-      _mqttMan.publish(topic.c_str(), jsonDoc, true);
+      _mqttMan.publish(topic.c_str(), json, true);
     }
   }
 
@@ -1156,8 +1156,8 @@ void WPalaSensor::appInitWebServer(WebServer &server)
             [this, &server]()
             {
 #define TICK_TO_SKIP 20
-              JsonDocument doc;
-              DeserializationError error = deserializeJson(doc, server.arg(F("plain")));
+              JsonDocument json;
+              DeserializationError error = deserializeJson(json, server.arg(F("plain")));
 
               if (error)
               {
@@ -1168,7 +1168,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               JsonVariant jv;
 
               // look for temperature to apply
-              if ((jv = doc[F("temperature")]).is<JsonVariant>())
+              if ((jv = json[F("temperature")]).is<JsonVariant>())
               {
                 // convert and set it
                 setDac(jv.as<float>());
@@ -1177,7 +1177,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               }
 
               // look for increase of dac
-              if (doc[F("up")].is<JsonVariant>())
+              if (json[F("up")].is<JsonVariant>())
               {
                 // go one step up
                 _dac.setValue(_dac.getValue() + 1);
@@ -1186,7 +1186,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               }
 
               // look for decrease of dac
-              if (doc[F("down")].is<JsonVariant>())
+              if (json[F("down")].is<JsonVariant>())
               {
                 // go one step down
                 _dac.setValue(_dac.getValue() - 1);
@@ -1197,7 +1197,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
 #if DEVELOPPER_MODE
 
               // look for dac requested position
-              if ((jv = doc[F("dac")]).is<JsonVariant>())
+              if ((jv = json[F("dac")]).is<JsonVariant>())
               {
                 // convert and set it
                 _dac.setValue(jv);
@@ -1206,7 +1206,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               }
 
               // look for resistance to apply
-              if ((jv = doc[F("resistance")]).is<JsonVariant>())
+              if ((jv = json[F("resistance")]).is<JsonVariant>())
               {
                 // convert resistance value and call right function
                 setDac(jv.as<int>());
