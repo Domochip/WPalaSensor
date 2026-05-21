@@ -710,43 +710,43 @@ void WPalaSensor::setConfigDefaultValues()
 
 //------------------------------------------
 // Parse JSON object into configuration properties
-bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
+bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage = false)
 {
   JsonVariant jv;
 
-  if ((jv = doc[F("rp")]).is<JsonVariant>())
+  if ((jv = json[F("rp")]).is<JsonVariant>())
     _refreshPeriod = jv;
 
-  if ((jv = doc[F("sha")]).is<JsonVariant>())
+  if ((jv = json[F("sha")]).is<JsonVariant>())
     _steinhartHartCoeffs[0] = jv;
-  if ((jv = doc[F("shb")]).is<JsonVariant>())
+  if ((jv = json[F("shb")]).is<JsonVariant>())
     _steinhartHartCoeffs[1] = jv;
-  if ((jv = doc[F("shc")]).is<JsonVariant>())
+  if ((jv = json[F("shc")]).is<JsonVariant>())
     _steinhartHartCoeffs[2] = jv;
 
   // Parse Home Automation config
 
-  if ((jv = doc[F("haproto")]).is<JsonVariant>())
+  if ((jv = json[F("haproto")]).is<JsonVariant>())
     _ha.protocol = jv;
 
   // if an home Automation protocol has been selected then get common param
   if (_ha.protocol != HA_PROTO_DISABLED)
   {
-    if ((jv = doc[F("hamfr")]).is<JsonVariant>())
+    if ((jv = json[F("hamfr")]).is<JsonVariant>())
       _ha.maxFailedRequest = jv;
 
-    if ((jv = doc[F("hatt")]).is<JsonVariant>())
+    if ((jv = json[F("hatt")]).is<JsonVariant>())
       _ha.temperatureTimeout = jv;
   }
 
   // Parse ConnectionBox config
-  if ((jv = doc[F("cbproto")]).is<JsonVariant>())
+  if ((jv = json[F("cbproto")]).is<JsonVariant>())
     _ha.cboxProtocol = jv;
 
   // if an ConnectionBox protocol has been selected then get common param
   if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
   {
-    if ((jv = doc[F("cbtt")]).is<JsonVariant>())
+    if ((jv = json[F("cbtt")]).is<JsonVariant>())
       _ha.cboxTemperatureTimeout = jv;
   }
 
@@ -754,24 +754,24 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
   if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
 
-    if ((jv = doc[F("hamhost")]).is<const char *>())
+    if ((jv = json[F("hamhost")]).is<const char *>())
       strlcpy(_ha.mqtt.hostname, jv, sizeof(_ha.mqtt.hostname));
-    if ((jv = doc[F("hamport")]).is<JsonVariant>())
+    if ((jv = json[F("hamport")]).is<JsonVariant>())
       _ha.mqtt.port = jv;
-    if ((jv = doc[F("hamu")]).is<const char *>())
+    if ((jv = json[F("hamu")]).is<const char *>())
       strlcpy(_ha.mqtt.username, jv, sizeof(_ha.mqtt.username));
 
-    if ((jv = doc[F("hamp")]).is<const char *>())
+    if ((jv = json[F("hamp")]).is<const char *>())
     {
       // if not from web page or value is not the predefined one
       if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
         strlcpy(_ha.mqtt.password, jv, sizeof(_ha.mqtt.password));
     }
-    if ((jv = doc[F("hambt")]).is<const char *>())
+    if ((jv = json[F("hambt")]).is<const char *>())
       strlcpy(_ha.mqtt.baseTopic, jv, sizeof(_ha.mqtt.baseTopic));
 
-    _ha.mqtt.hassDiscoveryEnabled = doc[F("hamhassde")];
-    if ((jv = doc[F("hamhassdp")]).is<const char *>())
+    _ha.mqtt.hassDiscoveryEnabled = json[F("hamhassde")];
+    if ((jv = json[F("hamhassdp")]).is<const char *>())
       strlcpy(_ha.mqtt.hassDiscoveryPrefix, jv, sizeof(_ha.mqtt.hassDiscoveryPrefix));
   }
 
@@ -780,19 +780,19 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
   {
   case HA_PROTO_HTTP:
 
-    if ((jv = doc[F("hahtype")]).is<JsonVariant>())
+    if ((jv = json[F("hahtype")]).is<JsonVariant>())
       _ha.http.type = jv;
-    if ((jv = doc[F("hahhost")]).is<const char *>())
+    if ((jv = json[F("hahhost")]).is<const char *>())
       strlcpy(_ha.http.hostname, jv, sizeof(_ha.http.hostname));
-    _ha.http.tls = doc[F("hahtls")];
-    if ((jv = doc[F("hahtempid")]).is<JsonVariant>())
+    _ha.http.tls = json[F("hahtls")];
+    if ((jv = json[F("hahtempid")]).is<JsonVariant>())
       _ha.http.temperatureId = jv;
 
     switch (_ha.http.type)
     {
     case HA_HTTP_JEEDOM:
 
-      if ((jv = doc[F("hahjak")]).is<const char *>())
+      if ((jv = json[F("hahjak")]).is<const char *>())
       {
         // if not from web page or value is not the predefined one
         if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
@@ -805,10 +805,10 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
 
     case HA_HTTP_FIBARO:
 
-      if ((jv = doc[F("hahfuser")]).is<const char *>())
+      if ((jv = json[F("hahfuser")]).is<const char *>())
         strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
 
-      if ((jv = doc[F("hahfpass")]).is<const char *>())
+      if ((jv = json[F("hahfpass")]).is<const char *>())
       {
         // if not from web page or value is not the predefined one
         if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
@@ -825,10 +825,10 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
       if (_ha.http.hostname[0] && !strchr(_ha.http.hostname, ':') && !_ha.http.tls && (strlen(_ha.http.hostname) + 5 < sizeof(_ha.http.hostname) - 1))
         strcat(_ha.http.hostname, ":8123");
 
-      if ((jv = doc[F("hahhaei")]).is<const char *>())
+      if ((jv = json[F("hahhaei")]).is<const char *>())
         strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
 
-      if ((jv = doc[F("hahhallat")]).is<const char *>())
+      if ((jv = json[F("hahhallat")]).is<const char *>())
       {
         // if not from web page or value is not the predefined one
         if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
@@ -843,7 +843,7 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
     break;
   case HA_PROTO_MQTT:
 
-    if ((jv = doc[F("hamtemptopic")]).is<const char *>())
+    if ((jv = json[F("hamtemptopic")]).is<const char *>())
       strlcpy(_ha.mqtt.temperatureTopic, jv, sizeof(_ha.mqtt.temperatureTopic));
 
     if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.temperatureTopic[0])
@@ -856,7 +856,7 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
   {
   case CBOX_PROTO_HTTP:
 
-    if ((jv = doc[F("cbhip")]).is<const char *>())
+    if ((jv = json[F("cbhip")]).is<const char *>())
     {
       IPAddress ipParser;
       if (ipParser.fromString(jv.as<const char *>()))
@@ -871,7 +871,7 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
 
   case CBOX_PROTO_MQTT:
 
-    if ((jv = doc[F("cbmt1topic")]).is<const char *>())
+    if ((jv = json[F("cbmt1topic")]).is<const char *>())
       strlcpy(_ha.mqtt.cboxT1Topic, jv, sizeof(_ha.mqtt.cboxT1Topic));
 
     if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.cboxT1Topic[0])
@@ -884,145 +884,145 @@ bool WPalaSensor::parseConfigJSON(JsonDocument &doc, bool fromWebPage = false)
 
 //------------------------------------------
 // Generate JSON from configuration properties
-void WPalaSensor::fillConfigJSON(JsonDocument &doc, bool forSaveFile)
+void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile)
 {
-  doc["rp"] = _refreshPeriod;
+  json["rp"] = _refreshPeriod;
 
-  doc[F("sha")] = serialized(String(_steinhartHartCoeffs[0], 16));
-  doc[F("shb")] = serialized(String(_steinhartHartCoeffs[1], 16));
-  doc[F("shc")] = serialized(String(_steinhartHartCoeffs[2], 16));
+  json[F("sha")] = serialized(String(_steinhartHartCoeffs[0], 16));
+  json[F("shb")] = serialized(String(_steinhartHartCoeffs[1], 16));
+  json[F("shc")] = serialized(String(_steinhartHartCoeffs[2], 16));
 
-  doc[F("hamfr")] = _ha.maxFailedRequest;
-  doc[F("haproto")] = _ha.protocol;
-  doc[F("hatt")] = _ha.temperatureTimeout;
+  json[F("hamfr")] = _ha.maxFailedRequest;
+  json[F("haproto")] = _ha.protocol;
+  json[F("hatt")] = _ha.temperatureTimeout;
 
   // if for WebPage or protocol selected is HTTP
   if (!forSaveFile || _ha.protocol == HA_PROTO_HTTP)
   {
-    doc[F("hahtype")] = _ha.http.type;
-    doc[F("hahhost")] = _ha.http.hostname;
-    doc[F("hahtls")] = _ha.http.tls;
-    doc[F("hahtempid")] = _ha.http.temperatureId;
+    json[F("hahtype")] = _ha.http.type;
+    json[F("hahhost")] = _ha.http.hostname;
+    json[F("hahtls")] = _ha.http.tls;
+    json[F("hahtempid")] = _ha.http.temperatureId;
 
     // if Home Automation protocol selected is Jeedom
     if (_ha.http.type == HA_HTTP_JEEDOM)
     {
       if (forSaveFile)
-        doc[F("hahjak")] = _ha.http.secret;
+        json[F("hahjak")] = _ha.http.secret;
       else
-        doc[F("hahjak")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+        json[F("hahjak")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
     }
 
     // if Home Automation protocol selected is Fibaro
     if (_ha.http.type == HA_HTTP_FIBARO)
     {
-      doc[F("hahfuser")] = _ha.http.fibaro.username;
+      json[F("hahfuser")] = _ha.http.fibaro.username;
       if (forSaveFile)
-        doc[F("hahfpass")] = _ha.http.secret;
+        json[F("hahfpass")] = _ha.http.secret;
       else
-        doc[F("hahfpass")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+        json[F("hahfpass")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
     }
 
     // if Home Automation protocol selected is HomeAssistant
     if (_ha.http.type == HA_HTTP_HOMEASSISTANT)
     {
-      doc[F("hahhaei")] = _ha.http.homeassistant.entityId;
+      json[F("hahhaei")] = _ha.http.homeassistant.entityId;
       if (forSaveFile)
-        doc[F("hahhallat")] = _ha.http.secret;
+        json[F("hahhallat")] = _ha.http.secret;
       else
-        doc[F("hahhallat")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+        json[F("hahhallat")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
     }
   }
 
   // if for WebPage or protocol selected is MQTT
   if (!forSaveFile || _ha.protocol == HA_PROTO_MQTT)
   {
-    doc[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
+    json[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
   }
 
-  doc[F("cbproto")] = _ha.cboxProtocol;
-  doc[F("cbtt")] = _ha.cboxTemperatureTimeout;
+  json[F("cbproto")] = _ha.cboxProtocol;
+  json[F("cbtt")] = _ha.cboxTemperatureTimeout;
 
   // if for WebPage or CBox protocol selected is HTTP
   if (!forSaveFile || _ha.cboxProtocol == CBOX_PROTO_HTTP)
   {
     if (_ha.http.cboxIp)
-      doc[F("cbhip")] = WifiMan::ipToCString(_ha.http.cboxIp);
+      json[F("cbhip")] = WifiMan::ipToCString(_ha.http.cboxIp);
   }
 
   // if for WebPage or CBox protocol selected is MQTT
   if (!forSaveFile || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
-    doc[F("cbmt1topic")] = _ha.mqtt.cboxT1Topic;
+    json[F("cbmt1topic")] = _ha.mqtt.cboxT1Topic;
   }
 
   if (!forSaveFile || _ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
-    doc[F("hamhost")] = _ha.mqtt.hostname;
-    doc[F("hamport")] = _ha.mqtt.port;
-    doc[F("hamu")] = _ha.mqtt.username;
+    json[F("hamhost")] = _ha.mqtt.hostname;
+    json[F("hamport")] = _ha.mqtt.port;
+    json[F("hamu")] = _ha.mqtt.username;
     if (forSaveFile)
-      doc[F("hamp")] = _ha.mqtt.password;
+      json[F("hamp")] = _ha.mqtt.password;
     else
-      doc[F("hamp")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
-    doc[F("hambt")] = _ha.mqtt.baseTopic;
-    doc[F("hamhassde")] = _ha.mqtt.hassDiscoveryEnabled;
-    doc[F("hamhassdp")] = _ha.mqtt.hassDiscoveryPrefix;
+      json[F("hamp")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+    json[F("hambt")] = _ha.mqtt.baseTopic;
+    json[F("hamhassde")] = _ha.mqtt.hassDiscoveryEnabled;
+    json[F("hamhassdp")] = _ha.mqtt.hassDiscoveryPrefix;
   }
 }
 
 //------------------------------------------
 // Generate JSON of application status
-void WPalaSensor::fillStatusJSON(JsonDocument &doc)
+void WPalaSensor::fillStatusJSON(JsonVariant json)
 {
   // Home automation protocol
   if (_ha.protocol == HA_PROTO_HTTP)
-    doc[F("haprotocol")] = F("HTTP");
+    json[F("haprotocol")] = F("HTTP");
   else if (_ha.protocol == HA_PROTO_MQTT)
-    doc[F("haprotocol")] = F("MQTT");
+    json[F("haprotocol")] = F("MQTT");
   else
-    doc[F("haprotocol")] = F("Disabled");
+    json[F("haprotocol")] = F("Disabled");
 
   // Home automation connection status
   if (_ha.protocol == HA_PROTO_HTTP)
-    doc[F("hahttplastrespcode")] = _haRequestResult;
+    json[F("hahttplastrespcode")] = _haRequestResult;
   else if (_ha.protocol == HA_PROTO_MQTT)
-    doc[F("hamqttstatus")] = _mqttMan.getStateString();
+    json[F("hamqttstatus")] = _mqttMan.getStateString();
 
   // Home Automation last temperature and age
   char buf[10];
   if (_ha.protocol != HA_PROTO_DISABLED)
   {
-    doc[F("haslasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
-    doc[F("haslasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
+    json[F("haslasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
+    json[F("haslasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
   }
 
   // WPalaControl/CBox protocol
   if (_ha.cboxProtocol == CBOX_PROTO_HTTP)
-    doc[F("cboxprotocol")] = F("HTTP");
+    json[F("cboxprotocol")] = F("HTTP");
   else if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
-    doc[F("cboxprotocol")] = F("MQTT");
+    json[F("cboxprotocol")] = F("MQTT");
   else
-    doc[F("cboxprotocol")] = F("Disabled");
+    json[F("cboxprotocol")] = F("Disabled");
 
   // WPalaControl/CBox connection status
   if (_ha.cboxProtocol == CBOX_PROTO_HTTP)
-    doc[F("cboxhttplastrespcode")] = _stoveRequestResult;
+    json[F("cboxhttplastrespcode")] = _stoveRequestResult;
   else if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
-    doc[F("cboxmqttstatus")] = _mqttMan.getStateString();
+    json[F("cboxmqttstatus")] = _mqttMan.getStateString();
 
   // WPalaControl/CBox last temperature and age
   if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
   {
-    doc[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
-    doc[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
+    json[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
+    json[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
   }
 
-  doc[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
-  doc[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
+  json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
+  json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
 
-  doc[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
-  doc[F("dac")] = _dac.getValue();
+  json[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
+  json[F("dac")] = _dac.getValue();
 }
 
 //------------------------------------------
