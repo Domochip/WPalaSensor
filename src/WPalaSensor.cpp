@@ -710,7 +710,7 @@ void WPalaSensor::setConfigDefaultValues()
 
 //------------------------------------------
 // Parse JSON object into configuration properties
-bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage = false)
+bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false */)
 {
   JsonVariant jv;
 
@@ -884,7 +884,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage = false)
 
 //------------------------------------------
 // Generate JSON from configuration properties
-void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile)
+void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false */)
 {
   json["rp"] = _refreshPeriod;
 
@@ -1027,7 +1027,7 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
 
 //------------------------------------------
 // code to execute during initialization and reinitialization of the app
-bool WPalaSensor::appInit(bool reInit)
+bool WPalaSensor::appInit(bool reInit /* = false */)
 {
   // stop Tickers
   _refreshTicker.detach();
