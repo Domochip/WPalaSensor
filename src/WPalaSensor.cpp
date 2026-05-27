@@ -505,9 +505,23 @@ bool WPalaSensor::mqttPublishHassDiscovery()
 
   LOG_SERIAL_PRINTLN(F("Publish Home Assistant Discovery data"));
 
+  // Helper lambda to prepare entity topic
+  auto prepareHassDiscoveryTopic = [&](const String &type, const String &uniqueId)
+  {
+    String topic;
+    topic.reserve(strlen(_ha.mqtt.hassDiscoveryPrefix) + type.length() + uniqueId.length() + 9); // 9 = "/" + "/" + "/config"
+    topic += _ha.mqtt.hassDiscoveryPrefix;
+    topic += F("/");
+    topic += type;
+    topic += F("/");
+    topic += uniqueId;
+    topic += F("/config");
+    return topic;
+  };
+
   // variables
   JsonDocument json;
-  String device, availability;
+  String device;
   String uniqueIdPrefix;
   String uniqueId;
   String topic;
@@ -520,14 +534,15 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   // ---------- Device ----------
 
   // prepare device JSON
-  json[F("configuration_url")] = F("http://" CUSTOM_APP_MODEL ".local");
+  deserializeJson(json, F("{"
+                          "\"configuration_url\":\"http://" CUSTOM_APP_MODEL ".local\","
+                          "\"manufacturer\":\"" CUSTOM_APP_MANUFACTURER "\","
+                          "\"model\":\"" CUSTOM_APP_MODEL "\","
+                          "\"sw_version\":\"" VERSION "\""
+                          "}"));
   json[F("identifiers")][0] = uniqueIdPrefix;
-  json[F("manufacturer")] = F(CUSTOM_APP_MANUFACTURER);
-  json[F("model")] = F(CUSTOM_APP_MODEL);
   json[F("name")] = WiFi.getHostname();
-  json[F("sw_version")] = VERSION;
   serializeJson(json, device); // serialize to device String
-  json.clear();                // clean json
 
   // ----- Entities -----
 
@@ -536,30 +551,24 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   //
 
   // prepare uniqueId, topic and payload for connectivity sensor
-  uniqueId = uniqueIdPrefix;
-  uniqueId += F("_Connectivity");
+  uniqueId = uniqueIdPrefix + F("_Connectivity");
 
-  topic = _ha.mqtt.hassDiscoveryPrefix;
-  topic += F("/binary_sensor/");
-  topic += uniqueId;
-  topic += F("/config");
+  topic = prepareHassDiscoveryTopic(F("binary_sensor"), uniqueId);
 
   // prepare payload for connectivity sensor
+  deserializeJson(json, F("{"
+                          "\"default_entity_id\":\"binary_sensor." CUSTOM_APP_MODEL "_connectivity\","
+                          "\"device_class\":\"connectivity\","
+                          "\"entity_category\":\"diagnostic\","
+                          "\"object_id\":\"" CUSTOM_APP_MODEL "_connectivity\","
+                          "\"state_topic\":\"~/connected\","
+                          "\"value_template\": \"{{ iif(int(value) > 0, 'ON', 'OFF') }}\""
+                          "}"));
   json[F("~")] = _preparedMqttBaseTopic;
-  json[F("default_entity_id")] = F("binary_sensor." CUSTOM_APP_MODEL "_connectivity");
-  json[F("device_class")] = F("connectivity");
   json[F("device")] = serialized(device);
-  json[F("entity_category")] = F("diagnostic");
-  json[F("object_id")] = F(CUSTOM_APP_MODEL "_connectivity");
-  json[F("state_topic")] = F("~/connected");
   json[F("unique_id")] = uniqueId;
-  json[F("value_template")] = F("{{ iif(int(value) > 0, 'ON', 'OFF') }}");
 
-  // publish
   _mqttMan.publish(topic.c_str(), json, true);
-
-  // clean
-  json.clear();
 
   return true;
 }
