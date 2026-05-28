@@ -52,7 +52,7 @@ void WPalaSensor::refresh()
     _applicationList[WifiManApp]->fillStatusJSON(json[getAppIdName(WifiManApp)].to<JsonObject>());
     fillStatusJSON(json[getAppIdName(CustomApp)].to<JsonObject>());
 
-    _mqttMan.publish(_preparedMqttBaseTopic, json, true);
+    _mqttMan.publish(_mqttMan.getBaseTopic(), json, true);
   }
 
   if (_skipTick)
@@ -295,41 +295,41 @@ void WPalaSensor::refresh()
   // publish to MQTT
   if (_mqttMan.connected())
   {
-    char topic[sizeof(_preparedMqttBaseTopic) + 14]; // 14 = len("/TempToDisplay")
+    char topic[MQTTMan::baseTopicSize + 14]; // 14 = len("/TempToDisplay")
     char val[9];
 
     // publish oneWire temperature
-    snprintf_P(topic, sizeof(topic), PSTR("%s/OWTemp"), _preparedMqttBaseTopic);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/OWTemp"), _mqttMan.getBaseTopic());
     dtostrf(_owTemperature, 1, 2, val);
     _mqttMan.publish(topic, val, true);
 
     // publish Home Automation temperature
-    snprintf_P(topic, sizeof(topic), PSTR("%s/HATemp"), _preparedMqttBaseTopic);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/HATemp"), _mqttMan.getBaseTopic());
     dtostrf(_haTemperature, 1, 2, val);
     _mqttMan.publish(topic, val, true);
 
     // publish temperature to display
-    snprintf_P(topic, sizeof(topic), PSTR("%s/TempToDisplay"), _preparedMqttBaseTopic);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/TempToDisplay"), _mqttMan.getBaseTopic());
     dtostrf(temperatureToDisplay, 1, 2, val);
     _mqttMan.publish(topic, val, true);
 
     // publish last used temperature
-    snprintf_P(topic, sizeof(topic), PSTR("%s/LastTempUsed"), _preparedMqttBaseTopic);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/LastTempUsed"), _mqttMan.getBaseTopic());
     dtostrf(_lastTemperatureUsed, 1, 2, val);
     _mqttMan.publish(topic, val, true);
 
     // publish Stove temperature
-    snprintf_P(topic, sizeof(topic), PSTR("%s/StoveTemp"), _preparedMqttBaseTopic);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/StoveTemp"), _mqttMan.getBaseTopic());
     dtostrf(_stoveTemperature, 1, 2, val);
     _mqttMan.publish(topic, val, true);
 
     // publish Delta
-    snprintf_P(topic, sizeof(topic), PSTR("%s/Delta"), _preparedMqttBaseTopic);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/Delta"), _mqttMan.getBaseTopic());
     dtostrf(_stoveDelta, 1, 2, val);
     _mqttMan.publish(topic, val, true);
 
     // publish Pushed temperature
-    snprintf_P(topic, sizeof(topic), PSTR("%s/PushedTemp"), _preparedMqttBaseTopic);
+    snprintf_P(topic, sizeof(topic), PSTR("%s/PushedTemp"), _mqttMan.getBaseTopic());
     dtostrf(_pushedTemperature, 1, 2, val);
     _mqttMan.publish(topic, val, true);
   }
@@ -351,7 +351,7 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
     mqttMan->subscribe(_ha.mqtt.cboxT1Topic);
 
   // subscribe to update/install topic
-  String topic(_preparedMqttBaseTopic);
+  String topic(_mqttMan.getBaseTopic());
   topic += F("/update/install");
   mqttMan->subscribe(topic.c_str());
 
@@ -564,7 +564,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
                           "\"state_topic\":\"~/connected\","
                           "\"value_template\": \"{{ iif(int(value) > 0, 'ON', 'OFF') }}\""
                           "}"));
-  json[F("~")] = _preparedMqttBaseTopic;
+  json[F("~")] = _mqttMan.getBaseTopic();
   json[F("device")] = serialized(device);
   json[F("unique_id")] = uniqueId;
 
@@ -653,7 +653,7 @@ bool WPalaSensor::mqttPublishUpdate()
                               "\"object_id\":\"" CUSTOM_APP_MODEL "\","
                               "\"state_topic\":\"~/update\""
                               "}"));
-      json[F("~")] = _preparedMqttBaseTopic;
+      json[F("~")] = _mqttMan.getBaseTopic();
       json[F("availability")] = serialized(availabilityJSON);
       json[F("device")] = serialized(device);
       json[F("payload_install")] = version;
@@ -665,7 +665,7 @@ bool WPalaSensor::mqttPublishUpdate()
   }
 
   // calculate topic
-  topic = _preparedMqttBaseTopic;
+  topic = _mqttMan.getBaseTopic();
   topic += F("/update");
 
   // publish install in_progress (new in 2024.11)
@@ -1052,17 +1052,10 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
   // if MQTT used so configure it
   if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
   {
-    // prepare base topic
-    MQTTMan::prepareTopic(_ha.mqtt.baseTopic, _preparedMqttBaseTopic, sizeof(_preparedMqttBaseTopic));
-
-    // prepare will topic
-    String willTopic = _preparedMqttBaseTopic;
-    willTopic += F("/connected");
-
     // setup MQTT
     _mqttMan.setBufferSize(600); // max JSON size (Connectivity HAss discovery ~450)
     _mqttMan.setClient(_wifiClient).setServer(_ha.mqtt.hostname, _ha.mqtt.port);
-    _mqttMan.setConnectedAndWillTopic(willTopic.c_str());
+    _mqttMan.setBaseTopic(_ha.mqtt.baseTopic);
     _mqttMan.setConnectedCallback(std::bind(&WPalaSensor::mqttConnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
     _mqttMan.setCallback(std::bind(&WPalaSensor::mqttCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
