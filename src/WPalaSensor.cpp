@@ -1,5 +1,8 @@
 #include "WPalaSensor.h"
 
+#include "data/status2.html.gz.h"
+#include "data/config2.html.gz.h"
+
 //-----------------------------------------------------------------------
 // Steinhart–Hart reverse function
 //-----------------------------------------------------------------------
