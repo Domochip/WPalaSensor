@@ -1,8 +1,5 @@
 #include "WPalaSensor.h"
 
-#include "data/status2.html.gz.h"
-#include "data/config2.html.gz.h"
-
 //-----------------------------------------------------------------------
 // Steinhart–Hart reverse function
 //-----------------------------------------------------------------------
@@ -1097,21 +1094,6 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
 #endif
 
   return _ds18b20.getReady();
-}
-
-//------------------------------------------
-// Return HTML compressed pages
-Application::HtmlPage WPalaSensor::getHTMLContent(WebPageForPlaceHolder wp)
-{
-  switch (wp)
-  {
-  case status:
-    return {status2htmlgz, sizeof(status2htmlgz)};
-  case config:
-    return {config2htmlgz, sizeof(config2htmlgz)};
-  default:
-    return {nullptr, 0};
-  }
 }
 
 //------------------------------------------
