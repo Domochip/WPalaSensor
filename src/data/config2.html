@@ -282,8 +282,7 @@
 <input type='number' id='R3' style='display:none'>
 
 <script>
-    //QuerySelector Prefix is added by load function to know into what element querySelector need to look for
-    //var qsp = '#contentX ';
+    // qsp is substituted at build time by pio_pre_build_spa.py — var qsp = '#content2 ';
 
     function getSteinhartHart(R1, T1, R2, T2, R3, T3) {
         T1 = T1 + 273.15; T2 = T2 + 273.15; T3 = T3 + 273.15;

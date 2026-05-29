@@ -36,8 +36,7 @@ Used: <span id="onewiretempused"></span><br>
 Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<br>
 
 <script>
-    //QuerySelector Prefix is added by load function to know into what element querySelector need to look for
-    //var qsp = '#contentX ';
+    // qsp is substituted at build time by pio_pre_build_spa.py — var qsp = '#content2 ';
 
     getJSON("/gs" + qsp[8],
         function (GS) {
