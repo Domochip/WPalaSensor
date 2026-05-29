@@ -769,12 +769,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
     if ((jv = json[F("hamu")]).is<const char *>())
       strlcpy(_ha.mqtt.username, jv, sizeof(_ha.mqtt.username));
 
-    if ((jv = json[F("hamp")]).is<const char *>())
-    {
-      // if not from web page or value is not the predefined one
-      if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
-        strlcpy(_ha.mqtt.password, jv, sizeof(_ha.mqtt.password));
-    }
+    parseSecret(json[F("hamp")], _ha.mqtt.password, sizeof(_ha.mqtt.password), fromWebPage);
     if ((jv = json[F("hambt")]).is<const char *>())
       strlcpy(_ha.mqtt.baseTopic, jv, sizeof(_ha.mqtt.baseTopic));
 
@@ -800,12 +795,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
     {
     case HA_HTTP_JEEDOM:
 
-      if ((jv = json[F("hahjak")]).is<const char *>())
-      {
-        // if not from web page or value is not the predefined one
-        if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
-          strlcpy(_ha.http.secret, jv, sizeof(_ha.http.secret));
-      }
+      parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
       if (!_ha.http.hostname[0] || !_ha.http.secret[0])
         _ha.protocol = HA_PROTO_DISABLED;
@@ -816,12 +806,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
       if ((jv = json[F("hahfuser")]).is<const char *>())
         strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
 
-      if ((jv = json[F("hahfpass")]).is<const char *>())
-      {
-        // if not from web page or value is not the predefined one
-        if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
-          strlcpy(_ha.http.secret, jv, sizeof(_ha.http.secret));
-      }
+      parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
       if (!_ha.http.hostname[0])
         _ha.protocol = HA_PROTO_DISABLED;
@@ -836,12 +821,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
       if ((jv = json[F("hahhaei")]).is<const char *>())
         strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
 
-      if ((jv = json[F("hahhallat")]).is<const char *>())
-      {
-        // if not from web page or value is not the predefined one
-        if (!fromWebPage || strcmp_P(jv, appDataPredefPassword))
-          strlcpy(_ha.http.secret, jv, sizeof(_ha.http.secret));
-      }
+      parseSecret(json[F("hahhallat")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
       if (!_ha.http.hostname[0] || !_ha.http.homeassistant.entityId[0] || !_ha.http.secret[0])
         _ha.protocol = HA_PROTO_DISABLED;
@@ -915,30 +895,21 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
     // if Home Automation protocol selected is Jeedom
     if (_ha.http.type == HA_HTTP_JEEDOM)
     {
-      if (forSaveFile)
-        json[F("hahjak")] = _ha.http.secret;
-      else
-        json[F("hahjak")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+      fillSecret(json, F("hahjak"), _ha.http.secret, forSaveFile);
     }
 
     // if Home Automation protocol selected is Fibaro
     if (_ha.http.type == HA_HTTP_FIBARO)
     {
       json[F("hahfuser")] = _ha.http.fibaro.username;
-      if (forSaveFile)
-        json[F("hahfpass")] = _ha.http.secret;
-      else
-        json[F("hahfpass")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+      fillSecret(json, F("hahfpass"), _ha.http.secret, forSaveFile);
     }
 
     // if Home Automation protocol selected is HomeAssistant
     if (_ha.http.type == HA_HTTP_HOMEASSISTANT)
     {
       json[F("hahhaei")] = _ha.http.homeassistant.entityId;
-      if (forSaveFile)
-        json[F("hahhallat")] = _ha.http.secret;
-      else
-        json[F("hahhallat")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+      fillSecret(json, F("hahhallat"), _ha.http.secret, forSaveFile);
     }
   }
 
@@ -969,10 +940,7 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
     json[F("hamhost")] = _ha.mqtt.hostname;
     json[F("hamport")] = _ha.mqtt.port;
     json[F("hamu")] = _ha.mqtt.username;
-    if (forSaveFile)
-      json[F("hamp")] = _ha.mqtt.password;
-    else
-      json[F("hamp")] = (const __FlashStringHelper *)appDataPredefPassword; // predefined special password (mean to keep already saved one)
+    fillSecret(json, F("hamp"), _ha.mqtt.password, forSaveFile);
     json[F("hambt")] = _ha.mqtt.baseTopic;
     json[F("hamhassde")] = _ha.mqtt.hassDiscoveryEnabled;
     json[F("hamhassdp")] = _ha.mqtt.hassDiscoveryPrefix;

@@ -6,8 +6,6 @@
 #include "base/MQTTMan.h"
 #include "base/Application.h"
 
-const char appDataPredefPassword[] PROGMEM = "ewcXoCt4HHjZUvY1";
-
 #ifdef ESP8266
 #include <ESP8266HTTPClient.h>
 #else
