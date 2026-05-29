@@ -796,9 +796,6 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
     case HA_HTTP_JEEDOM:
 
       parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
-
-      if (!_ha.http.hostname[0] || !_ha.http.secret[0])
-        _ha.protocol = HA_PROTO_DISABLED;
       break;
 
     case HA_HTTP_FIBARO:
@@ -807,24 +804,14 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
         strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
 
       parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
-
-      if (!_ha.http.hostname[0])
-        _ha.protocol = HA_PROTO_DISABLED;
       break;
 
     case HA_HTTP_HOMEASSISTANT:
-
-      // if hostname is not empty and doesn't contains ":" and tls not enabled then add ":8123" (if it fits)
-      if (_ha.http.hostname[0] && !strchr(_ha.http.hostname, ':') && !_ha.http.tls && (strlen(_ha.http.hostname) + 5 < sizeof(_ha.http.hostname) - 1))
-        strcat(_ha.http.hostname, ":8123");
 
       if ((jv = json[F("hahhaei")]).is<const char *>())
         strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
 
       parseSecret(json[F("hahhallat")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
-
-      if (!_ha.http.hostname[0] || !_ha.http.homeassistant.entityId[0] || !_ha.http.secret[0])
-        _ha.protocol = HA_PROTO_DISABLED;
       break;
     }
 
@@ -833,9 +820,6 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
 
     if ((jv = json[F("hamtemptopic")]).is<const char *>())
       strlcpy(_ha.mqtt.temperatureTopic, jv, sizeof(_ha.mqtt.temperatureTopic));
-
-    if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.temperatureTopic[0])
-      _ha.protocol = HA_PROTO_DISABLED;
     break;
   }
 
@@ -852,22 +836,65 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
       else
         _ha.http.cboxIp = 0;
     }
-
-    if (!_ha.http.cboxIp)
-      _ha.cboxProtocol = CBOX_PROTO_DISABLED;
     break;
 
   case CBOX_PROTO_MQTT:
 
     if ((jv = json[F("cbmt1topic")]).is<const char *>())
       strlcpy(_ha.mqtt.cboxT1Topic, jv, sizeof(_ha.mqtt.cboxT1Topic));
-
-    if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.cboxT1Topic[0])
-      _ha.cboxProtocol = CBOX_PROTO_DISABLED;
     break;
   }
 
   return true;
+}
+
+//------------------------------------------
+// Normalise and validate configuration — disable protocols with missing required fields
+void WPalaSensor::validateConfig()
+{
+  // Normalise HomeAssistant hostname: append ":8123" if no port is specified and TLS is off
+  if (_ha.protocol == HA_PROTO_HTTP && _ha.http.type == HA_HTTP_HOMEASSISTANT)
+    if (_ha.http.hostname[0] && !strchr(_ha.http.hostname, ':') && !_ha.http.tls && (strlen(_ha.http.hostname) + 5 < sizeof(_ha.http.hostname) - 1))
+      strcat(_ha.http.hostname, ":8123");
+
+  // Disable HA protocol if required fields are missing
+  switch (_ha.protocol)
+  {
+  case HA_PROTO_HTTP:
+    switch (_ha.http.type)
+    {
+    case HA_HTTP_JEEDOM:
+      if (!_ha.http.hostname[0] || !_ha.http.secret[0])
+        _ha.protocol = HA_PROTO_DISABLED;
+      break;
+    case HA_HTTP_FIBARO:
+      if (!_ha.http.hostname[0])
+        _ha.protocol = HA_PROTO_DISABLED;
+      break;
+    case HA_HTTP_HOMEASSISTANT:
+      if (!_ha.http.hostname[0] || !_ha.http.homeassistant.entityId[0] || !_ha.http.secret[0])
+        _ha.protocol = HA_PROTO_DISABLED;
+      break;
+    }
+    break;
+  case HA_PROTO_MQTT:
+    if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.temperatureTopic[0])
+      _ha.protocol = HA_PROTO_DISABLED;
+    break;
+  }
+
+  // Disable CBox protocol if required fields are missing
+  switch (_ha.cboxProtocol)
+  {
+  case CBOX_PROTO_HTTP:
+    if (!_ha.http.cboxIp)
+      _ha.cboxProtocol = CBOX_PROTO_DISABLED;
+    break;
+  case CBOX_PROTO_MQTT:
+    if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.cboxT1Topic[0])
+      _ha.cboxProtocol = CBOX_PROTO_DISABLED;
+    break;
+  }
 }
 
 //------------------------------------------
