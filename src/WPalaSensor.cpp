@@ -511,9 +511,9 @@ bool WPalaSensor::mqttPublishHassDiscovery()
     String topic;
     topic.reserve(strlen(_ha.mqtt.hassDiscoveryPrefix) + type.length() + uniqueId.length() + 9); // 9 = "/" + "/" + "/config"
     topic += _ha.mqtt.hassDiscoveryPrefix;
-    topic += F("/");
+    topic += '/';
     topic += type;
-    topic += F("/");
+    topic += '/';
     topic += uniqueId;
     topic += F("/config");
     return topic;
@@ -567,7 +567,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
                           "\"state_topic\":\"~/connected\","
                           "\"value_template\": \"{{ iif(int(value) > 0, 'ON', 'OFF') }}\""
                           "}"));
-  json[F("~")] = _mqttMan.getBaseTopic();
+  json["~"] = _mqttMan.getBaseTopic();
   json[F("device")] = serialized(device);
   json[F("unique_id")] = uniqueId;
 
@@ -593,7 +593,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
                           "\"payload_install\":\"latest\","
                           "\"state_topic\":\"~/update\""
                           "}"));
-  json[F("~")] = _mqttMan.getBaseTopic();
+  json["~"] = _mqttMan.getBaseTopic();
   json[F("availability")] = serialized(availabilityJSON);
   json[F("device")] = serialized(device);
   json[F("unique_id")] = uniqueId;
