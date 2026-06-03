@@ -528,7 +528,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
 
   // prepare unique id prefix
   uniqueIdPrefix = F(CUSTOM_APP_MODEL "_");
-  uniqueIdPrefix += WiFi.macAddress();
+  uniqueIdPrefix += WifiMan::getMacAddress();
   uniqueIdPrefix.replace(":", "");
 
   // ---------- Device ----------
@@ -611,7 +611,7 @@ bool WPalaSensor::mqttPublishUpdate()
 
       // prepare unique id prefix
       uniqueIdPrefix = F(CUSTOM_APP_MODEL "_");
-      uniqueIdPrefix += WiFi.macAddress();
+      uniqueIdPrefix += WifiMan::getMacAddress();
       uniqueIdPrefix.replace(":", "");
 
       // ---------- Device ----------
