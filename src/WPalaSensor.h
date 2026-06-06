@@ -81,7 +81,7 @@ private:
 
   typedef struct
   {
-    byte maxFailedRequest = 0; // number of failed requests to HA before failover to local temperature sensor
+    uint8_t maxFailedRequest = 0; // number of failed requests to HA before failover to local temperature sensor
 
     HaProtocol protocol = HaProtocol::Disabled;
     uint16_t temperatureTimeout = 0;
@@ -105,7 +105,7 @@ private:
 
   bool _needRefresh = false;
   Ticker _refreshTicker;
-  byte _skipTick = 0;
+  uint8_t _skipTick = 0;
   bool _needPublishHassDiscovery = false;
   bool _needPublishUpdate = false;
   Ticker _publishUpdateTicker;

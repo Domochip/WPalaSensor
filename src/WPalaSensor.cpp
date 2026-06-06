@@ -234,7 +234,7 @@ void WPalaSensor::refresh()
         if (nb)
         {
           // look for start position of T1 value
-          byte posTRW = 0;
+          uint8_t posTRW = 0;
           while ((payload[posTRW] == ' ' || payload[posTRW] == ':' || payload[posTRW] == '\t') && posTRW < nb)
             posTRW++;
 
@@ -680,7 +680,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   // Parse Home Automation config
 
   if ((jv = json[F("haproto")]).is<JsonVariant>())
-    _ha.protocol = static_cast<HaProtocol>(jv.as<byte>());
+    _ha.protocol = static_cast<HaProtocol>(jv.as<uint8_t>());
 
   // if an home Automation protocol has been selected then get common param
   if (_ha.protocol != HaProtocol::Disabled)
@@ -694,7 +694,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
 
   // Parse ConnectionBox config
   if ((jv = json[F("cbproto")]).is<JsonVariant>())
-    _ha.cboxProtocol = static_cast<CBoxProtocol>(jv.as<byte>());
+    _ha.cboxProtocol = static_cast<CBoxProtocol>(jv.as<uint8_t>());
 
   // if an ConnectionBox protocol has been selected then get common param
   if (_ha.cboxProtocol != CBoxProtocol::Disabled)
@@ -731,7 +731,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   case HaProtocol::Http:
 
     if ((jv = json[F("hahtype")]).is<JsonVariant>())
-      _ha.http.type = static_cast<HaHttpType>(jv.as<byte>());
+      _ha.http.type = static_cast<HaHttpType>(jv.as<uint8_t>());
     if ((jv = json[F("hahhost")]).is<const char *>())
       strlcpy(_ha.http.hostname, jv, sizeof(_ha.http.hostname));
     _ha.http.tls = json[F("hahtls")];
