@@ -861,13 +861,13 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
   json[F("shc")] = serialized(String(_steinhartHartCoeffs[2], 16));
 
   json[F("hamfr")] = _ha.maxFailedRequest;
-  json[F("haproto")] = static_cast<byte>(_ha.protocol);
+  json[F("haproto")] = static_cast<uint8_t>(_ha.protocol);
   json[F("hatt")] = _ha.temperatureTimeout;
 
   // if for WebPage or protocol selected is HTTP
   if (!forSaveFile || _ha.protocol == HaProtocol::Http)
   {
-    json[F("hahtype")] = static_cast<byte>(_ha.http.type);
+    json[F("hahtype")] = static_cast<uint8_t>(_ha.http.type);
     json[F("hahhost")] = _ha.http.hostname;
     json[F("hahtls")] = _ha.http.tls;
     json[F("hahtempid")] = _ha.http.temperatureId;
@@ -899,7 +899,7 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
     json[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
   }
 
-  json[F("cbproto")] = static_cast<byte>(_ha.cboxProtocol);
+  json[F("cbproto")] = static_cast<uint8_t>(_ha.cboxProtocol);
   json[F("cbtt")] = _ha.cboxTemperatureTimeout;
 
   // if for WebPage or CBox protocol selected is HTTP

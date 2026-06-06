@@ -22,21 +22,21 @@ class WPalaSensor : public Application
 private:
   // -------------------- HomeAutomation Classes --------------------
 
-  enum class HaHttpType : byte
+  enum class HaHttpType : uint8_t
   {
     Jeedom = 0,
     Fibaro = 1,
     HomeAssistant = 2
   };
 
-  enum class HaProtocol : byte
+  enum class HaProtocol : uint8_t
   {
     Disabled = 0,
     Http = 1,
     Mqtt = 2
   };
 
-  enum class CBoxProtocol : byte
+  enum class CBoxProtocol : uint8_t
   {
     Disabled = 0,
     Http = 1,
