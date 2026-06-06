@@ -22,13 +22,30 @@ class WPalaSensor : public Application
 private:
   // -------------------- HomeAutomation Classes --------------------
 
-#define HA_HTTP_JEEDOM 0
-#define HA_HTTP_FIBARO 1
-#define HA_HTTP_HOMEASSISTANT 2
+  enum class HaHttpType : byte
+  {
+    Jeedom = 0,
+    Fibaro = 1,
+    HomeAssistant = 2
+  };
+
+  enum class HaProtocol : byte
+  {
+    Disabled = 0,
+    Http = 1,
+    Mqtt = 2
+  };
+
+  enum class CBoxProtocol : byte
+  {
+    Disabled = 0,
+    Http = 1,
+    Mqtt = 2
+  };
 
   typedef struct
   {
-    byte type = HA_HTTP_HOMEASSISTANT;
+    HaHttpType type = HaHttpType::HomeAssistant;
     char hostname[64 + 1] = {0};
     bool tls = false;
     int temperatureId = 0;
@@ -62,21 +79,13 @@ private:
     char cboxT1Topic[32 + 1] = {0};
   } MQTT;
 
-#define HA_PROTO_DISABLED 0
-#define HA_PROTO_HTTP 1
-#define HA_PROTO_MQTT 2
-
-#define CBOX_PROTO_DISABLED 0
-#define CBOX_PROTO_HTTP 1
-#define CBOX_PROTO_MQTT 2
-
   typedef struct
   {
     byte maxFailedRequest = 0; // number of failed requests to HA before failover to local temperature sensor
 
-    byte protocol = HA_PROTO_DISABLED;
+    HaProtocol protocol = HaProtocol::Disabled;
     uint16_t temperatureTimeout = 0;
-    byte cboxProtocol = CBOX_PROTO_DISABLED;
+    CBoxProtocol cboxProtocol = CBoxProtocol::Disabled;
     uint16_t cboxTemperatureTimeout = 0;
 
     HTTP http;

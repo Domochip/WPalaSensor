@@ -45,7 +45,7 @@ void WPalaSensor::refresh()
   LOG_SERIAL_PRINTLN(F("refresh"));
 
   // if MQTT protocol is enabled and connected then publish Core, Wifi and WPalaControl status
-  if (_ha.protocol == HA_PROTO_MQTT && _mqttMan.connected())
+  if (_ha.protocol == HaProtocol::Mqtt && _mqttMan.connected())
   {
     JsonDocument json;
     _applicationList[CoreApp]->fillStatusJSON(json[getAppIdName(CoreApp)].to<JsonObject>());
@@ -76,7 +76,7 @@ void WPalaSensor::refresh()
   }
 
   // if HomeAutomation protocol is HTTP and WiFi is connected
-  if (_ha.protocol == HA_PROTO_HTTP && WiFi.isConnected())
+  if (_ha.protocol == HaProtocol::Http && WiFi.isConnected())
   {
 
     WiFiClient client;
@@ -93,15 +93,15 @@ void WPalaSensor::refresh()
     // build the complete URI
     switch (_ha.http.type)
     {
-    case HA_HTTP_JEEDOM:
+    case HaHttpType::Jeedom:
       snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/core/api/jeeApi.php?apikey=%s&type=cmd&id=%d"),
                  _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.secret, _ha.http.temperatureId);
       break;
-    case HA_HTTP_FIBARO:
+    case HaHttpType::Fibaro:
       snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/devices?id=%d"),
                  _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.temperatureId);
       break;
-    case HA_HTTP_HOMEASSISTANT:
+    case HaHttpType::HomeAssistant:
       snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/states/%s"),
                  _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.homeassistant.entityId);
       break;
@@ -117,11 +117,11 @@ void WPalaSensor::refresh()
     }
 
     // For Fibaro, Pass authentication if specified in configuration
-    if (_ha.http.type == HA_HTTP_FIBARO && _ha.http.fibaro.username[0])
+    if (_ha.http.type == HaHttpType::Fibaro && _ha.http.fibaro.username[0])
       http.setAuthorization(_ha.http.fibaro.username, _ha.http.secret);
 
     // For HomeAssistant, Pass long-lived access token and set content type
-    if (_ha.http.type == HA_HTTP_HOMEASSISTANT)
+    if (_ha.http.type == HaHttpType::HomeAssistant)
     {
       snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("Bearer %s"), _ha.http.secret);
       http.addHeader(F("Authorization"), httpBuffer);
@@ -140,13 +140,13 @@ void WPalaSensor::refresh()
 
       switch (_ha.http.type)
       {
-      case HA_HTTP_JEEDOM:
+      case HaHttpType::Jeedom:
 
         nb = stream->readBytes(payload, 5);
         payload[nb] = 0;
         break;
 
-      case HA_HTTP_FIBARO:
+      case HaHttpType::Fibaro:
 
         while (http.connected() && stream->find("\"value\""))
         {
@@ -160,7 +160,7 @@ void WPalaSensor::refresh()
         }
         break;
 
-      case HA_HTTP_HOMEASSISTANT:
+      case HaHttpType::HomeAssistant:
 
         while (http.connected() && stream->find("\"state\""))
         {
@@ -200,7 +200,7 @@ void WPalaSensor::refresh()
   }
 
   // if ConnectionBox protocol is HTTP and WiFi is connected
-  if (_ha.cboxProtocol == CBOX_PROTO_HTTP && WiFi.isConnected())
+  if (_ha.cboxProtocol == CBoxProtocol::Http && WiFi.isConnected())
   {
     WiFiClient client;
 
@@ -256,7 +256,7 @@ void WPalaSensor::refresh()
   }
 
   // if Home Automation protocol is defined and temperature is not too old
-  if (_ha.protocol != HA_PROTO_DISABLED && (_haTemperatureMillis + _ha.temperatureTimeout * 1000) > millis())
+  if (_ha.protocol != HaProtocol::Disabled && (_haTemperatureMillis + _ha.temperatureTimeout * 1000) > millis())
   {
     temperatureToDisplay = _haTemperature;
     _haTemperatureUsed = true;
@@ -268,7 +268,7 @@ void WPalaSensor::refresh()
   }
 
   // if Connection Box protocol is defined and stove temperature arrived after last refresh and not first refresh tick
-  if (_ha.cboxProtocol != CBOX_PROTO_DISABLED && (_stoveTemperatureMillis + _refreshPeriod * 1000) > millis() && !_firstRefreshTick)
+  if (_ha.cboxProtocol != CBoxProtocol::Disabled && (_stoveTemperatureMillis + _refreshPeriod * 1000) > millis() && !_firstRefreshTick)
   {
     // adjust delta
     _stoveDelta += (_lastTemperatureUsed - _stoveTemperature) / 2.5F;
@@ -343,11 +343,11 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
 
   // Subscribe to needed topic
   // if Home Automation is configured for MQTT
-  if (_ha.protocol == HA_PROTO_MQTT)
+  if (_ha.protocol == HaProtocol::Mqtt)
     mqttMan->subscribe(_ha.mqtt.temperatureTopic);
 
   // if Connection Box/PalaControl is configured for MQTT
-  if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
+  if (_ha.cboxProtocol == CBoxProtocol::Mqtt)
     mqttMan->subscribe(_ha.mqtt.cboxT1Topic);
 
   // subscribe to update/install topic
@@ -364,7 +364,7 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
 void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
 {
   // if Home Automation is configured for MQTT and topic match
-  if (_ha.protocol == HA_PROTO_MQTT && !strcmp(topic, _ha.mqtt.temperatureTopic))
+  if (_ha.protocol == HaProtocol::Mqtt && !strcmp(topic, _ha.mqtt.temperatureTopic))
   {
     // copy payload into a null-terminated buffer
     char haTemperatureBuffer[7];
@@ -390,7 +390,7 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   }
 
   // if Home Automation is configured for MQTT and topic match
-  if (_ha.cboxProtocol == CBOX_PROTO_MQTT && !strcmp(topic, _ha.mqtt.cboxT1Topic))
+  if (_ha.cboxProtocol == CBoxProtocol::Mqtt && !strcmp(topic, _ha.mqtt.cboxT1Topic))
   {
     const uint8_t *valueStart = payload;
     unsigned int valueLen = length;
@@ -636,12 +636,12 @@ void WPalaSensor::setConfigDefaultValues()
   _steinhartHartCoeffs[2] = 0.0000003246246447;
 
   _ha.maxFailedRequest = 10;
-  _ha.protocol = HA_PROTO_DISABLED;
+  _ha.protocol = HaProtocol::Disabled;
   _ha.temperatureTimeout = 300;
-  _ha.cboxProtocol = CBOX_PROTO_DISABLED;
+  _ha.cboxProtocol = CBoxProtocol::Disabled;
   _ha.cboxTemperatureTimeout = 300;
 
-  _ha.http.type = HA_HTTP_HOMEASSISTANT;
+  _ha.http.type = HaHttpType::HomeAssistant;
   _ha.http.hostname[0] = 0;
   _ha.http.tls = false;
   _ha.http.temperatureId = 0;
@@ -680,10 +680,10 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   // Parse Home Automation config
 
   if ((jv = json[F("haproto")]).is<JsonVariant>())
-    _ha.protocol = jv;
+    _ha.protocol = static_cast<HaProtocol>(jv.as<byte>());
 
   // if an home Automation protocol has been selected then get common param
-  if (_ha.protocol != HA_PROTO_DISABLED)
+  if (_ha.protocol != HaProtocol::Disabled)
   {
     if ((jv = json[F("hamfr")]).is<JsonVariant>())
       _ha.maxFailedRequest = jv;
@@ -694,17 +694,17 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
 
   // Parse ConnectionBox config
   if ((jv = json[F("cbproto")]).is<JsonVariant>())
-    _ha.cboxProtocol = jv;
+    _ha.cboxProtocol = static_cast<CBoxProtocol>(jv.as<byte>());
 
   // if an ConnectionBox protocol has been selected then get common param
-  if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
+  if (_ha.cboxProtocol != CBoxProtocol::Disabled)
   {
     if ((jv = json[F("cbtt")]).is<JsonVariant>())
       _ha.cboxTemperatureTimeout = jv;
   }
 
   // if home automation or CBox protocol is MQTT then get common mqtt params
-  if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
+  if (_ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
   {
 
     if ((jv = json[F("hamhost")]).is<const char *>())
@@ -726,10 +726,12 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   // Now get Home Automation specific params
   switch (_ha.protocol)
   {
-  case HA_PROTO_HTTP:
+  case HaProtocol::Disabled:
+    break;
+  case HaProtocol::Http:
 
     if ((jv = json[F("hahtype")]).is<JsonVariant>())
-      _ha.http.type = jv;
+      _ha.http.type = static_cast<HaHttpType>(jv.as<byte>());
     if ((jv = json[F("hahhost")]).is<const char *>())
       strlcpy(_ha.http.hostname, jv, sizeof(_ha.http.hostname));
     _ha.http.tls = json[F("hahtls")];
@@ -738,12 +740,12 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
 
     switch (_ha.http.type)
     {
-    case HA_HTTP_JEEDOM:
+    case HaHttpType::Jeedom:
 
       parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
       break;
 
-    case HA_HTTP_FIBARO:
+    case HaHttpType::Fibaro:
 
       if ((jv = json[F("hahfuser")]).is<const char *>())
         strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
@@ -751,7 +753,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
       parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
       break;
 
-    case HA_HTTP_HOMEASSISTANT:
+    case HaHttpType::HomeAssistant:
 
       if ((jv = json[F("hahhaei")]).is<const char *>())
         strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
@@ -761,7 +763,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
     }
 
     break;
-  case HA_PROTO_MQTT:
+  case HaProtocol::Mqtt:
 
     if ((jv = json[F("hamtemptopic")]).is<const char *>())
       strlcpy(_ha.mqtt.temperatureTopic, jv, sizeof(_ha.mqtt.temperatureTopic));
@@ -771,7 +773,9 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   // Now get ConnectionBox specific params
   switch (_ha.cboxProtocol)
   {
-  case CBOX_PROTO_HTTP:
+  case CBoxProtocol::Disabled:
+    break;
+  case CBoxProtocol::Http:
 
     if ((jv = json[F("cbhip")]).is<const char *>())
     {
@@ -783,7 +787,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
     }
     break;
 
-  case CBOX_PROTO_MQTT:
+  case CBoxProtocol::Mqtt:
 
     if ((jv = json[F("cbmt1topic")]).is<const char *>())
       strlcpy(_ha.mqtt.cboxT1Topic, jv, sizeof(_ha.mqtt.cboxT1Topic));
@@ -798,46 +802,50 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
 void WPalaSensor::validateConfig()
 {
   // Normalise HomeAssistant hostname: append ":8123" if no port is specified and TLS is off
-  if (_ha.protocol == HA_PROTO_HTTP && _ha.http.type == HA_HTTP_HOMEASSISTANT)
+  if (_ha.protocol == HaProtocol::Http && _ha.http.type == HaHttpType::HomeAssistant)
     if (_ha.http.hostname[0] && !strchr(_ha.http.hostname, ':') && !_ha.http.tls && (strlen(_ha.http.hostname) + 5 < sizeof(_ha.http.hostname) - 1))
       strcat(_ha.http.hostname, ":8123");
 
   // Disable HA protocol if required fields are missing
   switch (_ha.protocol)
   {
-  case HA_PROTO_HTTP:
+  case HaProtocol::Disabled:
+    break;
+  case HaProtocol::Http:
     switch (_ha.http.type)
     {
-    case HA_HTTP_JEEDOM:
+    case HaHttpType::Jeedom:
       if (!_ha.http.hostname[0] || !_ha.http.secret[0])
-        _ha.protocol = HA_PROTO_DISABLED;
+        _ha.protocol = HaProtocol::Disabled;
       break;
-    case HA_HTTP_FIBARO:
+    case HaHttpType::Fibaro:
       if (!_ha.http.hostname[0])
-        _ha.protocol = HA_PROTO_DISABLED;
+        _ha.protocol = HaProtocol::Disabled;
       break;
-    case HA_HTTP_HOMEASSISTANT:
+    case HaHttpType::HomeAssistant:
       if (!_ha.http.hostname[0] || !_ha.http.homeassistant.entityId[0] || !_ha.http.secret[0])
-        _ha.protocol = HA_PROTO_DISABLED;
+        _ha.protocol = HaProtocol::Disabled;
       break;
     }
     break;
-  case HA_PROTO_MQTT:
+  case HaProtocol::Mqtt:
     if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.temperatureTopic[0])
-      _ha.protocol = HA_PROTO_DISABLED;
+      _ha.protocol = HaProtocol::Disabled;
     break;
   }
 
   // Disable CBox protocol if required fields are missing
   switch (_ha.cboxProtocol)
   {
-  case CBOX_PROTO_HTTP:
-    if (!_ha.http.cboxIp)
-      _ha.cboxProtocol = CBOX_PROTO_DISABLED;
+  case CBoxProtocol::Disabled:
     break;
-  case CBOX_PROTO_MQTT:
+  case CBoxProtocol::Http:
+    if (!_ha.http.cboxIp)
+      _ha.cboxProtocol = CBoxProtocol::Disabled;
+    break;
+  case CBoxProtocol::Mqtt:
     if (!_ha.mqtt.hostname[0] || !_ha.mqtt.baseTopic[0] || !_ha.mqtt.cboxT1Topic[0])
-      _ha.cboxProtocol = CBOX_PROTO_DISABLED;
+      _ha.cboxProtocol = CBoxProtocol::Disabled;
     break;
   }
 }
@@ -853,32 +861,32 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
   json[F("shc")] = serialized(String(_steinhartHartCoeffs[2], 16));
 
   json[F("hamfr")] = _ha.maxFailedRequest;
-  json[F("haproto")] = _ha.protocol;
+  json[F("haproto")] = static_cast<byte>(_ha.protocol);
   json[F("hatt")] = _ha.temperatureTimeout;
 
   // if for WebPage or protocol selected is HTTP
-  if (!forSaveFile || _ha.protocol == HA_PROTO_HTTP)
+  if (!forSaveFile || _ha.protocol == HaProtocol::Http)
   {
-    json[F("hahtype")] = _ha.http.type;
+    json[F("hahtype")] = static_cast<byte>(_ha.http.type);
     json[F("hahhost")] = _ha.http.hostname;
     json[F("hahtls")] = _ha.http.tls;
     json[F("hahtempid")] = _ha.http.temperatureId;
 
     // if Home Automation protocol selected is Jeedom
-    if (_ha.http.type == HA_HTTP_JEEDOM)
+    if (_ha.http.type == HaHttpType::Jeedom)
     {
       fillSecret(json, F("hahjak"), _ha.http.secret, forSaveFile);
     }
 
     // if Home Automation protocol selected is Fibaro
-    if (_ha.http.type == HA_HTTP_FIBARO)
+    if (_ha.http.type == HaHttpType::Fibaro)
     {
       json[F("hahfuser")] = _ha.http.fibaro.username;
       fillSecret(json, F("hahfpass"), _ha.http.secret, forSaveFile);
     }
 
     // if Home Automation protocol selected is HomeAssistant
-    if (_ha.http.type == HA_HTTP_HOMEASSISTANT)
+    if (_ha.http.type == HaHttpType::HomeAssistant)
     {
       json[F("hahhaei")] = _ha.http.homeassistant.entityId;
       fillSecret(json, F("hahhallat"), _ha.http.secret, forSaveFile);
@@ -886,28 +894,28 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
   }
 
   // if for WebPage or protocol selected is MQTT
-  if (!forSaveFile || _ha.protocol == HA_PROTO_MQTT)
+  if (!forSaveFile || _ha.protocol == HaProtocol::Mqtt)
   {
     json[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
   }
 
-  json[F("cbproto")] = _ha.cboxProtocol;
+  json[F("cbproto")] = static_cast<byte>(_ha.cboxProtocol);
   json[F("cbtt")] = _ha.cboxTemperatureTimeout;
 
   // if for WebPage or CBox protocol selected is HTTP
-  if (!forSaveFile || _ha.cboxProtocol == CBOX_PROTO_HTTP)
+  if (!forSaveFile || _ha.cboxProtocol == CBoxProtocol::Http)
   {
     if (_ha.http.cboxIp)
       json[F("cbhip")] = WifiMan::ipToCString(_ha.http.cboxIp);
   }
 
   // if for WebPage or CBox protocol selected is MQTT
-  if (!forSaveFile || _ha.cboxProtocol == CBOX_PROTO_MQTT)
+  if (!forSaveFile || _ha.cboxProtocol == CBoxProtocol::Mqtt)
   {
     json[F("cbmt1topic")] = _ha.mqtt.cboxT1Topic;
   }
 
-  if (!forSaveFile || _ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
+  if (!forSaveFile || _ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
   {
     json[F("hamhost")] = _ha.mqtt.hostname;
     json[F("hamport")] = _ha.mqtt.port;
@@ -924,43 +932,43 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
 void WPalaSensor::fillStatusJSON(JsonVariant json)
 {
   // Home automation protocol
-  if (_ha.protocol == HA_PROTO_HTTP)
+  if (_ha.protocol == HaProtocol::Http)
     json[F("haprotocol")] = F("HTTP");
-  else if (_ha.protocol == HA_PROTO_MQTT)
+  else if (_ha.protocol == HaProtocol::Mqtt)
     json[F("haprotocol")] = F("MQTT");
   else
     json[F("haprotocol")] = F("Disabled");
 
   // Home automation connection status
-  if (_ha.protocol == HA_PROTO_HTTP)
+  if (_ha.protocol == HaProtocol::Http)
     json[F("hahttplastrespcode")] = _haRequestResult;
-  else if (_ha.protocol == HA_PROTO_MQTT)
+  else if (_ha.protocol == HaProtocol::Mqtt)
     json[F("hamqttstatus")] = _mqttMan.getStateString();
 
   // Home Automation last temperature and age
   char buf[10];
-  if (_ha.protocol != HA_PROTO_DISABLED)
+  if (_ha.protocol != HaProtocol::Disabled)
   {
     json[F("haslasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
     json[F("haslasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
   }
 
   // WPalaControl/CBox protocol
-  if (_ha.cboxProtocol == CBOX_PROTO_HTTP)
+  if (_ha.cboxProtocol == CBoxProtocol::Http)
     json[F("cboxprotocol")] = F("HTTP");
-  else if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
+  else if (_ha.cboxProtocol == CBoxProtocol::Mqtt)
     json[F("cboxprotocol")] = F("MQTT");
   else
     json[F("cboxprotocol")] = F("Disabled");
 
   // WPalaControl/CBox connection status
-  if (_ha.cboxProtocol == CBOX_PROTO_HTTP)
+  if (_ha.cboxProtocol == CBoxProtocol::Http)
     json[F("cboxhttplastrespcode")] = _stoveRequestResult;
-  else if (_ha.cboxProtocol == CBOX_PROTO_MQTT)
+  else if (_ha.cboxProtocol == CBoxProtocol::Mqtt)
     json[F("cboxmqttstatus")] = _mqttMan.getStateString();
 
   // WPalaControl/CBox last temperature and age
-  if (_ha.cboxProtocol != CBOX_PROTO_DISABLED)
+  if (_ha.cboxProtocol != CBoxProtocol::Disabled)
   {
     json[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
     json[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
@@ -990,7 +998,7 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
   setDac(20.0F, true);
 
   // if MQTT used so configure it
-  if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
+  if (_ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
   {
     // setup MQTT
     _mqttMan.setBufferSize(600); // max JSON size (Connectivity HAss discovery ~450)
@@ -1127,7 +1135,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
 // Run for application
 void WPalaSensor::appRun()
 {
-  if (_ha.protocol == HA_PROTO_MQTT || _ha.cboxProtocol == CBOX_PROTO_MQTT)
+  if (_ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
   {
     _mqttMan.loop();
 
