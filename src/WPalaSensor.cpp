@@ -9,8 +9,8 @@ void WPalaSensor::setDac(float temperature, bool EEPROM /* = false*/)
   float temperatureK = temperature + 273.15;
 
   // calculate and return resistance value based on provided temperature
-  double x = (1 / _steinhartHartCoeffs[2]) * (_steinhartHartCoeffs[0] - (1 / temperatureK));
-  double y = sqrt(pow(_steinhartHartCoeffs[1] / (3 * _steinhartHartCoeffs[2]), 3) + pow(x / 2, 2));
+  double x = (1 / _shC) * (_shA - (1 / temperatureK));
+  double y = sqrt(pow(_shB / (3 * _shC), 3) + pow(x / 2, 2));
   setDac((int)(exp(cbrt(y - (x / 2)) - cbrt(y + (x / 2)))), EEPROM);
 }
 //-----------------------------------------------------------------------
@@ -631,9 +631,9 @@ void WPalaSensor::setConfigDefaultValues()
 {
   _refreshPeriod = 30;
 
-  _steinhartHartCoeffs[0] = 0.0010418107149703;
-  _steinhartHartCoeffs[1] = 0.0002249955839098;
-  _steinhartHartCoeffs[2] = 0.0000003246246447;
+  _shA = 0.0010418107149703;
+  _shB = 0.0002249955839098;
+  _shC = 0.0000003246246447;
 
   _ha.maxFailedRequest = 10;
   _ha.protocol = HaProtocol::Disabled;
@@ -671,11 +671,11 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
     _refreshPeriod = jv;
 
   if ((jv = json[F("sha")]).is<JsonVariant>())
-    _steinhartHartCoeffs[0] = jv;
+    _shA = jv;
   if ((jv = json[F("shb")]).is<JsonVariant>())
-    _steinhartHartCoeffs[1] = jv;
+    _shB = jv;
   if ((jv = json[F("shc")]).is<JsonVariant>())
-    _steinhartHartCoeffs[2] = jv;
+    _shC = jv;
 
   // Parse Home Automation config
 
@@ -856,9 +856,9 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
 {
   json["rp"] = _refreshPeriod;
 
-  json[F("sha")] = serialized(String(_steinhartHartCoeffs[0], 16));
-  json[F("shb")] = serialized(String(_steinhartHartCoeffs[1], 16));
-  json[F("shc")] = serialized(String(_steinhartHartCoeffs[2], 16));
+  json[F("sha")] = serialized(String(_shA, 16));
+  json[F("shb")] = serialized(String(_shB, 16));
+  json[F("shc")] = serialized(String(_shC, 16));
 
   json[F("hamfr")] = _ha.maxFailedRequest;
   json[F("haproto")] = static_cast<uint8_t>(_ha.protocol);

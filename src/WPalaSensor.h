@@ -95,7 +95,12 @@ private:
   // --------------------
 
   uint8_t _refreshPeriod;
-  double _steinhartHartCoeffs[3] = {0, 0, 0};
+  // Steinhart-Hart coefficient A
+  double _shA = 0;
+  // Steinhart-Hart coefficient B
+  double _shB = 0;
+  // Steinhart-Hart coefficient C
+  double _shC = 0;
   HomeAutomation _ha;
 
   // Run variables
