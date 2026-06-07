@@ -17,10 +17,10 @@
 #define DEFAULT_AP_SSID CUSTOM_APP_MODEL               // Default Access Point SSID "{CUSTOM_APP_MODEL}"
 #define DEFAULT_AP_PSK "password"                      // Default Access Point Password
 
-// Control EventSourceMan code (To be used by Application if EventSource server is needed)
-#define EVTSRC_ENABLED 0
-#define EVTSRC_MAX_CLIENTS 2
-#define EVTSRC_KEEPALIVE_ENABLED 0
+// Control SSEServer code (To be used by Application if Server-sent events are needed)
+#define SSE_SERVER_ENABLED 0
+#define SSE_SERVER_MAX_CLIENTS 2
+#define SSE_SERVER_KEEPALIVE 0
 
 // Pin for 1Wire DS18B20 bus
 #ifdef ESP8266
