@@ -7,9 +7,9 @@ Application::Application(AppId appId) : _appId(appId)
   _applicationList[_appId] = this;
 }
 
-char Application::getAppIdChar(AppId appId)
+char Application::getAppIdChar()
 {
-  return '0' + appId;
+  return '0' + _appId;
 }
 
 const __FlashStringHelper *Application::getAppIdName()
@@ -426,7 +426,7 @@ void Application::initWebServer(WebServer &server)
   char url[16];
 
   // JSON Status handler
-  sprintf_P(url, PSTR("/gs%c"), getAppIdChar(_appId));
+  sprintf_P(url, PSTR("/gs%c"), getAppIdChar());
   server.on(url, HTTP_GET,
             [this, &server]()
             {
@@ -441,7 +441,7 @@ void Application::initWebServer(WebServer &server)
             });
 
   // JSON Config handler
-  sprintf_P(url, PSTR("/gc%c"), getAppIdChar(_appId));
+  sprintf_P(url, PSTR("/gc%c"), getAppIdChar());
   server.on(url, HTTP_GET,
             [this, &server]()
             {
@@ -455,7 +455,7 @@ void Application::initWebServer(WebServer &server)
               serializeJson(json, client);
             });
 
-  sprintf_P(url, PSTR("/sc%c"), getAppIdChar(_appId));
+  sprintf_P(url, PSTR("/sc%c"), getAppIdChar());
   server.on(url, HTTP_POST,
             [this, &server]()
             {

@@ -41,6 +41,7 @@ protected:
   bool saveConfig();
   bool loadConfig();
 
+  char getAppIdChar();
   const __FlashStringHelper *getAppIdName();
   const __FlashStringHelper *getMqttTopicSuffix();
 
@@ -54,7 +55,6 @@ protected:
 public:
   Application(AppId appId);
 
-  static char getAppIdChar(AppId appId);
   void mqttPublishStatus(MQTTMan &mqttMan);
   void init(bool skipExistingConfig);
   void initWebServer(WebServer &server);
