@@ -308,8 +308,7 @@ void Core::mqttPublishStatus(MQTTMan &mqttMan)
   topic.reserve(MQTTMan::baseTopicSize + 5); // base topic + suffix
 
   topic = mqttMan.getBaseTopic();
-  topic += '/';
-  topic += getAppIdName();
+  topic += getMqttTopicSuffix();
   fillStatusJSON(json);
   mqttMan.publish(topic.c_str(), json, true);
 }

@@ -42,6 +42,7 @@ protected:
   bool loadConfig();
 
   const __FlashStringHelper *getAppIdName();
+  const __FlashStringHelper *getMqttTopicSuffix();
 
   static void fillSecret(JsonVariant json, const __FlashStringHelper *key, const char *value, bool forSaveFile);
   static void parseSecret(JsonVariant jv, char *dest, size_t size, bool fromWebPage);

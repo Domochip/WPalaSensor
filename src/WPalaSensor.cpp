@@ -619,7 +619,7 @@ void WPalaSensor::mqttPublishStatus(MQTTMan &mqttMan)
   topic.reserve(MQTTMan::baseTopicSize + 5); // base topic + suffix
 
   topic = mqttMan.getBaseTopic();
-  topic += F("/App");
+  topic += getMqttTopicSuffix();
   fillStatusJSON(json);
   mqttMan.publish(topic.c_str(), json, true);
 }

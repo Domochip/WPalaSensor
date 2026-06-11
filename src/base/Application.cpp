@@ -23,6 +23,17 @@ const __FlashStringHelper *Application::getAppIdName()
   return F(CUSTOM_APP_MODEL);
 }
 
+const __FlashStringHelper *Application::getMqttTopicSuffix()
+{
+  if (_appId == CoreApp)
+    return F("Core");
+
+  if (_appId == WifiManApp)
+    return F("WiFi");
+
+  return F("/App");
+}
+
 bool Application::saveConfig()
 {
   char configPath[32];
