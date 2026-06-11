@@ -17,6 +17,7 @@ using WebServer = ESP8266WebServer;
 #endif
 #include <ArduinoJson.h>
 #include <Ticker.h>
+#include "MQTTMan.h"
 
 // Predefined placeholder sent to the web page instead of the real password value
 const char predefPassword[] PROGMEM = "ewcXoCt4HHjZUvY0";
@@ -71,6 +72,8 @@ protected:
 
 public:
   virtual void fillStatusJSON(JsonVariant json) = 0;
+  virtual void mqttPublishStatus(MQTTMan &mqttMan) = 0;
+  virtual void mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix) = 0;
 };
 
 #endif

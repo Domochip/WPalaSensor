@@ -387,3 +387,67 @@ void WifiMan::appRun()
   MDNS.update();
 #endif
 }
+
+void WifiMan::mqttPublishStatus(MQTTMan &mqttMan)
+{
+  JsonDocument json;
+  String topic;
+  topic.reserve(MQTTMan::baseTopicSize + 5); // base topic + suffix
+
+  topic = mqttMan.getBaseTopic();
+  topic += '/';
+  topic += getAppIdName(WifiManApp);
+  fillStatusJSON(json);
+  mqttMan.publish(topic.c_str(), json, true);
+}
+
+void WifiMan::mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix)
+{
+  JsonDocument json;
+  String uniqueId;
+  const __FlashStringHelper *availabilityJSON = F("{\"topic\":\"~/connected\",\"value_template\":\"{{ iif(int(value) > 0, 'online', 'offline') }}\"}");
+
+  // Helper lambda to prepare entity topic
+  auto prepareTopic = [&](const String &type, const String &uniqueId)
+  {
+    String topic;
+    topic.reserve(strlen(hassDiscoveryPrefix) + type.length() + uniqueId.length() + 9); // 9 = "/" + "/" + "/config"
+    topic += hassDiscoveryPrefix;
+    topic += '/';
+    topic += type;
+    topic += '/';
+    topic += uniqueId;
+    topic += F("/config");
+    return topic;
+  };
+
+  // Helper lambda which adds common attributes to JSON and publish it to MQTT
+  auto publishEntity = [&](const String &type, const String &uniqueId, bool withStandardAvail = true)
+  {
+    json["~"] = mqttMan.getBaseTopic();
+    if (withStandardAvail)
+      json[F("availability")] = serialized(availabilityJSON);
+    json[F("device")] = serialized(device);
+    json[F("unique_id")] = uniqueId;
+    mqttMan.publish(prepareTopic(type, uniqueId).c_str(), json, true);
+  };
+
+  //
+  // Wifi connection counter entity
+  //
+
+  // prepare uniqueId, topic and payload for wifi connection counter sensor
+  uniqueId = uniqueIdPrefix + F("_WifiConnectCount");
+
+  // prepare payload for wifi connection counter sensor
+  deserializeJson(json, F("{"
+                          "\"default_entity_id\":\"sensor." CUSTOM_APP_MODEL "_wifi_connect_count\","
+                          "\"entity_category\":\"diagnostic\","
+                          "\"icon\":\"mdi:counter\","
+                          "\"name\":\"WiFi Connect Count\","
+                          "\"object_id\":\"" CUSTOM_APP_MODEL "_wifi_connect_count\","
+                          "\"state_topic\":\"~/WiFi\","
+                          "\"value_template\":\"{{ value_json.connectcount }}\""
+                          "}"));
+  publishEntity(F("sensor"), uniqueId);
+}
