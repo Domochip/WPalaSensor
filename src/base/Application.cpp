@@ -26,10 +26,10 @@ const __FlashStringHelper *Application::getAppIdName()
 const __FlashStringHelper *Application::getMqttTopicSuffix()
 {
   if (_appId == CoreApp)
-    return F("Core");
+    return F("/Core");
 
   if (_appId == WifiManApp)
-    return F("WiFi");
+    return F("/WiFi");
 
   return F("/App");
 }
