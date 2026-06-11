@@ -613,6 +613,33 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   _mqttMan.publish(topic.c_str(), json, true);
 
   //
+  // MQTT connection counter entity
+  //
+
+  // prepare uniqueId, topic and payload for mqtt connection counter sensor
+  uniqueId = uniqueIdPrefix + F("_MqttConnectCount");
+
+  topic = prepareHassDiscoveryTopic(F("sensor"), uniqueId);
+
+  // prepare payload for mqtt connection counter sensor
+  deserializeJson(json, F("{"
+                          "\"default_entity_id\":\"sensor." CUSTOM_APP_MODEL "_mqtt_connect_count\","
+                          "\"entity_category\":\"diagnostic\","
+                          "\"icon\":\"mdi:counter\","
+                          "\"name\":\"MQTT Connect Count\","
+                          "\"object_id\":\"" CUSTOM_APP_MODEL "_mqtt_connect_count\","
+                          "\"state_topic\":\"~/App\","
+                          "\"value_template\":\"{{ value_json.mqttconnectcount }}\""
+                          "}"));
+  json["~"] = _mqttMan.getBaseTopic();
+  json[F("availability")] = serialized(availabilityJSON);
+  json[F("device")] = serialized(device);
+  json[F("unique_id")] = uniqueId;
+
+  // publish
+  _mqttMan.publish(topic.c_str(), json, true);
+
+  //
   // Update entity
   //
 
