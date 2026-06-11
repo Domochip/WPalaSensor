@@ -48,11 +48,22 @@ void WPalaSensor::refresh()
   if (_ha.protocol == HaProtocol::Mqtt && _mqttMan.connected())
   {
     JsonDocument json;
-    _applicationList[CoreApp]->fillStatusJSON(json[getAppIdName(CoreApp)].to<JsonObject>());
-    _applicationList[WifiManApp]->fillStatusJSON(json[getAppIdName(WifiManApp)].to<JsonObject>());
-    fillStatusJSON(json[getAppIdName(CustomApp)].to<JsonObject>());
+    String topic;
+    topic.reserve(MQTTMan::baseTopicSize + 5); // base topic + suffix
 
-    _mqttMan.publish(_mqttMan.getBaseTopic(), json, true);
+    auto publishStatus = [&](AppId appId, const __FlashStringHelper *suffix)
+    {
+      topic = _mqttMan.getBaseTopic();
+      topic += '/';
+      topic += suffix;
+      _applicationList[appId]->fillStatusJSON(json);
+      _mqttMan.publish(topic.c_str(), json, true);
+      json.clear();
+    };
+
+    publishStatus(CoreApp, getAppIdName(CoreApp));
+    publishStatus(WifiManApp, getAppIdName(WifiManApp));
+    publishStatus(CustomApp, F("App"));
   }
 
   if (_skipTick)
