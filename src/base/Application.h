@@ -41,6 +41,8 @@ protected:
   bool saveConfig();
   bool loadConfig();
 
+  const __FlashStringHelper *getAppIdName();
+
   static void fillSecret(JsonVariant json, const __FlashStringHelper *key, const char *value, bool forSaveFile);
   static void parseSecret(JsonVariant jv, char *dest, size_t size, bool fromWebPage);
 
@@ -52,7 +54,6 @@ public:
   Application(AppId appId);
 
   static char getAppIdChar(AppId appId);
-  static const __FlashStringHelper *getAppIdName(AppId appId);
   void init(bool skipExistingConfig);
   void initWebServer(WebServer &server);
   void run();

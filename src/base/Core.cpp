@@ -309,7 +309,7 @@ void Core::mqttPublishStatus(MQTTMan &mqttMan)
 
   topic = mqttMan.getBaseTopic();
   topic += '/';
-  topic += getAppIdName(CoreApp);
+  topic += getAppIdName();
   fillStatusJSON(json);
   mqttMan.publish(topic.c_str(), json, true);
 }

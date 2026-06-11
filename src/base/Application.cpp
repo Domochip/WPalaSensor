@@ -12,12 +12,12 @@ char Application::getAppIdChar(AppId appId)
   return '0' + appId;
 }
 
-const __FlashStringHelper *Application::getAppIdName(AppId appId)
+const __FlashStringHelper *Application::getAppIdName()
 {
-  if (appId == CoreApp)
+  if (_appId == CoreApp)
     return F("Core");
 
-  if (appId == WifiManApp)
+  if (_appId == WifiManApp)
     return F("WiFi");
 
   return F(CUSTOM_APP_MODEL);
@@ -26,7 +26,7 @@ const __FlashStringHelper *Application::getAppIdName(AppId appId)
 bool Application::saveConfig()
 {
   char configPath[32];
-  snprintf_P(configPath, sizeof(configPath), PSTR("/%s.json"), (const char *)getAppIdName(_appId));
+  snprintf_P(configPath, sizeof(configPath), PSTR("/%s.json"), (const char *)getAppIdName());
   File configFile = LittleFS.open(configPath, "w");
   if (!configFile)
   {
@@ -49,7 +49,7 @@ bool Application::loadConfig()
 
   bool result = true; // missing file is not an error: default values are already set
   char configPath[32];
-  snprintf_P(configPath, sizeof(configPath), PSTR("/%s.json"), (const char *)getAppIdName(_appId));
+  snprintf_P(configPath, sizeof(configPath), PSTR("/%s.json"), (const char *)getAppIdName());
   File configFile = LittleFS.open(configPath, "r");
   if (configFile)
   {
@@ -385,7 +385,7 @@ void Application::init(bool skipExistingConfig)
 {
   bool result = true;
 
-  LOG_SERIAL_PRINTF_P(PSTR("Start %s : "), (const char *)getAppIdName(_appId));
+  LOG_SERIAL_PRINTF_P(PSTR("Start %s : "), (const char *)getAppIdName());
 
   setConfigDefaultValues();
 
@@ -478,7 +478,7 @@ void Application::run()
 {
   if (_reInit)
   {
-    LOG_SERIAL_PRINTF_P(PSTR("ReStart %s : "), (const char *)getAppIdName(_appId));
+    LOG_SERIAL_PRINTF_P(PSTR("ReStart %s : "), (const char *)getAppIdName());
 
     if (appInit(true))
       LOG_SERIAL_PRINTLN(F("OK"));

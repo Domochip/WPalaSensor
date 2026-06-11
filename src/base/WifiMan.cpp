@@ -396,7 +396,7 @@ void WifiMan::mqttPublishStatus(MQTTMan &mqttMan)
 
   topic = mqttMan.getBaseTopic();
   topic += '/';
-  topic += getAppIdName(WifiManApp);
+  topic += getAppIdName();
   fillStatusJSON(json);
   mqttMan.publish(topic.c_str(), json, true);
 }
