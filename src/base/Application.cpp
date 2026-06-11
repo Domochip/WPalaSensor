@@ -392,6 +392,18 @@ bool Application::updateFirmware(const char *version, String &retMsg, std::funct
   return success;
 }
 
+void Application::mqttPublishStatus(MQTTMan &mqttMan)
+{
+  JsonDocument json;
+  String topic;
+  topic.reserve(MQTTMan::baseTopicSize + 5); // base topic + suffix
+
+  topic = mqttMan.getBaseTopic();
+  topic += getMqttTopicSuffix();
+  fillStatusJSON(json);
+  mqttMan.publish(topic.c_str(), json, true);
+}
+
 void Application::init(bool skipExistingConfig)
 {
   bool result = true;

@@ -144,7 +144,6 @@ private:
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
   bool mqttPublishHassDiscovery();
   bool mqttPublishUpdate();
-  void mqttPublishStatus(MQTTMan &mqttMan);
   void mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix);
 
   void setConfigDefaultValues();

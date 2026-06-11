@@ -611,20 +611,6 @@ bool WPalaSensor::mqttPublishUpdate()
 }
 
 //------------------------------------------
-// Publish WPalaSensor status to MQTT
-void WPalaSensor::mqttPublishStatus(MQTTMan &mqttMan)
-{
-  JsonDocument json;
-  String topic;
-  topic.reserve(MQTTMan::baseTopicSize + 5); // base topic + suffix
-
-  topic = mqttMan.getBaseTopic();
-  topic += getMqttTopicSuffix();
-  fillStatusJSON(json);
-  mqttMan.publish(topic.c_str(), json, true);
-}
-
-//------------------------------------------
 // Used to initialize configuration properties to default values
 void WPalaSensor::setConfigDefaultValues()
 {

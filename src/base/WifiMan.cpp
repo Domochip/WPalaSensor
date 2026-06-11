@@ -388,18 +388,6 @@ void WifiMan::appRun()
 #endif
 }
 
-void WifiMan::mqttPublishStatus(MQTTMan &mqttMan)
-{
-  JsonDocument json;
-  String topic;
-  topic.reserve(MQTTMan::baseTopicSize + 5); // base topic + suffix
-
-  topic = mqttMan.getBaseTopic();
-  topic += getMqttTopicSuffix();
-  fillStatusJSON(json);
-  mqttMan.publish(topic.c_str(), json, true);
-}
-
 void WifiMan::mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix)
 {
   JsonDocument json;

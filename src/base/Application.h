@@ -55,6 +55,7 @@ public:
   Application(AppId appId);
 
   static char getAppIdChar(AppId appId);
+  void mqttPublishStatus(MQTTMan &mqttMan);
   void init(bool skipExistingConfig);
   void initWebServer(WebServer &server);
   void run();
@@ -74,7 +75,6 @@ protected:
 
 public:
   virtual void fillStatusJSON(JsonVariant json) = 0;
-  virtual void mqttPublishStatus(MQTTMan &mqttMan) = 0;
   virtual void mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix) = 0;
 };
 
