@@ -548,13 +548,10 @@ bool WPalaSensor::mqttPublishHassDiscovery()
 void WPalaSensor::mqttPublishHassDiscovery(HassDiscoveryCtx &ctx)
 {
   JsonDocument json;
-  String uniqueId;
 
   //
   // MQTT connection counter entity
   //
-
-  uniqueId = ctx.uniqueIdPrefix + F("_MqttConnectCount");
 
   // prepare payload for mqtt connection counter sensor
   deserializeJson(json, F("{"
@@ -566,7 +563,7 @@ void WPalaSensor::mqttPublishHassDiscovery(HassDiscoveryCtx &ctx)
                           "\"state_topic\":\"~/App\","
                           "\"value_template\":\"{{ value_json.mqttconnectcount }}\""
                           "}"));
-  ctx.publishEntity(json, F("sensor"), uniqueId);
+  ctx.publishEntity(json, F("sensor"), F("_MqttConnectCount"));
 }
 
 //------------------------------------------
