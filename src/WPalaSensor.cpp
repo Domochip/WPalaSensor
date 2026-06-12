@@ -357,7 +357,7 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
   _needPublishHassDiscovery = true;
 
   // To be removed at 2027-06-12: clean retained message on base topic (used in early versions)
-  mqttMan->publish(_mqttMan.getBaseTopic(), "");
+  mqttMan->publish(_mqttMan.getBaseTopic(), "", true);
 }
 
 //------------------------------------------
