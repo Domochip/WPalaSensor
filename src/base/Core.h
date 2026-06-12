@@ -23,7 +23,7 @@ public:
   Core() : Application(CoreApp) {};
   static const char *getSerialNumber();
   void mqttPublishStatus(MQTTMan &mqttMan);
-  void mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix);
+  void mqttPublishHassDiscovery(HassDiscoveryCtx &ctx);
 };
 
 #endif

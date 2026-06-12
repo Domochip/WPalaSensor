@@ -2,6 +2,27 @@
 
 Application *Application::_applicationList[3] = {nullptr, nullptr, nullptr};
 
+void Application::HassDiscoveryCtx::publishEntity(JsonDocument &json, const String &type, const String &uniqueId, bool withStandardAvail)
+{
+  static const __FlashStringHelper *availabilityJSON = F("{\"topic\":\"~/connected\",\"value_template\":\"{{ iif(int(value) > 0, 'online', 'offline') }}\"}");
+
+  String topic;
+  topic.reserve(strlen(hassDiscoveryPrefix) + type.length() + uniqueId.length() + 9); // 9 = "/" + "/" + "/config"
+  topic += hassDiscoveryPrefix;
+  topic += '/';
+  topic += type;
+  topic += '/';
+  topic += uniqueId;
+  topic += F("/config");
+
+  json["~"] = mqttMan.getBaseTopic();
+  if (withStandardAvail)
+    json[F("availability")] = serialized(availabilityJSON);
+  json[F("device")] = serialized(device);
+  json[F("unique_id")] = uniqueId;
+  mqttMan.publish(topic.c_str(), json, true);
+}
+
 Application::Application(AppId appId) : _appId(appId)
 {
   _applicationList[_appId] = this;

@@ -74,8 +74,18 @@ protected:
   virtual void setConfigDefaultValues() = 0;
 
 public:
+  struct HassDiscoveryCtx
+  {
+    MQTTMan &mqttMan;
+    const String &device;
+    const String &uniqueIdPrefix;
+    const char *hassDiscoveryPrefix;
+
+    void publishEntity(JsonDocument &json, const String &type, const String &uniqueId, bool withStandardAvail = true);
+  };
+
   virtual void fillStatusJSON(JsonVariant json) = 0;
-  virtual void mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix) = 0;
+  virtual void mqttPublishHassDiscovery(HassDiscoveryCtx &ctx) = 0;
 };
 
 #endif

@@ -144,7 +144,7 @@ private:
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
   bool mqttPublishHassDiscovery();
   bool mqttPublishUpdate();
-  void mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix);
+  void mqttPublishHassDiscovery(HassDiscoveryCtx &ctx);
 
   void setConfigDefaultValues();
   bool parseConfigJSON(JsonVariant json, bool fromWebPage = false);

@@ -301,43 +301,17 @@ void Core::appInitWebServer(WebServer &server)
         server.client().stop();
       });
 }
-void Core::mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix)
+void Core::mqttPublishHassDiscovery(HassDiscoveryCtx &ctx)
 {
   JsonDocument json;
   String uniqueId;
-  const __FlashStringHelper *availabilityJSON = F("{\"topic\":\"~/connected\",\"value_template\":\"{{ iif(int(value) > 0, 'online', 'offline') }}\"}");
-
-  // Helper lambda to prepare entity topic
-  auto prepareTopic = [&](const String &type, const String &uniqueId)
-  {
-    String topic;
-    topic.reserve(strlen(hassDiscoveryPrefix) + type.length() + uniqueId.length() + 9); // 9 = "/" + "/" + "/config"
-    topic += hassDiscoveryPrefix;
-    topic += '/';
-    topic += type;
-    topic += '/';
-    topic += uniqueId;
-    topic += F("/config");
-    return topic;
-  };
-
-  // Helper lambda which adds common attributes to JSON and publish it to MQTT
-  auto publishEntity = [&](const String &type, const String &uniqueId, bool withStandardAvail = true)
-  {
-    json["~"] = mqttMan.getBaseTopic();
-    if (withStandardAvail)
-      json[F("availability")] = serialized(availabilityJSON);
-    json[F("device")] = serialized(device);
-    json[F("unique_id")] = uniqueId;
-    mqttMan.publish(prepareTopic(type, uniqueId).c_str(), json, true);
-  };
 
   //
   // Connectivity entity
   //
 
   // prepare uniqueId, topic and payload for connectivity sensor
-  uniqueId = uniqueIdPrefix + F("_Connectivity");
+  uniqueId = ctx.uniqueIdPrefix + F("_Connectivity");
 
   // prepare payload for connectivity sensor
   deserializeJson(json, F("{"
@@ -348,14 +322,14 @@ void Core::mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, cons
                           "\"state_topic\":\"~/connected\","
                           "\"value_template\": \"{{ iif(int(value) > 0, 'ON', 'OFF') }}\""
                           "}"));
-  publishEntity(F("binary_sensor"), uniqueId, false);
+  ctx.publishEntity(json, F("binary_sensor"), uniqueId, false);
 
   //
   // Update entity
   //
 
   // prepare uniqueId, topic and payload for update sensor
-  uniqueId = uniqueIdPrefix + F("_Update");
+  uniqueId = ctx.uniqueIdPrefix + F("_Update");
 
   // prepare payload for update sensor
   deserializeJson(json, F("{"
@@ -367,5 +341,5 @@ void Core::mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, cons
                           "\"payload_install\":\"latest\","
                           "\"state_topic\":\"~/update\""
                           "}"));
-  publishEntity(F("update"), uniqueId);
+  ctx.publishEntity(json, F("update"), uniqueId);
 }

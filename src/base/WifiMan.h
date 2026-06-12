@@ -58,7 +58,7 @@ public:
   static const char *ipToCString(IPAddress ip);
   // helper to get MAC address as const char* (cached)
   static const char *getMacAddress();
-  void mqttPublishHassDiscovery(MQTTMan &mqttMan, const String &device, const String &uniqueIdPrefix, const char *hassDiscoveryPrefix);
+  void mqttPublishHassDiscovery(HassDiscoveryCtx &ctx);
 };
 
 #endif
