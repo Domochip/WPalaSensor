@@ -530,6 +530,8 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   json[F("name")] = WiFi.getHostname();
   serializeJson(json, device); // serialize to device String
 
+  json.clear();
+
   // ----- Call each application's discovery method -----
 
   HassDiscoveryCtx ctx{_mqttMan, device, uniqueIdPrefix, _ha.mqtt.hassDiscoveryPrefix};
