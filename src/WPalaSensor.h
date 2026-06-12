@@ -143,6 +143,7 @@ private:
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
   bool mqttPublishHassDiscovery();
+  void mqttPublishHassDiscovery(HassDiscoveryCtx &ctx);
   bool mqttPublishUpdate();
 
   void setConfigDefaultValues();

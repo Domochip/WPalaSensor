@@ -495,6 +495,7 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
 }
 
 //------------------------------------------
+// Publish Home Assistant Discovery data to MQTT
 bool WPalaSensor::mqttPublishHassDiscovery()
 {
   // if MQTT is not connected then return false
@@ -507,33 +508,6 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   JsonDocument json;
   String device;
   String uniqueIdPrefix;
-  String uniqueId;
-  const __FlashStringHelper *availabilityJSON = F("{\"topic\":\"~/connected\",\"value_template\":\"{{ iif(int(value) > 0, 'online', 'offline') }}\"}");
-
-  // Helper lambda to prepare entity topic
-  auto prepareTopic = [&](const String &type, const String &uniqueId)
-  {
-    String topic;
-    topic.reserve(strlen(_ha.mqtt.hassDiscoveryPrefix) + type.length() + uniqueId.length() + 9); // 9 = "/" + "/" + "/config"
-    topic += _ha.mqtt.hassDiscoveryPrefix;
-    topic += '/';
-    topic += type;
-    topic += '/';
-    topic += uniqueId;
-    topic += F("/config");
-    return topic;
-  };
-
-  // Helper lambda which adds common attributes to JSON and publish it to MQTT
-  auto publishEntity = [&](const String &type, const String &uniqueId, bool withStandardAvail = true)
-  {
-    json["~"] = _mqttMan.getBaseTopic();
-    if (withStandardAvail)
-      json[F("availability")] = serialized(availabilityJSON);
-    json[F("device")] = serialized(device);
-    json[F("unique_id")] = uniqueId;
-    _mqttMan.publish(prepareTopic(type, uniqueId).c_str(), json, true);
-  };
 
   // ---------- Device ----------
 
@@ -553,51 +527,29 @@ bool WPalaSensor::mqttPublishHassDiscovery()
   json[F("name")] = WiFi.getHostname();
   serializeJson(json, device); // serialize to device String
 
-  // ----- Entities -----
+  // ----- Call each application's discovery method -----
 
-  //
-  // Connectivity entity
-  //
+  HassDiscoveryCtx ctx{_mqttMan, device, uniqueIdPrefix, _ha.mqtt.hassDiscoveryPrefix};
 
-  // prepare uniqueId, topic and payload for connectivity sensor
-  uniqueId = uniqueIdPrefix + F("_Connectivity");
+  _applicationList[CoreApp]->mqttPublishHassDiscovery(ctx);
+  _applicationList[WifiManApp]->mqttPublishHassDiscovery(ctx);
+  mqttPublishHassDiscovery(ctx);
 
-  // prepare payload for connectivity sensor
-  deserializeJson(json, F("{"
-                          "\"default_entity_id\":\"binary_sensor." CUSTOM_APP_MODEL "_connectivity\","
-                          "\"device_class\":\"connectivity\","
-                          "\"entity_category\":\"diagnostic\","
-                          "\"object_id\":\"" CUSTOM_APP_MODEL "_connectivity\","
-                          "\"state_topic\":\"~/connected\","
-                          "\"value_template\": \"{{ iif(int(value) > 0, 'ON', 'OFF') }}\""
-                          "}"));
-  publishEntity(F("binary_sensor"), uniqueId, false);
+  return true;
+}
 
-  //
-  // Wifi connection counter entity
-  //
-
-  // prepare uniqueId, topic and payload for wifi connection counter sensor
-  uniqueId = uniqueIdPrefix + F("_WifiConnectCount");
-
-  // prepare payload for wifi connection counter sensor
-  deserializeJson(json, F("{"
-                          "\"default_entity_id\":\"sensor." CUSTOM_APP_MODEL "_wifi_connect_count\","
-                          "\"entity_category\":\"diagnostic\","
-                          "\"icon\":\"mdi:counter\","
-                          "\"name\":\"WiFi Connect Count\","
-                          "\"object_id\":\"" CUSTOM_APP_MODEL "_wifi_connect_count\","
-                          "\"state_topic\":\"~/WiFi\","
-                          "\"value_template\":\"{{ value_json.connectcount }}\""
-                          "}"));
-  publishEntity(F("sensor"), uniqueId);
+//------------------------------------------
+// Publish WPalaSensor Home Assistant Discovery entities
+void WPalaSensor::mqttPublishHassDiscovery(HassDiscoveryCtx &ctx)
+{
+  JsonDocument json;
+  String uniqueId;
 
   //
   // MQTT connection counter entity
   //
 
-  // prepare uniqueId, topic and payload for mqtt connection counter sensor
-  uniqueId = uniqueIdPrefix + F("_MqttConnectCount");
+  uniqueId = ctx.uniqueIdPrefix + F("_MqttConnectCount");
 
   // prepare payload for mqtt connection counter sensor
   deserializeJson(json, F("{"
@@ -609,28 +561,7 @@ bool WPalaSensor::mqttPublishHassDiscovery()
                           "\"state_topic\":\"~/App\","
                           "\"value_template\":\"{{ value_json.mqttconnectcount }}\""
                           "}"));
-  publishEntity(F("sensor"), uniqueId);
-
-  //
-  // Update entity
-  //
-
-  // prepare uniqueId, topic and payload for update sensor
-  uniqueId = uniqueIdPrefix + F("_Update");
-
-  // prepare payload for update sensor
-  deserializeJson(json, F("{"
-                          "\"command_topic\":\"~/update/install\","
-                          "\"default_entity_id\":\"update." CUSTOM_APP_MODEL "\","
-                          "\"device_class\":\"firmware\","
-                          "\"entity_category\":\"config\","
-                          "\"object_id\":\"" CUSTOM_APP_MODEL "\","
-                          "\"payload_install\":\"latest\","
-                          "\"state_topic\":\"~/update\""
-                          "}"));
-  publishEntity(F("update"), uniqueId);
-
-  return true;
+  ctx.publishEntity(json, F("sensor"), uniqueId);
 }
 
 //------------------------------------------
