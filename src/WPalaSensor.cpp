@@ -567,27 +567,6 @@ void WPalaSensor::mqttPublishHassDiscovery(HassDiscoveryCtx &ctx)
 }
 
 //------------------------------------------
-// Publish update to MQTT
-bool WPalaSensor::mqttPublishUpdate()
-{
-  if (!_mqttMan.connected())
-    return false;
-
-  // get update info
-  JsonDocument updateInfo;
-  fillLatestUpdateInfoJson(updateInfo);
-
-  // calculate update topic
-  String topic = _mqttMan.getBaseTopic();
-  topic += F("/update");
-
-  // publish update info
-  _mqttMan.publish(topic.c_str(), updateInfo, true);
-
-  return true;
-}
-
-//------------------------------------------
 // Used to initialize configuration properties to default values
 void WPalaSensor::setConfigDefaultValues()
 {
@@ -1112,7 +1091,7 @@ void WPalaSensor::appRun()
       _needRefresh = true;
     }
 
-    if (_needPublishUpdate && mqttPublishUpdate())
+    if (_needPublishUpdate && mqttPublishUpdate(_mqttMan))
       _needPublishUpdate = false;
   }
 
