@@ -917,7 +917,10 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
 
   // if MQTT used add Mqtt connection count
   if (_ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
+  {
     json[F("mqttconnectcount")] = _mqttMan.getConnectionCount();
+    json[F("mqttdiscoreason")] = _mqttMan.getLastDiscoState();
+  }
 
   json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
   json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
