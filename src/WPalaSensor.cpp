@@ -563,7 +563,7 @@ void WPalaSensor::mqttPublishHassDiscovery(HassDiscoveryCtx &ctx)
                           "\"state_topic\":\"~/App\","
                           "\"value_template\":\"{{ value_json.mqttconnectcount }}\""
                           "}"));
-  ctx.publishEntity(json, F("sensor"), F("_MqttConnectCount"));
+  ctx.publishEntity(json, F("sensor"), F("MqttConnectCount"));
 }
 
 //------------------------------------------
