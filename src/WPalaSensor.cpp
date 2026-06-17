@@ -581,6 +581,26 @@ void WPalaSensor::mqttPublishHassDiscovery(HassDiscoveryCtx &ctx)
                           "{{ r.get(value_json.mqttdiscoreason|int,'Unknown') }}\""
                           "}"));
   ctx.publishEntity(json, F("sensor"), F("MqttDiscoReason"));
+
+  //
+  // Temperature Fallback binary sensor entity
+  //
+  if (_ha.protocol != HaProtocol::Disabled)
+  {
+    deserializeJson(json, F("{"
+                            "\"default_entity_id\":\"binary_sensor." CUSTOM_APP_MODEL "_temp_fallback\","
+                            "\"device_class\":\"problem\","
+                            "\"entity_category\":\"diagnostic\","
+                            "\"icon\":\"mdi:thermometer-alert\","
+                            "\"name\":\"Temperature Fallback\","
+                            "\"object_id\":\"" CUSTOM_APP_MODEL "_temp_fallback\","
+                            "\"state_topic\":\"~/App\","
+                            "\"value_template\":\"{{ value_json.onewiretempused }}\","
+                            "\"payload_on\":\"Yes\","
+                            "\"payload_off\":\"No\""
+                            "}"));
+    ctx.publishEntity(json, F("binary_sensor"), F("TempFallback"));
+  }
 }
 
 //------------------------------------------
