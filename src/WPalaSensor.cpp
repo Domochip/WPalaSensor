@@ -613,7 +613,6 @@ void WPalaSensor::setConfigDefaultValues()
   _shB = 0.0002249955839098;
   _shC = 0.0000003246246447;
 
-  _ha.maxFailedRequest = 10;
   _ha.protocol = HaProtocol::Disabled;
   _ha.temperatureTimeout = 300;
   _ha.cboxProtocol = CBoxProtocol::Disabled;
@@ -663,9 +662,6 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   // if an home Automation protocol has been selected then get common param
   if (_ha.protocol != HaProtocol::Disabled)
   {
-    if ((jv = json[F("hamfr")]).is<JsonVariant>())
-      _ha.maxFailedRequest = jv;
-
     if ((jv = json[F("hatt")]).is<JsonVariant>())
       _ha.temperatureTimeout = jv;
   }
@@ -838,7 +834,6 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
   json[F("shb")] = serialized(String(_shB, 16));
   json[F("shc")] = serialized(String(_shC, 16));
 
-  json[F("hamfr")] = _ha.maxFailedRequest;
   json[F("haproto")] = static_cast<uint8_t>(_ha.protocol);
   json[F("hatt")] = _ha.temperatureTimeout;
 

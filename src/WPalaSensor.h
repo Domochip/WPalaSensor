@@ -81,8 +81,6 @@ private:
 
   typedef struct
   {
-    uint8_t maxFailedRequest = 0; // number of failed requests to HA before failover to local temperature sensor
-
     HaProtocol protocol = HaProtocol::Disabled;
     uint16_t temperatureTimeout = 0;
     CBoxProtocol cboxProtocol = CBoxProtocol::Disabled;
