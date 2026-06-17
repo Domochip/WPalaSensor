@@ -36,6 +36,187 @@ void WPalaSensor::setDac(int resistance, bool EEPROM /* = false*/)
   }
 }
 
+//------------------------------------------
+// Fetch HA temperature via HTTP and update _haTemperature / _haTemperatureMillis
+void WPalaSensor::fetchHaTemperatureHttp()
+{
+  WiFiClient client;
+  WiFiClientSecure clientSecure;
+
+  HTTPClient http;
+  char httpBuffer[320];
+
+  // set timeOut
+  http.setTimeout(5000);
+
+  // try to get HomeAutomation sensor value -----------------
+
+  // build the complete URI
+  switch (_ha.http.type)
+  {
+  case HaHttpType::Jeedom:
+    snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/core/api/jeeApi.php?apikey=%s&type=cmd&id=%d"),
+               _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.secret, _ha.http.temperatureId);
+    break;
+  case HaHttpType::Fibaro:
+    snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/devices?id=%d"),
+               _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.temperatureId);
+    break;
+  case HaHttpType::HomeAssistant:
+    snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/states/%s"),
+               _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.homeassistant.entityId);
+    break;
+  }
+
+  // if not TLS then use client, else use clientSecure
+  if (!_ha.http.tls)
+    http.begin(client, httpBuffer);
+  else
+  {
+    clientSecure.setInsecure();
+    http.begin(clientSecure, httpBuffer);
+  }
+
+  // For Fibaro, Pass authentication if specified in configuration
+  if (_ha.http.type == HaHttpType::Fibaro && _ha.http.fibaro.username[0])
+    http.setAuthorization(_ha.http.fibaro.username, _ha.http.secret);
+
+  // For HomeAssistant, Pass long-lived access token and set content type
+  if (_ha.http.type == HaHttpType::HomeAssistant)
+  {
+    snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("Bearer %s"), _ha.http.secret);
+    http.addHeader(F("Authorization"), httpBuffer);
+    http.addHeader(F("Content-Type"), F("application/json"));
+  }
+
+  // send request
+  _haRequestResult = http.GET();
+
+  if (_haRequestResult == 200)
+  {
+    WiFiClient *stream = http.getStreamPtr();
+
+    char payload[60] = {0};
+    int nb = 0;
+
+    switch (_ha.http.type)
+    {
+    case HaHttpType::Jeedom:
+
+      nb = stream->readBytes(payload, 5);
+      payload[nb] = 0;
+      break;
+
+    case HaHttpType::Fibaro:
+
+      while (http.connected() && stream->find("\"value\""))
+      {
+        // go to first next double quote (or return false if a comma appears first)
+        if (stream->findUntil("\"", ","))
+        {
+          // read value (read until next doublequote)
+          nb = stream->readBytesUntil('"', payload, sizeof(payload) - 1);
+          payload[nb] = 0;
+        }
+      }
+      break;
+
+    case HaHttpType::HomeAssistant:
+
+      while (http.connected() && stream->find("\"state\""))
+      {
+        // go to first next double quote (or return false if a comma appears first)
+        if (stream->findUntil("\"", ","))
+        {
+          // read value (read until next doublequote)
+          nb = stream->readBytesUntil('"', payload, sizeof(payload) - 1);
+          payload[nb] = 0;
+        }
+      }
+      break;
+    }
+
+    // if we readed some bytes
+    if (nb)
+    {
+      // convert to float
+      char *endPtr;
+      float haTemperature = strtof(payload, &endPtr);
+
+      // if we got a correct value (at least one character was parsed)
+      if (endPtr != payload)
+      {
+        // round it to tenth
+        haTemperature *= 10;
+        haTemperature = round(haTemperature);
+        haTemperature /= 10;
+
+        // place it in global _haTemperature and store millis
+        _haTemperature = haTemperature;
+        _haTemperatureMillis = millis();
+      }
+    }
+  }
+  http.end();
+}
+
+//------------------------------------------
+// Fetch CBox stove temperature via HTTP and update _stoveTemperature / _stoveTemperatureMillis
+void WPalaSensor::fetchCBoxTemperatureHttp()
+{
+  WiFiClient client;
+
+  HTTPClient http;
+
+  // set timeOut
+  http.setTimeout(5000);
+
+  // try to get current stove temperature info ----------------------
+  char cboxUrl[64];
+  IPAddress cboxIp(_ha.http.cboxIp);
+  snprintf_P(cboxUrl, sizeof(cboxUrl), PSTR("http://%d.%d.%d.%d/cgi-bin/sendmsg.lua?cmd=GET%%20TMPS"),
+             cboxIp[0], cboxIp[1], cboxIp[2], cboxIp[3]);
+  http.begin(client, cboxUrl);
+
+  // send request
+  _stoveRequestResult = http.GET();
+  // if we get successfull HTTP answer
+  if (_stoveRequestResult == 200)
+  {
+    WiFiClient *stream = http.getStreamPtr();
+
+    // if we found T1 in answer
+    if (stream->find("\"T1\""))
+    {
+      char payload[8];
+      // read until the comma into payload variable
+      int nb = stream->readBytesUntil(',', payload, sizeof(payload) - 1);
+      payload[nb] = 0; // end payload char[]
+      // if we readed some bytes
+      if (nb)
+      {
+        // look for start position of T1 value
+        uint8_t posTRW = 0;
+        while ((payload[posTRW] == ' ' || payload[posTRW] == ':' || payload[posTRW] == '\t') && posTRW < nb)
+          posTRW++;
+
+        // convert to float
+        char *endPtr;
+        float stoveTemperature = strtof(payload + posTRW, &endPtr);
+
+        // if we got a correct value (at least one character was parsed)
+        if (endPtr != payload + posTRW)
+        {
+          // place it in global _stoveTemperature and store millis
+          _stoveTemperature = stoveTemperature;
+          _stoveTemperatureMillis = millis();
+        }
+      }
+    }
+  }
+  http.end();
+}
+
 //-----------------------------------------------------------------------
 // Main Refresh method
 //-----------------------------------------------------------------------
@@ -59,7 +240,7 @@ void WPalaSensor::refresh()
     return;
   }
 
-  float temperatureToDisplay = 20.0;
+  float temperatureToDisplay;
 
   // read temperature from the local sensor
   _owTemperature = _ds18b20.readTemp();
@@ -73,187 +254,15 @@ void WPalaSensor::refresh()
     _owTemperature /= 10;
   }
 
-  // if HomeAutomation protocol is HTTP and WiFi is connected
+  // fetch remote temperatures
   if (_ha.protocol == HaProtocol::Http && WiFi.isConnected())
-  {
+    fetchHaTemperatureHttp();
 
-    WiFiClient client;
-    WiFiClientSecure clientSecure;
-
-    HTTPClient http;
-    char httpBuffer[320];
-
-    // set timeOut
-    http.setTimeout(5000);
-
-    // try to get HomeAutomation sensor value -----------------
-
-    // build the complete URI
-    switch (_ha.http.type)
-    {
-    case HaHttpType::Jeedom:
-      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/core/api/jeeApi.php?apikey=%s&type=cmd&id=%d"),
-                 _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.secret, _ha.http.temperatureId);
-      break;
-    case HaHttpType::Fibaro:
-      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/devices?id=%d"),
-                 _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.temperatureId);
-      break;
-    case HaHttpType::HomeAssistant:
-      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("http%s://%s/api/states/%s"),
-                 _ha.http.tls ? "s" : "", _ha.http.hostname, _ha.http.homeassistant.entityId);
-      break;
-    }
-
-    // if not TLS then use client, else use clientSecure
-    if (!_ha.http.tls)
-      http.begin(client, httpBuffer);
-    else
-    {
-      clientSecure.setInsecure();
-      http.begin(clientSecure, httpBuffer);
-    }
-
-    // For Fibaro, Pass authentication if specified in configuration
-    if (_ha.http.type == HaHttpType::Fibaro && _ha.http.fibaro.username[0])
-      http.setAuthorization(_ha.http.fibaro.username, _ha.http.secret);
-
-    // For HomeAssistant, Pass long-lived access token and set content type
-    if (_ha.http.type == HaHttpType::HomeAssistant)
-    {
-      snprintf_P(httpBuffer, sizeof(httpBuffer), PSTR("Bearer %s"), _ha.http.secret);
-      http.addHeader(F("Authorization"), httpBuffer);
-      http.addHeader(F("Content-Type"), F("application/json"));
-    }
-
-    // send request
-    _haRequestResult = http.GET();
-
-    if (_haRequestResult == 200)
-    {
-      WiFiClient *stream = http.getStreamPtr();
-
-      char payload[60] = {0};
-      int nb = 0;
-
-      switch (_ha.http.type)
-      {
-      case HaHttpType::Jeedom:
-
-        nb = stream->readBytes(payload, 5);
-        payload[nb] = 0;
-        break;
-
-      case HaHttpType::Fibaro:
-
-        while (http.connected() && stream->find("\"value\""))
-        {
-          // go to first next double quote (or return false if a comma appears first)
-          if (stream->findUntil("\"", ","))
-          {
-            // read value (read until next doublequote)
-            nb = stream->readBytesUntil('"', payload, sizeof(payload) - 1);
-            payload[nb] = 0;
-          }
-        }
-        break;
-
-      case HaHttpType::HomeAssistant:
-
-        while (http.connected() && stream->find("\"state\""))
-        {
-          // go to first next double quote (or return false if a comma appears first)
-          if (stream->findUntil("\"", ","))
-          {
-            // read value (read until next doublequote)
-            nb = stream->readBytesUntil('"', payload, sizeof(payload) - 1);
-            payload[nb] = 0;
-          }
-        }
-        break;
-      }
-
-      // if we readed some bytes
-      if (nb)
-      {
-        // convert to float
-        char *endPtr;
-        float haTemperature = strtof(payload, &endPtr);
-
-        // if we got a correct value (at least one character was parsed)
-        if (endPtr != payload)
-        {
-          // round it to tenth
-          haTemperature *= 10;
-          haTemperature = round(haTemperature);
-          haTemperature /= 10;
-
-          // place it in global _haTemperature and store millis
-          _haTemperature = haTemperature;
-          _haTemperatureMillis = millis();
-        }
-      }
-    }
-    http.end();
-  }
-
-  // if ConnectionBox protocol is HTTP and WiFi is connected
   if (_ha.cboxProtocol == CBoxProtocol::Http && WiFi.isConnected())
-  {
-    WiFiClient client;
-
-    HTTPClient http;
-
-    // set timeOut
-    http.setTimeout(5000);
-
-    // try to get current stove temperature info ----------------------
-    char cboxUrl[64];
-    IPAddress cboxIp(_ha.http.cboxIp);
-    snprintf_P(cboxUrl, sizeof(cboxUrl), PSTR("http://%d.%d.%d.%d/cgi-bin/sendmsg.lua?cmd=GET%%20TMPS"),
-               cboxIp[0], cboxIp[1], cboxIp[2], cboxIp[3]);
-    http.begin(client, cboxUrl);
-
-    // send request
-    _stoveRequestResult = http.GET();
-    // if we get successfull HTTP answer
-    if (_stoveRequestResult == 200)
-    {
-      WiFiClient *stream = http.getStreamPtr();
-
-      // if we found T1 in answer
-      if (stream->find("\"T1\""))
-      {
-        char payload[8];
-        // read until the comma into payload variable
-        int nb = stream->readBytesUntil(',', payload, sizeof(payload) - 1);
-        payload[nb] = 0; // end payload char[]
-        // if we readed some bytes
-        if (nb)
-        {
-          // look for start position of T1 value
-          uint8_t posTRW = 0;
-          while ((payload[posTRW] == ' ' || payload[posTRW] == ':' || payload[posTRW] == '\t') && posTRW < nb)
-            posTRW++;
-
-          // convert to float
-          char *endPtr;
-          float stoveTemperature = strtof(payload + posTRW, &endPtr);
-
-          // if we got a correct value (at least one character was parsed)
-          if (endPtr != payload + posTRW)
-          {
-            // place it in global _stoveTemperature and store millis
-            _stoveTemperature = stoveTemperature;
-            _stoveTemperatureMillis = millis();
-          }
-        }
-      }
-    }
-    http.end();
-  }
+    fetchCBoxTemperatureHttp();
 
   // if Home Automation protocol is defined and temperature is not too old
+
   if (_ha.protocol != HaProtocol::Disabled && (_haTemperatureMillis + _ha.temperatureTimeout * 1000) > millis())
   {
     temperatureToDisplay = _haTemperature;

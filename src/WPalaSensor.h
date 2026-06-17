@@ -137,6 +137,8 @@ private:
 
   void setDac(float temperature, bool EEPROM = false);
   void setDac(int resistance, bool EEPROM = false);
+  void fetchHaTemperatureHttp();
+  void fetchCBoxTemperatureHttp();
   void refresh();
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
