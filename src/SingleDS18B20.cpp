@@ -118,7 +118,7 @@ float SingleDS18B20::readTemp()
 {
 
   if (!getReady())
-    return 12.3456;
+    return NAN;
 
   byte data[9];
 
@@ -132,7 +132,7 @@ float SingleDS18B20::readTemp()
 
   // if read of scratchpad failed (implicit 3 times) then return special fake value
   if (!readScratchPad(_owROMCode, data))
-    return 12.3456;
+    return NAN;
 
   // Convert the data to actual temperature
   // because the result is a 16 bit signed integer, it should

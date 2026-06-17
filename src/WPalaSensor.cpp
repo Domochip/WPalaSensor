@@ -244,7 +244,7 @@ void WPalaSensor::refresh()
 
   // read temperature from the local sensor
   _owTemperature = _ds18b20.readTemp();
-  if (_owTemperature == 12.3456F)
+  if (isnan(_owTemperature))
     _owTemperature = 20.0; // if reading of local sensor failed so push 20°C
   else
   {
