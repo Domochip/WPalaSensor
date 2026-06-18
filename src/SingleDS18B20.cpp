@@ -68,6 +68,7 @@ SingleDS18B20::SingleDS18B20(uint8_t owPin) : _ow(owPin)
 {
 
   // find first temp sensor ----------
+  bool sensorLocated = false;
   _ow.reset_search();
 
   while (_ow.search(_owROMCode))
@@ -76,15 +77,14 @@ SingleDS18B20::SingleDS18B20(uint8_t owPin) : _ow(owPin)
     // if ROM received is correct or not a Temperature sensor THEN continue to next device
     if ((_ow.crc8(_owROMCode, 7) == _owROMCode[7]) && (_owROMCode[0] == 0x10 || _owROMCode[0] == 0x22 || _owROMCode[0] == 0x28))
     {
-      _tempSensorFound = true;
+      sensorLocated = true;
       break;
     }
   }
 
-  if (!_tempSensorFound)
+  if (!sensorLocated)
     return;
 
-  _tempSensorFound = false;
   // configure sensor ----------
   byte data[9];
 
