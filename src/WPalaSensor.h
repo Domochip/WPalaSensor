@@ -67,7 +67,7 @@ private:
   struct MQTT
   {
     char hostname[64 + 1] = {0};
-    uint32_t port = 0;
+    uint16_t port = 1883;
     char username[32 + 1] = {0};
     char password[64 + 1] = {0};
     char baseTopic[64 + 1] = {0};
@@ -82,9 +82,9 @@ private:
   struct HomeAutomation
   {
     HaProtocol protocol = HaProtocol::Disabled;
-    uint16_t temperatureTimeout = 0;
+    uint16_t temperatureTimeout = 300;
     CBoxProtocol cboxProtocol = CBoxProtocol::Disabled;
-    uint16_t cboxTemperatureTimeout = 0;
+    uint16_t cboxTemperatureTimeout = 300;
 
     HTTP http;
     MQTT mqtt;
