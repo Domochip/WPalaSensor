@@ -45,46 +45,46 @@ private:
 
   struct HTTP
   {
-    HaHttpType type = HaHttpType::HomeAssistant;
-    char hostname[64 + 1] = {0};
-    bool tls = false;
-    int temperatureId = 0;
-    char secret[183 + 1] = {0}; // store Home Assistant long lived access token or Jeedom API key or Fibaro password
+    HaHttpType type;
+    char hostname[64 + 1];
+    bool tls;
+    int temperatureId;
+    char secret[183 + 1]; // store Home Assistant long lived access token or Jeedom API key or Fibaro password
 
     struct
     {
-      char username[64 + 1] = {0};
+      char username[64 + 1];
     } fibaro;
 
     struct
     {
-      char entityId[64 + 1] = {0};
+      char entityId[64 + 1];
     } homeassistant;
 
-    uint32_t cboxIp = 0;
+    uint32_t cboxIp;
   };
 
   struct MQTT
   {
-    char hostname[64 + 1] = {0};
-    uint16_t port = 1883;
-    char username[32 + 1] = {0};
-    char password[64 + 1] = {0};
-    char baseTopic[64 + 1] = {0};
-    bool hassDiscoveryEnabled = true;
-    char hassDiscoveryPrefix[32 + 1] = {0};
+    char hostname[64 + 1];
+    uint16_t port;
+    char username[32 + 1];
+    char password[64 + 1];
+    char baseTopic[64 + 1];
+    bool hassDiscoveryEnabled;
+    char hassDiscoveryPrefix[32 + 1];
 
-    char temperatureTopic[64 + 1] = {0};
+    char temperatureTopic[64 + 1];
 
-    char cboxT1Topic[32 + 1] = {0};
+    char cboxT1Topic[32 + 1];
   };
 
   struct HomeAutomation
   {
-    HaProtocol protocol = HaProtocol::Disabled;
-    uint16_t temperatureTimeout = 300;
-    CBoxProtocol cboxProtocol = CBoxProtocol::Disabled;
-    uint16_t cboxTemperatureTimeout = 300;
+    HaProtocol protocol;
+    uint16_t temperatureTimeout;
+    CBoxProtocol cboxProtocol;
+    uint16_t cboxTemperatureTimeout;
 
     HTTP http;
     MQTT mqtt;
@@ -94,11 +94,11 @@ private:
 
   uint8_t _refreshPeriod;
   // Steinhart-Hart coefficient A
-  double _shA = 0;
+  double _shA;
   // Steinhart-Hart coefficient B
-  double _shB = 0;
+  double _shB;
   // Steinhart-Hart coefficient C
-  double _shC = 0;
+  double _shC;
   HomeAutomation _ha;
 
   // Run variables
