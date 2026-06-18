@@ -7,19 +7,19 @@
 
 //-----------------------------------------------------------------------
 // DS18X20 Read ScratchPad command
-bool SingleDS18B20::readScratchPad(byte data[])
+bool SingleDS18B20::readScratchPad(uint8_t data[])
 {
 
   bool crcScratchPadOK = false;
 
   // read scratchpad (if 3 failures occurs, then return the error
-  for (byte i = 0; i < 3; i++)
+  for (uint8_t i = 0; i < 3; i++)
   {
     // read scratchpad of the current device
     _ow.reset();
     _ow.select(_owROMCode);
     _ow.write(0xBE); // Read ScratchPad
-    for (byte j = 0; j < 9; j++)
+    for (uint8_t j = 0; j < 9; j++)
     { // read 9 bytes
       data[j] = _ow.read();
     }
@@ -34,7 +34,7 @@ bool SingleDS18B20::readScratchPad(byte data[])
 }
 //------------------------------------------
 // DS18X20 Write ScratchPad command
-void SingleDS18B20::writeScratchPad(byte th, byte tl, byte cfg)
+void SingleDS18B20::writeScratchPad(uint8_t th, uint8_t tl, uint8_t cfg)
 {
 
   _ow.reset();
@@ -86,7 +86,7 @@ SingleDS18B20::SingleDS18B20(uint8_t owPin) : _ow(owPin)
     return;
 
   // configure sensor ----------
-  byte data[9];
+  uint8_t data[9];
 
   // if scratchPad read failed then stop
   if (!readScratchPad(data))
@@ -119,7 +119,7 @@ float SingleDS18B20::readTemp()
   if (!getReady())
     return NAN;
 
-  byte data[9];
+  uint8_t data[9];
 
   startConvertT();
 
@@ -149,7 +149,7 @@ float SingleDS18B20::readTemp()
   }
   else
   {
-    byte cfg = (data[4] & 0x60);
+    uint8_t cfg = (data[4] & 0x60);
     // at lower res, the low bits are undefined, so let's zero them
     if (cfg == 0x00)
       raw = raw & ~7; // 9 bit resolution, 93.75 ms

@@ -8,10 +8,10 @@ class SingleDS18B20
 private:
   OneWire _ow;
   bool _tempSensorFound = false;
-  byte _owROMCode[8];
+  uint8_t _owROMCode[8];
 
-  bool readScratchPad(byte data[]);
-  void writeScratchPad(byte th, byte tl, byte cfg);
+  bool readScratchPad(uint8_t data[]);
+  void writeScratchPad(uint8_t th, uint8_t tl, uint8_t cfg);
   void copyScratchPad();
   void startConvertT();
 
