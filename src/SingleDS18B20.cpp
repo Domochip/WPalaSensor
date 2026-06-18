@@ -9,28 +9,21 @@
 // DS18X20 Read ScratchPad command
 bool SingleDS18B20::readScratchPad(uint8_t data[])
 {
-
-  bool crcScratchPadOK = false;
-
-  // read scratchpad (if 3 failures occurs, then return the error
+  // try to read scratchpad 3 times
   for (uint8_t i = 0; i < 3; i++)
   {
     // read scratchpad of the current device
     _ow.reset();
     _ow.select(_owROMCode);
-    _ow.write(0xBE); // Read ScratchPad
-    for (uint8_t j = 0; j < 9; j++)
-    { // read 9 bytes
+    _ow.write(0xBE);                // Read ScratchPad
+    for (uint8_t j = 0; j < 9; j++) // read 9 bytes
       data[j] = _ow.read();
-    }
+
     if (_ow.crc8(data, 8) == data[8])
-    {
-      crcScratchPadOK = true;
-      break;
-    }
+      return true; // if CRC is OK then return true
   }
 
-  return crcScratchPadOK;
+  return false;
 }
 //------------------------------------------
 // DS18X20 Write ScratchPad command
