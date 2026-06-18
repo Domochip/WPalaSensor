@@ -26,7 +26,7 @@ boolean SingleDS18B20::readScratchPad(byte addr[], byte data[])
     if (_ow.crc8(data, 8) == data[8])
     {
       crcScratchPadOK = true;
-      i = 3; // end for loop
+      break;
     }
   }
 
