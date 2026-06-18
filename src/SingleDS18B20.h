@@ -10,10 +10,10 @@ private:
   bool _tempSensorFound = false;
   byte _owROMCode[8];
 
-  boolean readScratchPad(byte addr[], byte data[]);
-  void writeScratchPad(byte addr[], byte th, byte tl, byte cfg);
-  void copyScratchPad(byte addr[]);
-  void startConvertT(byte addr[]);
+  bool readScratchPad(byte data[]);
+  void writeScratchPad(byte th, byte tl, byte cfg);
+  void copyScratchPad();
+  void startConvertT();
 
 public:
   SingleDS18B20(uint8_t owPin);

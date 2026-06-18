@@ -7,17 +7,17 @@
 
 //-----------------------------------------------------------------------
 // DS18X20 Read ScratchPad command
-boolean SingleDS18B20::readScratchPad(byte addr[], byte data[])
+bool SingleDS18B20::readScratchPad(byte data[])
 {
 
-  boolean crcScratchPadOK = false;
+  bool crcScratchPadOK = false;
 
   // read scratchpad (if 3 failures occurs, then return the error
   for (byte i = 0; i < 3; i++)
   {
     // read scratchpad of the current device
     _ow.reset();
-    _ow.select(addr);
+    _ow.select(_owROMCode);
     _ow.write(0xBE); // Read ScratchPad
     for (byte j = 0; j < 9; j++)
     { // read 9 bytes
@@ -34,11 +34,11 @@ boolean SingleDS18B20::readScratchPad(byte addr[], byte data[])
 }
 //------------------------------------------
 // DS18X20 Write ScratchPad command
-void SingleDS18B20::writeScratchPad(byte addr[], byte th, byte tl, byte cfg)
+void SingleDS18B20::writeScratchPad(byte th, byte tl, byte cfg)
 {
 
   _ow.reset();
-  _ow.select(addr);
+  _ow.select(_owROMCode);
   _ow.write(0x4E); // Write ScratchPad
   _ow.write(th);   // Th 80°C
   _ow.write(tl);   // Tl 0°C
@@ -46,19 +46,19 @@ void SingleDS18B20::writeScratchPad(byte addr[], byte th, byte tl, byte cfg)
 }
 //------------------------------------------
 // DS18X20 Copy ScratchPad command
-void SingleDS18B20::copyScratchPad(byte addr[])
+void SingleDS18B20::copyScratchPad()
 {
 
   _ow.reset();
-  _ow.select(addr);
+  _ow.select(_owROMCode);
   _ow.write(0x48); // Copy ScratchPad
 }
 //------------------------------------------
 // DS18X20 Start Temperature conversion
-void SingleDS18B20::startConvertT(byte addr[])
+void SingleDS18B20::startConvertT()
 {
   _ow.reset();
-  _ow.select(addr);
+  _ow.select(_owROMCode);
   _ow.write(0x44); // start conversion
 }
 
@@ -89,17 +89,16 @@ SingleDS18B20::SingleDS18B20(uint8_t owPin) : _ow(owPin)
   byte data[9];
 
   // if scratchPad read failed then stop
-  if (!readScratchPad(_owROMCode, data))
+  if (!readScratchPad(data))
     return;
 
   // if config is not correct
   if (data[2] != 0x50 || data[3] != 0x00 || data[4] != 0x5F)
   {
-
-    writeScratchPad(_owROMCode, 0x50, 0x00, 0x5F); // write ScratchPad with Th=80°C, Tl=0°C, Config 11bit resolution
-    if (!readScratchPad(_owROMCode, data))
-      return;                   // if scratchPad read failed then stop
-    copyScratchPad(_owROMCode); // so we finally can copy scratchpad to memory
+    writeScratchPad(0x50, 0x00, 0x5F); // write ScratchPad with Th=80°C, Tl=0°C, Config 11bit resolution
+    if (!readScratchPad(data))
+      return;         // if scratchPad read failed then stop
+    copyScratchPad(); // so we finally can copy scratchpad to memory
   }
 
   _tempSensorFound = true;
@@ -122,7 +121,7 @@ float SingleDS18B20::readTemp()
 
   byte data[9];
 
-  startConvertT(_owROMCode);
+  startConvertT();
 
   // wait for conversion end (DS18B20 are powered)
   while (_ow.read_bit() == 0)
@@ -131,7 +130,7 @@ float SingleDS18B20::readTemp()
   }
 
   // if read of scratchpad failed (implicit 3 times) then return special fake value
-  if (!readScratchPad(_owROMCode, data))
+  if (!readScratchPad(data))
     return NAN;
 
   // Convert the data to actual temperature
