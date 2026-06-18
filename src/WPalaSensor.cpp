@@ -646,49 +646,49 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   parseField(json[F("shc")], _shC);
 
   // Home Automation common
-  parseEnumField(json[F("haproto")], _ha.protocol);
+  parseField(json[F("haproto")], _ha.protocol);
   parseField(json[F("hatt")], _ha.temperatureTimeout);
 
   // HA HTTP common
-  parseEnumField(json[F("hahtype")], _ha.http.type);
-  parseStringField(json[F("hahhost")], _ha.http.hostname, sizeof(_ha.http.hostname));
-  parseBoolField(json[F("hahtls")], _ha.http.tls);
+  parseField(json[F("hahtype")], _ha.http.type);
+  parseField(json[F("hahhost")], _ha.http.hostname);
+  parseField(json[F("hahtls")], _ha.http.tls);
   parseField(json[F("hahtempid")], _ha.http.temperatureId);
 
   // HA HTTP Jeedom
   parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
   // HA HTTP Fibaro
-  parseStringField(json[F("hahfuser")], _ha.http.fibaro.username, sizeof(_ha.http.fibaro.username));
+  parseField(json[F("hahfuser")], _ha.http.fibaro.username);
   parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
   // HA HTTP HomeAssistant
-  parseStringField(json[F("hahhaei")], _ha.http.homeassistant.entityId, sizeof(_ha.http.homeassistant.entityId));
+  parseField(json[F("hahhaei")], _ha.http.homeassistant.entityId);
   parseSecret(json[F("hahhallat")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
   // HA MQTT common
-  parseStringField(json[F("hamtemptopic")], _ha.mqtt.temperatureTopic, sizeof(_ha.mqtt.temperatureTopic));
+  parseField(json[F("hamtemptopic")], _ha.mqtt.temperatureTopic);
 
   // CBox common
-  parseEnumField(json[F("cbproto")], _ha.cboxProtocol);
+  parseField(json[F("cbproto")], _ha.cboxProtocol);
   parseField(json[F("cbtt")], _ha.cboxTemperatureTimeout);
 
   // CBox HTTP
   parseIPField(json[F("cbhip")], _ha.http.cboxIp);
 
   // CBox MQTT
-  parseStringField(json[F("cbmt1topic")], _ha.mqtt.cboxT1Topic, sizeof(_ha.mqtt.cboxT1Topic));
+  parseField(json[F("cbmt1topic")], _ha.mqtt.cboxT1Topic);
 
   // MQTT common
-  parseStringField(json[F("hamhost")], _ha.mqtt.hostname, sizeof(_ha.mqtt.hostname));
+  parseField(json[F("hamhost")], _ha.mqtt.hostname);
   parseField(json[F("hamport")], _ha.mqtt.port);
-  parseStringField(json[F("hamu")], _ha.mqtt.username, sizeof(_ha.mqtt.username));
+  parseField(json[F("hamu")], _ha.mqtt.username);
 
   parseSecret(json[F("hamp")], _ha.mqtt.password, sizeof(_ha.mqtt.password), fromWebPage);
-  parseStringField(json[F("hambt")], _ha.mqtt.baseTopic, sizeof(_ha.mqtt.baseTopic));
+  parseField(json[F("hambt")], _ha.mqtt.baseTopic);
 
-  parseBoolField(json[F("hamhassde")], _ha.mqtt.hassDiscoveryEnabled);
-  parseStringField(json[F("hamhassdp")], _ha.mqtt.hassDiscoveryPrefix, sizeof(_ha.mqtt.hassDiscoveryPrefix));
+  parseField(json[F("hamhassde")], _ha.mqtt.hassDiscoveryEnabled);
+  parseField(json[F("hamhassdp")], _ha.mqtt.hassDiscoveryPrefix);
 
   return true;
 }
