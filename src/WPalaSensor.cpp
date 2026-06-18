@@ -1,5 +1,7 @@
 #include "WPalaSensor.h"
 
+static float roundTenth(float v) { return round(v * 10.0f) / 10.0f; }
+
 //-----------------------------------------------------------------------
 // Steinhart–Hart reverse function
 //-----------------------------------------------------------------------
@@ -146,13 +148,8 @@ void WPalaSensor::fetchHaTemperatureHttp()
       // if we got a correct value (at least one character was parsed)
       if (endPtr != payload)
       {
-        // round it to tenth
-        haTemperature *= 10;
-        haTemperature = round(haTemperature);
-        haTemperature /= 10;
-
-        // place it in global _haTemperature and store millis
-        _haTemperature = haTemperature;
+        // round to tenth and store in global _haTemperature
+        _haTemperature = roundTenth(haTemperature);
         _haTemperatureMillis = millis();
       }
     }
@@ -247,12 +244,7 @@ void WPalaSensor::refresh()
   if (isnan(_owTemperature))
     _owTemperature = 20.0; // if reading of local sensor failed so push 20°C
   else
-  {
-    // round it to tenth
-    _owTemperature *= 10;
-    _owTemperature = round(_owTemperature);
-    _owTemperature /= 10;
-  }
+    _owTemperature = roundTenth(_owTemperature); // round to tenth
 
   // fetch remote temperatures
   if (_ha.protocol == HaProtocol::Http && WiFi.isConnected())
@@ -389,12 +381,8 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
     // if we got a correct value (at least one character was parsed)
     if (endPtr != haTemperatureBuffer)
     {
-      // round it to tenth
-      haTemperature *= 10;
-      haTemperature = round(haTemperature);
-      haTemperature /= 10;
-
-      _haTemperature = haTemperature;
+      // round to tenth and store in global _haTemperature
+      _haTemperature = roundTenth(haTemperature);
       _haTemperatureMillis = millis();
     }
   }
