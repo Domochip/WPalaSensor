@@ -639,85 +639,56 @@ void WPalaSensor::setConfigDefaultValues()
 // Parse JSON object into configuration properties
 bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false */)
 {
-  JsonVariant jv;
+  parseField(json[F("rp")], _refreshPeriod);
 
-  if ((jv = json[F("rp")]).is<JsonVariant>())
-    _refreshPeriod = jv;
-
-  if ((jv = json[F("sha")]).is<JsonVariant>())
-    _shA = jv;
-  if ((jv = json[F("shb")]).is<JsonVariant>())
-    _shB = jv;
-  if ((jv = json[F("shc")]).is<JsonVariant>())
-    _shC = jv;
+  parseField(json[F("sha")], _shA);
+  parseField(json[F("shb")], _shB);
+  parseField(json[F("shc")], _shC);
 
   // Home Automation common
-  if ((jv = json[F("haproto")]).is<JsonVariant>())
-    _ha.protocol = static_cast<HaProtocol>(jv.as<uint8_t>());
-  if ((jv = json[F("hatt")]).is<JsonVariant>())
-    _ha.temperatureTimeout = jv;
+  parseEnumField(json[F("haproto")], _ha.protocol);
+  parseField(json[F("hatt")], _ha.temperatureTimeout);
 
   // HA HTTP common
-  if ((jv = json[F("hahtype")]).is<JsonVariant>())
-    _ha.http.type = static_cast<HaHttpType>(jv.as<uint8_t>());
-  if ((jv = json[F("hahhost")]).is<const char *>())
-    strlcpy(_ha.http.hostname, jv, sizeof(_ha.http.hostname));
-  _ha.http.tls = json[F("hahtls")];
-  if ((jv = json[F("hahtempid")]).is<JsonVariant>())
-    _ha.http.temperatureId = jv;
+  parseEnumField(json[F("hahtype")], _ha.http.type);
+  parseStringField(json[F("hahhost")], _ha.http.hostname, sizeof(_ha.http.hostname));
+  parseBoolField(json[F("hahtls")], _ha.http.tls);
+  parseField(json[F("hahtempid")], _ha.http.temperatureId);
 
   // HA HTTP Jeedom
   parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
   // HA HTTP Fibaro
-  if ((jv = json[F("hahfuser")]).is<const char *>())
-    strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
+  parseStringField(json[F("hahfuser")], _ha.http.fibaro.username, sizeof(_ha.http.fibaro.username));
   parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
   // HA HTTP HomeAssistant
-  if ((jv = json[F("hahhaei")]).is<const char *>())
-    strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
+  parseStringField(json[F("hahhaei")], _ha.http.homeassistant.entityId, sizeof(_ha.http.homeassistant.entityId));
   parseSecret(json[F("hahhallat")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
 
   // HA MQTT common
-  if ((jv = json[F("hamtemptopic")]).is<const char *>())
-    strlcpy(_ha.mqtt.temperatureTopic, jv, sizeof(_ha.mqtt.temperatureTopic));
+  parseStringField(json[F("hamtemptopic")], _ha.mqtt.temperatureTopic, sizeof(_ha.mqtt.temperatureTopic));
 
   // CBox common
-  if ((jv = json[F("cbproto")]).is<JsonVariant>())
-    _ha.cboxProtocol = static_cast<CBoxProtocol>(jv.as<uint8_t>());
-  if ((jv = json[F("cbtt")]).is<JsonVariant>())
-    _ha.cboxTemperatureTimeout = jv;
+  parseEnumField(json[F("cbproto")], _ha.cboxProtocol);
+  parseField(json[F("cbtt")], _ha.cboxTemperatureTimeout);
 
   // CBox HTTP
-  if ((jv = json[F("cbhip")]).is<const char *>())
-  {
-    IPAddress ipParser;
-    if (ipParser.fromString(jv.as<const char *>()))
-      _ha.http.cboxIp = static_cast<uint32_t>(ipParser);
-    else
-      _ha.http.cboxIp = 0;
-  }
+  parseIPField(json[F("cbhip")], _ha.http.cboxIp);
 
   // CBox MQTT
-  if ((jv = json[F("cbmt1topic")]).is<const char *>())
-    strlcpy(_ha.mqtt.cboxT1Topic, jv, sizeof(_ha.mqtt.cboxT1Topic));
+  parseStringField(json[F("cbmt1topic")], _ha.mqtt.cboxT1Topic, sizeof(_ha.mqtt.cboxT1Topic));
 
   // MQTT common
-  if ((jv = json[F("hamhost")]).is<const char *>())
-    strlcpy(_ha.mqtt.hostname, jv, sizeof(_ha.mqtt.hostname));
-  if ((jv = json[F("hamport")]).is<JsonVariant>())
-    _ha.mqtt.port = jv;
-  if ((jv = json[F("hamu")]).is<const char *>())
-    strlcpy(_ha.mqtt.username, jv, sizeof(_ha.mqtt.username));
+  parseStringField(json[F("hamhost")], _ha.mqtt.hostname, sizeof(_ha.mqtt.hostname));
+  parseField(json[F("hamport")], _ha.mqtt.port);
+  parseStringField(json[F("hamu")], _ha.mqtt.username, sizeof(_ha.mqtt.username));
 
   parseSecret(json[F("hamp")], _ha.mqtt.password, sizeof(_ha.mqtt.password), fromWebPage);
-  if ((jv = json[F("hambt")]).is<const char *>())
-    strlcpy(_ha.mqtt.baseTopic, jv, sizeof(_ha.mqtt.baseTopic));
+  parseStringField(json[F("hambt")], _ha.mqtt.baseTopic, sizeof(_ha.mqtt.baseTopic));
 
-  _ha.mqtt.hassDiscoveryEnabled = json[F("hamhassde")];
-  if ((jv = json[F("hamhassdp")]).is<const char *>())
-    strlcpy(_ha.mqtt.hassDiscoveryPrefix, jv, sizeof(_ha.mqtt.hassDiscoveryPrefix));
+  parseBoolField(json[F("hamhassde")], _ha.mqtt.hassDiscoveryEnabled);
+  parseStringField(json[F("hamhassdp")], _ha.mqtt.hassDiscoveryPrefix, sizeof(_ha.mqtt.hassDiscoveryPrefix));
 
   return true;
 }
