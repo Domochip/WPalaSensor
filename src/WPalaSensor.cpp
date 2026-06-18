@@ -263,7 +263,7 @@ void WPalaSensor::refresh()
 
   // if Home Automation protocol is defined and temperature is not too old
 
-  if (_ha.protocol != HaProtocol::Disabled && (_haTemperatureMillis + _ha.temperatureTimeout * 1000) > millis())
+  if (_ha.protocol != HaProtocol::Disabled && (millis() - _haTemperatureMillis) < (uint32_t)_ha.temperatureTimeout * 1000)
   {
     temperatureToDisplay = _haTemperature;
     _haTemperatureUsed = true;
@@ -275,13 +275,13 @@ void WPalaSensor::refresh()
   }
 
   // if Connection Box protocol is defined and stove temperature arrived after last refresh and not first refresh tick
-  if (_ha.cboxProtocol != CBoxProtocol::Disabled && (_stoveTemperatureMillis + _refreshPeriod * 1000) > millis() && !_firstRefreshTick)
+  if (_ha.cboxProtocol != CBoxProtocol::Disabled && (millis() - _stoveTemperatureMillis) < (uint32_t)_refreshPeriod * 1000 && !_firstRefreshTick)
   {
     // adjust delta
     _stoveDelta += (_lastTemperatureUsed - _stoveTemperature) / 2.5F;
   }
   // else if stove temperature is too old (older for more than timeout) then reset delta
-  else if ((_stoveTemperatureMillis + _ha.cboxTemperatureTimeout * 1000) <= millis())
+  else if ((millis() - _stoveTemperatureMillis) >= (uint32_t)_ha.cboxTemperatureTimeout * 1000)
   {
     _stoveDelta = 0;
   }
