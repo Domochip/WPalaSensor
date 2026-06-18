@@ -651,119 +651,73 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   if ((jv = json[F("shc")]).is<JsonVariant>())
     _shC = jv;
 
-  // Parse Home Automation config
-
+  // Home Automation common
   if ((jv = json[F("haproto")]).is<JsonVariant>())
     _ha.protocol = static_cast<HaProtocol>(jv.as<uint8_t>());
+  if ((jv = json[F("hatt")]).is<JsonVariant>())
+    _ha.temperatureTimeout = jv;
 
-  // if an home Automation protocol has been selected then get common param
-  if (_ha.protocol != HaProtocol::Disabled)
-  {
-    if ((jv = json[F("hatt")]).is<JsonVariant>())
-      _ha.temperatureTimeout = jv;
-  }
+  // HA HTTP common
+  if ((jv = json[F("hahtype")]).is<JsonVariant>())
+    _ha.http.type = static_cast<HaHttpType>(jv.as<uint8_t>());
+  if ((jv = json[F("hahhost")]).is<const char *>())
+    strlcpy(_ha.http.hostname, jv, sizeof(_ha.http.hostname));
+  _ha.http.tls = json[F("hahtls")];
+  if ((jv = json[F("hahtempid")]).is<JsonVariant>())
+    _ha.http.temperatureId = jv;
 
-  // Parse ConnectionBox config
+  // HA HTTP Jeedom
+  parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
+
+  // HA HTTP Fibaro
+  if ((jv = json[F("hahfuser")]).is<const char *>())
+    strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
+  parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
+
+  // HA HTTP HomeAssistant
+  if ((jv = json[F("hahhaei")]).is<const char *>())
+    strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
+  parseSecret(json[F("hahhallat")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
+
+  // HA MQTT common
+  if ((jv = json[F("hamtemptopic")]).is<const char *>())
+    strlcpy(_ha.mqtt.temperatureTopic, jv, sizeof(_ha.mqtt.temperatureTopic));
+
+  // CBox common
   if ((jv = json[F("cbproto")]).is<JsonVariant>())
     _ha.cboxProtocol = static_cast<CBoxProtocol>(jv.as<uint8_t>());
+  if ((jv = json[F("cbtt")]).is<JsonVariant>())
+    _ha.cboxTemperatureTimeout = jv;
 
-  // if an ConnectionBox protocol has been selected then get common param
-  if (_ha.cboxProtocol != CBoxProtocol::Disabled)
+  // CBox HTTP
+  if ((jv = json[F("cbhip")]).is<const char *>())
   {
-    if ((jv = json[F("cbtt")]).is<JsonVariant>())
-      _ha.cboxTemperatureTimeout = jv;
+    IPAddress ipParser;
+    if (ipParser.fromString(jv.as<const char *>()))
+      _ha.http.cboxIp = static_cast<uint32_t>(ipParser);
+    else
+      _ha.http.cboxIp = 0;
   }
 
-  // if home automation or CBox protocol is MQTT then get common mqtt params
-  if (_ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
-  {
+  // CBox MQTT
+  if ((jv = json[F("cbmt1topic")]).is<const char *>())
+    strlcpy(_ha.mqtt.cboxT1Topic, jv, sizeof(_ha.mqtt.cboxT1Topic));
 
-    if ((jv = json[F("hamhost")]).is<const char *>())
-      strlcpy(_ha.mqtt.hostname, jv, sizeof(_ha.mqtt.hostname));
-    if ((jv = json[F("hamport")]).is<JsonVariant>())
-      _ha.mqtt.port = jv;
-    if ((jv = json[F("hamu")]).is<const char *>())
-      strlcpy(_ha.mqtt.username, jv, sizeof(_ha.mqtt.username));
+  // MQTT common
+  if ((jv = json[F("hamhost")]).is<const char *>())
+    strlcpy(_ha.mqtt.hostname, jv, sizeof(_ha.mqtt.hostname));
+  if ((jv = json[F("hamport")]).is<JsonVariant>())
+    _ha.mqtt.port = jv;
+  if ((jv = json[F("hamu")]).is<const char *>())
+    strlcpy(_ha.mqtt.username, jv, sizeof(_ha.mqtt.username));
 
-    parseSecret(json[F("hamp")], _ha.mqtt.password, sizeof(_ha.mqtt.password), fromWebPage);
-    if ((jv = json[F("hambt")]).is<const char *>())
-      strlcpy(_ha.mqtt.baseTopic, jv, sizeof(_ha.mqtt.baseTopic));
+  parseSecret(json[F("hamp")], _ha.mqtt.password, sizeof(_ha.mqtt.password), fromWebPage);
+  if ((jv = json[F("hambt")]).is<const char *>())
+    strlcpy(_ha.mqtt.baseTopic, jv, sizeof(_ha.mqtt.baseTopic));
 
-    _ha.mqtt.hassDiscoveryEnabled = json[F("hamhassde")];
-    if ((jv = json[F("hamhassdp")]).is<const char *>())
-      strlcpy(_ha.mqtt.hassDiscoveryPrefix, jv, sizeof(_ha.mqtt.hassDiscoveryPrefix));
-  }
-
-  // Now get Home Automation specific params
-  switch (_ha.protocol)
-  {
-  case HaProtocol::Disabled:
-    break;
-  case HaProtocol::Http:
-
-    if ((jv = json[F("hahtype")]).is<JsonVariant>())
-      _ha.http.type = static_cast<HaHttpType>(jv.as<uint8_t>());
-    if ((jv = json[F("hahhost")]).is<const char *>())
-      strlcpy(_ha.http.hostname, jv, sizeof(_ha.http.hostname));
-    _ha.http.tls = json[F("hahtls")];
-    if ((jv = json[F("hahtempid")]).is<JsonVariant>())
-      _ha.http.temperatureId = jv;
-
-    switch (_ha.http.type)
-    {
-    case HaHttpType::Jeedom:
-
-      parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
-      break;
-
-    case HaHttpType::Fibaro:
-
-      if ((jv = json[F("hahfuser")]).is<const char *>())
-        strlcpy(_ha.http.fibaro.username, jv, sizeof(_ha.http.fibaro.username));
-
-      parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
-      break;
-
-    case HaHttpType::HomeAssistant:
-
-      if ((jv = json[F("hahhaei")]).is<const char *>())
-        strlcpy(_ha.http.homeassistant.entityId, jv, sizeof(_ha.http.homeassistant.entityId));
-
-      parseSecret(json[F("hahhallat")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
-      break;
-    }
-
-    break;
-  case HaProtocol::Mqtt:
-
-    if ((jv = json[F("hamtemptopic")]).is<const char *>())
-      strlcpy(_ha.mqtt.temperatureTopic, jv, sizeof(_ha.mqtt.temperatureTopic));
-    break;
-  }
-
-  // Now get ConnectionBox specific params
-  switch (_ha.cboxProtocol)
-  {
-  case CBoxProtocol::Disabled:
-    break;
-  case CBoxProtocol::Http:
-
-    if ((jv = json[F("cbhip")]).is<const char *>())
-    {
-      IPAddress ipParser;
-      if (ipParser.fromString(jv.as<const char *>()))
-        _ha.http.cboxIp = static_cast<uint32_t>(ipParser);
-      else
-        _ha.http.cboxIp = 0;
-    }
-    break;
-
-  case CBoxProtocol::Mqtt:
-
-    if ((jv = json[F("cbmt1topic")]).is<const char *>())
-      strlcpy(_ha.mqtt.cboxT1Topic, jv, sizeof(_ha.mqtt.cboxT1Topic));
-    break;
-  }
+  _ha.mqtt.hassDiscoveryEnabled = json[F("hamhassde")];
+  if ((jv = json[F("hamhassdp")]).is<const char *>())
+    strlcpy(_ha.mqtt.hassDiscoveryPrefix, jv, sizeof(_ha.mqtt.hassDiscoveryPrefix));
 
   return true;
 }
@@ -831,70 +785,48 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
   json[F("shb")] = serialized(String(_shB, 16));
   json[F("shc")] = serialized(String(_shC, 16));
 
+  // Home Automation common
   json[F("haproto")] = static_cast<uint8_t>(_ha.protocol);
   json[F("hatt")] = _ha.temperatureTimeout;
 
-  // if for WebPage or protocol selected is HTTP
-  if (!forSaveFile || _ha.protocol == HaProtocol::Http)
-  {
-    json[F("hahtype")] = static_cast<uint8_t>(_ha.http.type);
-    json[F("hahhost")] = _ha.http.hostname;
-    json[F("hahtls")] = _ha.http.tls;
-    json[F("hahtempid")] = _ha.http.temperatureId;
+  // HA HTTP common
+  json[F("hahtype")] = static_cast<uint8_t>(_ha.http.type);
+  json[F("hahhost")] = _ha.http.hostname;
+  json[F("hahtls")] = _ha.http.tls;
+  json[F("hahtempid")] = _ha.http.temperatureId;
 
-    // if Home Automation protocol selected is Jeedom
-    if (_ha.http.type == HaHttpType::Jeedom)
-    {
-      fillSecret(json, F("hahjak"), _ha.http.secret, forSaveFile);
-    }
+  // HA HTTP Jeedom
+  fillSecret(json, F("hahjak"), _ha.http.secret, forSaveFile);
 
-    // if Home Automation protocol selected is Fibaro
-    if (_ha.http.type == HaHttpType::Fibaro)
-    {
-      json[F("hahfuser")] = _ha.http.fibaro.username;
-      fillSecret(json, F("hahfpass"), _ha.http.secret, forSaveFile);
-    }
+  // HA HTTP Fibaro
+  json[F("hahfuser")] = _ha.http.fibaro.username;
+  fillSecret(json, F("hahfpass"), _ha.http.secret, forSaveFile);
 
-    // if Home Automation protocol selected is HomeAssistant
-    if (_ha.http.type == HaHttpType::HomeAssistant)
-    {
-      json[F("hahhaei")] = _ha.http.homeassistant.entityId;
-      fillSecret(json, F("hahhallat"), _ha.http.secret, forSaveFile);
-    }
-  }
+  // HA HTTP HomeAssistant
+  json[F("hahhaei")] = _ha.http.homeassistant.entityId;
+  fillSecret(json, F("hahhallat"), _ha.http.secret, forSaveFile);
 
-  // if for WebPage or protocol selected is MQTT
-  if (!forSaveFile || _ha.protocol == HaProtocol::Mqtt)
-  {
-    json[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
-  }
+  // HA MQTT common
+  json[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
 
+  // CBox common
   json[F("cbproto")] = static_cast<uint8_t>(_ha.cboxProtocol);
   json[F("cbtt")] = _ha.cboxTemperatureTimeout;
 
-  // if for WebPage or CBox protocol selected is HTTP
-  if (!forSaveFile || _ha.cboxProtocol == CBoxProtocol::Http)
-  {
-    if (_ha.http.cboxIp)
-      json[F("cbhip")] = WifiMan::ipToCString(_ha.http.cboxIp);
-  }
+  // CBox HTTP
+  json[F("cbhip")] = WifiMan::ipToCString(_ha.http.cboxIp);
 
-  // if for WebPage or CBox protocol selected is MQTT
-  if (!forSaveFile || _ha.cboxProtocol == CBoxProtocol::Mqtt)
-  {
-    json[F("cbmt1topic")] = _ha.mqtt.cboxT1Topic;
-  }
+  // CBox MQTT
+  json[F("cbmt1topic")] = _ha.mqtt.cboxT1Topic;
 
-  if (!forSaveFile || _ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
-  {
-    json[F("hamhost")] = _ha.mqtt.hostname;
-    json[F("hamport")] = _ha.mqtt.port;
-    json[F("hamu")] = _ha.mqtt.username;
-    fillSecret(json, F("hamp"), _ha.mqtt.password, forSaveFile);
-    json[F("hambt")] = _ha.mqtt.baseTopic;
-    json[F("hamhassde")] = _ha.mqtt.hassDiscoveryEnabled;
-    json[F("hamhassdp")] = _ha.mqtt.hassDiscoveryPrefix;
-  }
+  // MQTT common
+  json[F("hamhost")] = _ha.mqtt.hostname;
+  json[F("hamport")] = _ha.mqtt.port;
+  json[F("hamu")] = _ha.mqtt.username;
+  fillSecret(json, F("hamp"), _ha.mqtt.password, forSaveFile);
+  json[F("hambt")] = _ha.mqtt.baseTopic;
+  json[F("hamhassde")] = _ha.mqtt.hassDiscoveryEnabled;
+  json[F("hamhassdp")] = _ha.mqtt.hassDiscoveryPrefix;
 }
 
 //------------------------------------------
