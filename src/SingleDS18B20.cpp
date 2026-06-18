@@ -125,18 +125,13 @@ float SingleDS18B20::readTemp()
 
   // wait for conversion end (DS18B20 are powered)
   while (_ow.read_bit() == 0)
-  {
     delay(10);
-  }
 
-  // if read of scratchpad failed (implicit 3 times) then return special fake value
+  // if read of scratchpad failed (implicit 3 times) then return NaN
   if (!readScratchPad(data))
     return NAN;
 
   // Convert the data to actual temperature
-  // because the result is a 16 bit signed integer, it should
-  // be stored to an "int16_t" type, which is always 16 bits
-  // even when compiled on a 32 bit processor.
   int16_t raw = (data[1] << 8) | data[0];
   if (_owROMCode[0] == 0x10)
   {                 // type S temp Sensor
