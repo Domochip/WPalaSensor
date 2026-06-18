@@ -3,9 +3,10 @@
 
 #include <OneWire.h>
 
-class SingleDS18B20 : public OneWire
+class SingleDS18B20
 {
 private:
+  OneWire _ow;
   bool _tempSensorFound = false;
   byte _owROMCode[8];
 

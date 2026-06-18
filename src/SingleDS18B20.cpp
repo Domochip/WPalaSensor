@@ -16,14 +16,14 @@ boolean SingleDS18B20::readScratchPad(byte addr[], byte data[])
   for (byte i = 0; i < 3; i++)
   {
     // read scratchpad of the current device
-    reset();
-    select(addr);
-    write(0xBE); // Read ScratchPad
+    _ow.reset();
+    _ow.select(addr);
+    _ow.write(0xBE); // Read ScratchPad
     for (byte j = 0; j < 9; j++)
     { // read 9 bytes
-      data[j] = read();
+      data[j] = _ow.read();
     }
-    if (crc8(data, 8) == data[8])
+    if (_ow.crc8(data, 8) == data[8])
     {
       crcScratchPadOK = true;
       i = 3; // end for loop
@@ -37,44 +37,44 @@ boolean SingleDS18B20::readScratchPad(byte addr[], byte data[])
 void SingleDS18B20::writeScratchPad(byte addr[], byte th, byte tl, byte cfg)
 {
 
-  reset();
-  select(addr);
-  write(0x4E); // Write ScratchPad
-  write(th);   // Th 80°C
-  write(tl);   // Tl 0°C
-  write(cfg);  // Config
+  _ow.reset();
+  _ow.select(addr);
+  _ow.write(0x4E); // Write ScratchPad
+  _ow.write(th);   // Th 80°C
+  _ow.write(tl);   // Tl 0°C
+  _ow.write(cfg);  // Config
 }
 //------------------------------------------
 // DS18X20 Copy ScratchPad command
 void SingleDS18B20::copyScratchPad(byte addr[])
 {
 
-  reset();
-  select(addr);
-  write(0x48); // Copy ScratchPad
+  _ow.reset();
+  _ow.select(addr);
+  _ow.write(0x48); // Copy ScratchPad
 }
 //------------------------------------------
 // DS18X20 Start Temperature conversion
 void SingleDS18B20::startConvertT(byte addr[])
 {
-  reset();
-  select(addr);
-  write(0x44); // start conversion
+  _ow.reset();
+  _ow.select(addr);
+  _ow.write(0x44); // start conversion
 }
 
 //------------------------------------------
 // Constructor
-SingleDS18B20::SingleDS18B20(uint8_t owPin) : OneWire(owPin)
+SingleDS18B20::SingleDS18B20(uint8_t owPin) : _ow(owPin)
 {
 
   // find first temp sensor ----------
-  reset_search();
+  _ow.reset_search();
 
-  while (search(_owROMCode))
+  while (_ow.search(_owROMCode))
   {
 
     // if ROM received is correct or not a Temperature sensor THEN continue to next device
-    if ((crc8(_owROMCode, 7) == _owROMCode[7]) && (_owROMCode[0] == 0x10 || _owROMCode[0] == 0x22 || _owROMCode[0] == 0x28))
+    if ((_ow.crc8(_owROMCode, 7) == _owROMCode[7]) && (_owROMCode[0] == 0x10 || _owROMCode[0] == 0x22 || _owROMCode[0] == 0x28))
     {
       _tempSensorFound = true;
       break;
@@ -125,7 +125,7 @@ float SingleDS18B20::readTemp()
   startConvertT(_owROMCode);
 
   // wait for conversion end (DS18B20 are powered)
-  while (read_bit() == 0)
+  while (_ow.read_bit() == 0)
   {
     delay(10);
   }
