@@ -147,5 +147,5 @@ float SingleDS18B20::readTemp()
       raw = raw & ~1; // 11 bit res, 375 ms
     //// default is 12 bit resolution, 750 ms conversion time
   }
-  return (float)raw / 16.0;
+  return raw / 16.0f;
 }
