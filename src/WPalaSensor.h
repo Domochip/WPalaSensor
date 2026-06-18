@@ -43,7 +43,7 @@ private:
     Mqtt = 2
   };
 
-  typedef struct
+  struct HTTP
   {
     HaHttpType type = HaHttpType::HomeAssistant;
     char hostname[64 + 1] = {0};
@@ -62,9 +62,9 @@ private:
     } homeassistant;
 
     uint32_t cboxIp = 0;
-  } HTTP;
+  };
 
-  typedef struct
+  struct MQTT
   {
     char hostname[64 + 1] = {0};
     uint32_t port = 0;
@@ -77,9 +77,9 @@ private:
     char temperatureTopic[64 + 1] = {0};
 
     char cboxT1Topic[32 + 1] = {0};
-  } MQTT;
+  };
 
-  typedef struct
+  struct HomeAutomation
   {
     HaProtocol protocol = HaProtocol::Disabled;
     uint16_t temperatureTimeout = 0;
@@ -88,7 +88,7 @@ private:
 
     HTTP http;
     MQTT mqtt;
-  } HomeAutomation;
+  };
 
   // --------------------
 
