@@ -656,15 +656,15 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   parseField(json[F("hahtempid")], _ha.http.temperatureId);
 
   // HA HTTP Jeedom
-  parseSecret(json[F("hahjak")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
+  parseSecret(json[F("hahjak")], _ha.http.secret, fromWebPage);
 
   // HA HTTP Fibaro
   parseField(json[F("hahfuser")], _ha.http.fibaro.username);
-  parseSecret(json[F("hahfpass")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
+  parseSecret(json[F("hahfpass")], _ha.http.secret, fromWebPage);
 
   // HA HTTP HomeAssistant
   parseField(json[F("hahhaei")], _ha.http.homeassistant.entityId);
-  parseSecret(json[F("hahhallat")], _ha.http.secret, sizeof(_ha.http.secret), fromWebPage);
+  parseSecret(json[F("hahhallat")], _ha.http.secret, fromWebPage);
 
   // HA MQTT common
   parseField(json[F("hamtemptopic")], _ha.mqtt.temperatureTopic);
