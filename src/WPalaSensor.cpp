@@ -684,7 +684,7 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
   parseField(json[F("hamport")], _ha.mqtt.port);
   parseField(json[F("hamu")], _ha.mqtt.username);
 
-  parseSecret(json[F("hamp")], _ha.mqtt.password, sizeof(_ha.mqtt.password), fromWebPage);
+  parseSecret(json[F("hamp")], _ha.mqtt.password, fromWebPage);
   parseField(json[F("hambt")], _ha.mqtt.baseTopic);
 
   parseField(json[F("hamhassde")], _ha.mqtt.hassDiscoveryEnabled);
