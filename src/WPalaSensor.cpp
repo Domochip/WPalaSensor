@@ -885,6 +885,7 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
     // (≈268 bytes worst-case: max baseTopic + max username/password + will topic).
     // 512 gives a ×2 safety margin
     _mqttMan.setBufferSize(512);
+    _mqttMan.setKeepAlive(_refreshPeriod + 15);
     _mqttMan.setClient(_wifiClient).setServer(_ha.mqtt.hostname, _ha.mqtt.port);
     _mqttMan.setBaseTopic(_ha.mqtt.baseTopic);
     _mqttMan.setConnectedCallback(std::bind(&WPalaSensor::mqttConnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
