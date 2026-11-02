@@ -179,6 +179,14 @@
                     <label for="hamtemptopic">Temperature Topic</label>
                     <input type='text' id='hamtemptopic' name='hamtemptopic' maxlength='64'>
                 </div>
+                <div class="pure-control-group">
+                    <label for="hamtempisjson">JSON Payload</label>
+                    <input type='checkbox' id='hamtempisjson' name='hamtempisjson'>
+                </div>
+                <div class="pure-control-group" id="hamtempkeydiv" style="display:none">
+                    <label for="hamtempkey">Temperature Key</label>
+                    <input type='text' id='hamtempkey' name='hamtempkey' maxlength='32'>
+                </div>
             </div>
         </div>
 
@@ -392,6 +400,10 @@
                 $(qsp + "#hah2").style.display = '';
                 break;
         }
+    });
+
+    $(qsp + "#hamtempisjson").addEventListener('change', function () {
+        $(qsp + "#hamtempkeydiv").style.display = this.checked ? '' : 'none';
     });
 
     $(qsp + "#cbproto").addEventListener('change', function () {
