@@ -76,7 +76,7 @@ private:
 
     char temperatureTopic[64 + 1];
     bool isJSONPayload;
-    char temperatureKey[32 + 1];
+    char temperatureKey[16 + 1];
 
     char cboxT1Topic[32 + 1];
   };
