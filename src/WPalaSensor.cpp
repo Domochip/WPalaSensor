@@ -632,6 +632,8 @@ void WPalaSensor::setConfigDefaultValues()
   _ha.mqtt.hassDiscoveryEnabled = true;
   strcpy_P(_ha.mqtt.hassDiscoveryPrefix, PSTR("homeassistant"));
   _ha.mqtt.temperatureTopic[0] = 0;
+  _ha.mqtt.isJSONPayload = false;
+  _ha.mqtt.temperatureKey[0] = 0;
   _ha.mqtt.cboxT1Topic[0] = 0;
 }
 
@@ -668,6 +670,8 @@ bool WPalaSensor::parseConfigJSON(JsonVariant json, bool fromWebPage /* = false 
 
   // HA MQTT common
   parseField(json[F("hamtemptopic")], _ha.mqtt.temperatureTopic);
+  parseField(json[F("hamtempisjson")], _ha.mqtt.isJSONPayload);
+  parseField(json[F("hamtempkey")], _ha.mqtt.temperatureKey);
 
   // CBox common
   parseField(json[F("cbproto")], _ha.cboxProtocol);
@@ -779,6 +783,8 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
 
   // HA MQTT common
   json[F("hamtemptopic")] = _ha.mqtt.temperatureTopic;
+  json[F("hamtempisjson")] = _ha.mqtt.isJSONPayload;
+  json[F("hamtempkey")] = _ha.mqtt.temperatureKey;
 
   // CBox common
   json[F("cbproto")] = static_cast<uint8_t>(_ha.cboxProtocol);
