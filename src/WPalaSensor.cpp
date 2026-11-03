@@ -368,22 +368,56 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   // if Home Automation is configured for MQTT and topic match
   if (_ha.protocol == HaProtocol::Mqtt && !strcmp(topic, _ha.mqtt.temperatureTopic))
   {
-    // copy payload into a null-terminated buffer
-    char haTemperatureBuffer[7];
-    unsigned int len = min(length, 6u);
-    memcpy(haTemperatureBuffer, payload, len);
-    haTemperatureBuffer[len] = 0;
+    const uint8_t *valueStart = payload;
+    unsigned int valueLen = length;
 
-    // convert
-    char *endPtr;
-    float haTemperature = strtof(haTemperatureBuffer, &endPtr);
-
-    // if we got a correct value (at least one character was parsed)
-    if (endPtr != haTemperatureBuffer)
+    if (_ha.mqtt.isJSONPayload)
     {
-      // round to tenth and store in global _haTemperature
-      _haTemperature = roundTenth(haTemperature);
-      _haTemperatureMillis = millis();
+      valueLen = 0;
+      const size_t keyLength = strlen(_ha.mqtt.temperatureKey);
+      if (length > 0 && payload[0] == '{' && keyLength > 0)
+      {
+        for (unsigned int i = 0; i + keyLength + 3 <= length; i++)
+        {
+          if (payload[i] != '"' || payload[i + keyLength + 1] != '"' || payload[i + keyLength + 2] != ':' || memcmp(payload + i + 1, _ha.mqtt.temperatureKey, keyLength) != 0)
+            continue;
+
+          valueStart = payload + i + keyLength + 3;
+          while (valueStart < (payload + length) && (*valueStart == ' ' || *valueStart == '\t' || *valueStart == '\r' || *valueStart == '\n'))
+            valueStart++;
+
+          while (valueStart + valueLen < payload + length)
+          {
+            char c = valueStart[valueLen];
+            if ((c >= '0' && c <= '9') || c == '+' || c == '-' || c == '.' || c == 'e' || c == 'E')
+              valueLen++;
+            else
+              break;
+          }
+          break;
+        }
+      }
+    }
+
+    if (valueLen > 0)
+    {
+      // copy payload into a null-terminated buffer
+      char haTemperatureBuffer[7];
+      unsigned int len = min(valueLen, 6u);
+      memcpy(haTemperatureBuffer, valueStart, len);
+      haTemperatureBuffer[len] = 0;
+
+      // convert
+      char *endPtr;
+      float haTemperature = strtof(haTemperatureBuffer, &endPtr);
+
+      // if we got a correct value (at least one character was parsed)
+      if (endPtr != haTemperatureBuffer)
+      {
+        // round to tenth and store in global _haTemperature
+        _haTemperature = roundTenth(haTemperature);
+        _haTemperatureMillis = millis();
+      }
     }
   }
 
