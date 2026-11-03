@@ -1,15 +1,4 @@
-<style>
-    .connected {
-        border: 3px solid #1Cb841;
-        padding: 10px;
-        position: relative;
-        top: -10px;
-    }
-</style>
-
-<h2 class="content-subhead">Sensor Simulator<span id="l">
-        <h6 style="display:inline"><b> Loading...</b></h6>
-    </span></h2>
+<h2 class="content-subhead">Sensor Simulator<span id="l" class="ld">Loading...</span></h2>
 <form class="pure-form pure-form-aligned" id='f1'>
     <fieldset>
 
@@ -22,11 +11,11 @@
         <h3 class="content-subhead">Calibration</h3>
         <div class="pure-control-group">
             <label>Calibrator</label>
-            <a class="pure-button" id="calibButton" style="background: #1cb841;">Show</a>
+            <a class="pure-button btn-ok" id="calibButton">Show</a>
         </div>
-        <div id='calib' class='connected' style='display:none'>
+        <div id='calib' class='panel' style='display:none'>
 
-            <h2 class="content-subhead" style="margin-top:10px;">Step 1 : Thermistor simulator calibration</h2>
+            <h2 class="content-subhead">Step 1 : Thermistor simulator calibration</h2>
             <em>All buttons of this section stop the WPalaSensor refresh for 20 periods (<span
                     id="twentyRefreshPeriodDuration"></span> seconds).</em><br>
             <em>This allows you to adjust the thermistor and see the result on the stove display.</em><br>
@@ -441,11 +430,11 @@
                 $(qsp + "#f1").style.display = 'none';
 
                 sessionStorage.setItem('activeTab', '#menuConfig');
-                $(qsp + '#r').innerHTML = '<h3><b>Configuration saved <span style="color: green;">successfully</span>.</b></h3>Waiting for device... <span id="cd">0</span>s';
+                $(qsp + '#r').innerHTML = '<h3><b>Configuration saved <span class="ok">successfully</span>.</b></h3>Waiting for device... <span id="cd">0</span>s';
                 redirectWhenReachable(location.origin, 30000);
             },
             function () {
-                $(qsp + '#r').innerHTML = '<h3><b>Configuration <span style="color: red;">error</span>.</b></h3>';
+                $(qsp + '#r').innerHTML = '<h3><b>Configuration <span class="err">error</span>.</b></h3>';
             }
         );
         event.preventDefault();
@@ -466,7 +455,7 @@
             fadeOut($(qsp + "#l"));
         },
         function () {
-            $(qsp + "#l").innerHTML = '<h6 style="display:inline;color:red;"><b> Failed</b></h6>';
+            $(qsp + "#l").innerHTML = '<span class="err">Failed</span>';
         }
     );
 </script>
