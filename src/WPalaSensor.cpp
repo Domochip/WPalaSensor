@@ -91,6 +91,24 @@ void WPalaSensor::setDac(int resistance, bool EEPROM /* = false*/)
 }
 
 //------------------------------------------
+// Fill JSON with Home Automation last temperature and its age
+void WPalaSensor::fillHaTemperatureJSON(JsonVariant json)
+{
+  char buf[10];
+  json[F("halasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
+  json[F("halasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
+}
+
+//------------------------------------------
+// Fill JSON with WPalaControl/CBox last temperature and its age
+void WPalaSensor::fillCBoxTemperatureJSON(JsonVariant json)
+{
+  char buf[10];
+  json[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
+  json[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
+}
+
+//------------------------------------------
 // Fetch HA temperature via HTTP and update _haTemperature / _haTemperatureMillis
 void WPalaSensor::fetchHaTemperatureHttp()
 {
@@ -813,12 +831,8 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
     json[F("hamqttstatus")] = _mqttMan.getStateString();
 
   // Home Automation last temperature and age
-  char buf[10];
   if (_ha.protocol != HaProtocol::Disabled)
-  {
-    json[F("halasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
-    json[F("halasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
-  }
+    fillHaTemperatureJSON(json);
 
   // WPalaControl/CBox connection status
   if (_ha.cboxProtocol == CBoxProtocol::Http)
@@ -828,10 +842,7 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
 
   // WPalaControl/CBox last temperature and age
   if (_ha.cboxProtocol != CBoxProtocol::Disabled)
-  {
-    json[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
-    json[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
-  }
+    fillCBoxTemperatureJSON(json);
 
   // if MQTT used add Mqtt connection count
   if (_ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
@@ -840,6 +851,7 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
     json[F("mqttdiscoreason")] = _mqttMan.getLastDiscoState();
   }
 
+  char buf[10];
   json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
   json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
 
