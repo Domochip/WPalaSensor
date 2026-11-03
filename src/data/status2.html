@@ -7,8 +7,8 @@ Protocol: <span id="haprotocol"></span><br>
 <span id="hamqttstatuse" style='display:none'>
     Connection State: <span id="hamqttstatus"></span><br>
 </span>
-<span id="haslasttempe" style='display:none'>
-    Last HA Temperature: <span id="haslasttemp"></span> (<span id="haslasttempage"></span> seconds ago)<br>
+<span id="halasttempe" style='display:none'>
+    Last HA Temperature: <span id="halasttemp"></span> (<span id="halasttempage"></span> seconds ago)<br>
 </span>
 <h4>WPalaControl/CBox</h4>
 Protocol: <span id="cboxprotocol"></span><br>
@@ -45,7 +45,7 @@ Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<
 
             show("hahttplastrespcodee", haP == 1);
             show("hamqttstatuse", haP == 2);
-            show("haslasttempe", haP != 0);
+            show("halasttempe", haP != 0);
 
             show("cboxhttplastrespcodee", cboxP == 1);
             show("cboxmqttstatuse", cboxP == 2);

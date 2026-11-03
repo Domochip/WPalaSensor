@@ -816,8 +816,8 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
   char buf[10];
   if (_ha.protocol != HaProtocol::Disabled)
   {
-    json[F("haslasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
-    json[F("haslasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
+    json[F("halasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
+    json[F("halasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
   }
 
   // WPalaControl/CBox connection status
