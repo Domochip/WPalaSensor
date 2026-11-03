@@ -1015,6 +1015,9 @@ void WPalaSensor::appInitWebServer(WebServer &server)
 
               server.send(200);
             });
+
+  // register EventSource
+  _sse.init(getAppIdChar(), server);
 }
 
 //------------------------------------------

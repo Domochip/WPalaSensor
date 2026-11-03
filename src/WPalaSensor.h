@@ -4,6 +4,7 @@
 #include "Main.h"
 #include "base/WifiMan.h"
 #include "base/MQTTMan.h"
+#include "base/SSEServer.h"
 #include "base/Application.h"
 
 #ifdef ESP8266
@@ -136,6 +137,7 @@ private:
 
   WiFiClient _wifiClient; // used by _mqttMan
   MQTTMan _mqttMan;
+  SSEServer _sse;
 
   void setDac(float temperature, bool EEPROM = false);
   void setDac(int resistance, bool EEPROM = false);

@@ -18,7 +18,7 @@
 #define DEFAULT_AP_PSK "password"                      // Default Access Point Password
 
 // Control SSEServer code (To be used by Application if Server-sent events are needed)
-#define SSE_SERVER_ENABLED 0
+#define SSE_SERVER_ENABLED 1
 #define SSE_SERVER_MAX_CLIENTS 2
 #define SSE_SERVER_KEEPALIVE 0
 
