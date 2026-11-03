@@ -2,6 +2,58 @@
 
 static float roundTenth(float v) { return round(v * 10.0f) / 10.0f; }
 
+static bool parseMqttTemperature(const uint8_t *payload, unsigned int length, bool isJSONPayload,
+                                 const char *temperatureKey, float &temperature)
+{
+  if (!payload || !temperatureKey)
+    return false;
+
+  const uint8_t *valueStart = payload;
+  unsigned int valueLen = length;
+
+  if (isJSONPayload)
+  {
+    valueLen = 0;
+    const size_t keyLength = strlen(temperatureKey);
+    if (length > 0 && payload[0] == '{' && keyLength > 0)
+    {
+      for (unsigned int i = 0; i + keyLength + 3 <= length; i++)
+      {
+        if (payload[i] != '"' || memcmp(payload + i + 1, temperatureKey, keyLength) != 0 ||
+            payload[i + keyLength + 1] != '"' || payload[i + keyLength + 2] != ':')
+          continue;
+
+        valueStart = payload + i + keyLength + 3;
+        while (valueStart < payload + length &&
+               (*valueStart == ' ' || *valueStart == '\t' || *valueStart == '\r' || *valueStart == '\n'))
+          valueStart++;
+
+        while (valueStart + valueLen < payload + length)
+        {
+          char c = valueStart[valueLen];
+          if ((c >= '0' && c <= '9') || c == '+' || c == '-' || c == '.' || c == 'e' || c == 'E')
+            valueLen++;
+          else
+            break;
+        }
+        break;
+      }
+    }
+  }
+
+  if (valueLen == 0)
+    return false;
+
+  char temperatureBuffer[7];
+  unsigned int len = min(valueLen, 6u);
+  memcpy(temperatureBuffer, valueStart, len);
+  temperatureBuffer[len] = 0;
+
+  char *endPtr;
+  temperature = strtof(temperatureBuffer, &endPtr);
+  return endPtr != temperatureBuffer;
+}
+
 //-----------------------------------------------------------------------
 // Steinhart–Hart reverse function
 //-----------------------------------------------------------------------
@@ -368,114 +420,24 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
   // if Home Automation is configured for MQTT and topic match
   if (_ha.protocol == HaProtocol::Mqtt && !strcmp(topic, _ha.mqtt.temperatureTopic))
   {
-    const uint8_t *valueStart = payload;
-    unsigned int valueLen = length;
-
-    if (_ha.mqtt.isJSONPayload)
+    float haTemperature;
+    if (parseMqttTemperature(payload, length, _ha.mqtt.isJSONPayload,
+                             _ha.mqtt.temperatureKey, haTemperature))
     {
-      valueLen = 0;
-      const size_t keyLength = strlen(_ha.mqtt.temperatureKey);
-      if (length > 0 && payload[0] == '{' && keyLength > 0)
-      {
-        for (unsigned int i = 0; i + keyLength + 3 <= length; i++)
-        {
-          if (payload[i] != '"' || payload[i + keyLength + 1] != '"' || payload[i + keyLength + 2] != ':' || memcmp(payload + i + 1, _ha.mqtt.temperatureKey, keyLength) != 0)
-            continue;
-
-          valueStart = payload + i + keyLength + 3;
-          while (valueStart < (payload + length) && (*valueStart == ' ' || *valueStart == '\t' || *valueStart == '\r' || *valueStart == '\n'))
-            valueStart++;
-
-          while (valueStart + valueLen < payload + length)
-          {
-            char c = valueStart[valueLen];
-            if ((c >= '0' && c <= '9') || c == '+' || c == '-' || c == '.' || c == 'e' || c == 'E')
-              valueLen++;
-            else
-              break;
-          }
-          break;
-        }
-      }
-    }
-
-    if (valueLen > 0)
-    {
-      // copy payload into a null-terminated buffer
-      char haTemperatureBuffer[7];
-      unsigned int len = min(valueLen, 6u);
-      memcpy(haTemperatureBuffer, valueStart, len);
-      haTemperatureBuffer[len] = 0;
-
-      // convert
-      char *endPtr;
-      float haTemperature = strtof(haTemperatureBuffer, &endPtr);
-
-      // if we got a correct value (at least one character was parsed)
-      if (endPtr != haTemperatureBuffer)
-      {
-        // round to tenth and store in global _haTemperature
-        _haTemperature = roundTenth(haTemperature);
-        _haTemperatureMillis = millis();
-      }
+      _haTemperature = roundTenth(haTemperature);
+      _haTemperatureMillis = millis();
     }
   }
 
   // if Home Automation is configured for MQTT and topic match
   if (_ha.cboxProtocol == CBoxProtocol::Mqtt && !strcmp(topic, _ha.mqtt.cboxT1Topic))
   {
-    const uint8_t *valueStart = payload;
-    unsigned int valueLen = length;
-
-    // if payload contains JSON, isolate T1 value
-    if (length > 0 && payload[0] == '{')
+    const bool isJSONPayload = length > 0 && payload[0] == '{';
+    float stoveTemperature;
+    if (parseMqttTemperature(payload, length, isJSONPayload, "T1", stoveTemperature))
     {
-      // search for "T1": in payload
-      for (unsigned int i = 0; i + 5 <= length; i++)
-      {
-        if (memcmp(payload + i, "\"T1\":", 5) == 0)
-        {
-          valueStart = payload + i + 5;
-
-          // skip whitespace before value
-          while (valueStart < (payload + length) && (*valueStart == ' ' || *valueStart == '\t' || *valueStart == '\r' || *valueStart == '\n'))
-            valueStart++;
-
-          valueLen = 0;
-
-          // count float text until first non-float char
-          while ((valueStart + valueLen) < (payload + length))
-          {
-            char c = valueStart[valueLen];
-            if ((c >= '0' && c <= '9') || c == '+' || c == '-' || c == '.' || c == 'e' || c == 'E')
-              valueLen++;
-            else
-              break;
-          }
-
-          break;
-        }
-      }
-    }
-
-    if (valueLen > 0)
-    {
-      // copy into null-terminated buffer for strtof
-      char stoveBuffer[7];
-      unsigned int bufLen = min(valueLen, 6u);
-      memcpy(stoveBuffer, valueStart, bufLen);
-      stoveBuffer[bufLen] = 0;
-
-      // convert
-      char *endPtr;
-      float stoveTemperature = strtof(stoveBuffer, &endPtr);
-
-      // if we got a correct value (at least one character was parsed)
-      if (endPtr != stoveBuffer)
-      {
-        _stoveTemperature = stoveTemperature;
-        _stoveTemperatureMillis = millis();
-      }
+      _stoveTemperature = stoveTemperature;
+      _stoveTemperatureMillis = millis();
     }
   }
 
