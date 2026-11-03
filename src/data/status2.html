@@ -33,6 +33,16 @@ Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<
     function show(id, cond) { $(qsp + "#" + id).style.display = (cond ? '' : 'none'); }
     function failed() { $(qsp + "#l").innerHTML = '<span class="err">Failed</span>'; }
 
+    // ages (seconds) displayed in these spans keep increasing every second
+    function incrementAges() {
+        ['halasttempage', 'cboxlasttempage'].forEach(function (id) {
+            var e = $(qsp + '#' + id);
+            if (e == null) { clearInterval(agesTimer); return; } // page has been left
+            if (e.innerHTML !== '') e.innerHTML = Number(e.innerHTML) + 1;
+        });
+    }
+    var agesTimer = setInterval(incrementAges, 1000);
+
     // update displayed values from a (possibly partial) status JSON object (from /gs or an SSE event)
     function applyStatus(status) {
         for (var k in status) {
