@@ -45,6 +45,9 @@ Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<
     getJSON("/gc" + qsp[8],
         function (GC) {
             var haP = GC["haproto"], cboxP = GC["cbproto"];
+            var protoNames = ["Disabled", "HTTP", "MQTT"];
+            $(qsp + "#haprotocol").innerHTML = protoNames[haP];
+            $(qsp + "#cboxprotocol").innerHTML = protoNames[cboxP];
 
             show("hahttplastrespcodee", haP == 1);
             show("hamqttstatuse", haP == 2);

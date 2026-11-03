@@ -806,14 +806,6 @@ void WPalaSensor::fillConfigJSON(JsonVariant json, bool forSaveFile /* = false *
 // Generate JSON of application status
 void WPalaSensor::fillStatusJSON(JsonVariant json)
 {
-  // Home automation protocol
-  if (_ha.protocol == HaProtocol::Http)
-    json[F("haprotocol")] = F("HTTP");
-  else if (_ha.protocol == HaProtocol::Mqtt)
-    json[F("haprotocol")] = F("MQTT");
-  else
-    json[F("haprotocol")] = F("Disabled");
-
   // Home automation connection status
   if (_ha.protocol == HaProtocol::Http)
     json[F("hahttplastrespcode")] = _haRequestResult;
@@ -827,14 +819,6 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
     json[F("haslasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
     json[F("haslasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
   }
-
-  // WPalaControl/CBox protocol
-  if (_ha.cboxProtocol == CBoxProtocol::Http)
-    json[F("cboxprotocol")] = F("HTTP");
-  else if (_ha.cboxProtocol == CBoxProtocol::Mqtt)
-    json[F("cboxprotocol")] = F("MQTT");
-  else
-    json[F("cboxprotocol")] = F("Disabled");
 
   // WPalaControl/CBox connection status
   if (_ha.cboxProtocol == CBoxProtocol::Http)
