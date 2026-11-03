@@ -36,26 +36,36 @@ Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<
 <script>
     // qsp is substituted at build time by pio_pre_build_spa.py — var qsp = '#content2 ';
 
-    getJSON("/gs" + qsp[8],
-        function (GS) {
-            for (k in GS) {
-                if ((e = $(qsp + '#' + k)) != undefined) e.innerHTML = GS[k];
-            }
+    var show = function (id, cond) { $(qsp + "#" + id).style.display = (cond ? '' : 'none'); };
+    var failed = function () {
+        $(qsp + "#l").innerHTML = '<span class="err">Failed</span>';
+    };
 
-            $(qsp + "#hahttplastrespcodee").style.display = (GS["hahttplastrespcode"] ? '' : 'none');
-            $(qsp + "#hamqttstatuse").style.display = (GS["hamqttstatus"] ? '' : 'none');
-            $(qsp + "#haslasttempe").style.display = (GS["haslasttemp"] ? '' : 'none');
-            $(qsp + "#haslasttempagee").style.display = (GS["haslasttempage"] ? '' : 'none');
+    // get configuration first to know which protocols are configured (0:Disabled, 1:HTTP, 2:MQTT)
+    getJSON("/gc" + qsp[8],
+        function (GC) {
+            var haP = GC["haproto"], cboxP = GC["cbproto"];
 
-            $(qsp + "#cboxhttplastrespcodee").style.display = (GS["cboxhttplastrespcode"] ? '' : 'none');
-            $(qsp + "#cboxmqttstatuse").style.display = (GS["cboxmqttstatus"] ? '' : 'none');
-            $(qsp + "#cboxlasttempe").style.display = (GS["cboxlasttemp"] ? '' : 'none');
-            $(qsp + "#cboxlasttempagee").style.display = (GS["cboxlasttempage"] ? '' : 'none');
+            show("hahttplastrespcodee", haP == 1);
+            show("hamqttstatuse", haP == 2);
+            show("haslasttempe", haP != 0);
+            show("haslasttempagee", haP != 0);
 
-            fadeOut($(qsp + "#l"));
+            show("cboxhttplastrespcodee", cboxP == 1);
+            show("cboxmqttstatuse", cboxP == 2);
+            show("cboxlasttempe", cboxP != 0);
+            show("cboxlasttempagee", cboxP != 0);
+
+            getJSON("/gs" + qsp[8],
+                function (GS) {
+                    for (k in GS) {
+                        if ((e = $(qsp + '#' + k)) != undefined) e.innerHTML = GS[k];
+                    }
+                    fadeOut($(qsp + "#l"));
+                },
+                failed
+            );
         },
-        function () {
-            $(qsp + "#l").innerHTML = '<span class="err">Failed</span>';
-        }
+        failed
     );
 </script>
