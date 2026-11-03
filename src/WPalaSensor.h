@@ -146,6 +146,7 @@ private:
   void fetchHaTemperatureHttp();
   void fetchCBoxTemperatureHttp();
   void refresh();
+  void broadcastMqttStatus();
   void mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection);
   void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
   bool mqttPublishHassDiscovery();

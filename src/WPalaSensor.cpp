@@ -426,6 +426,20 @@ void WPalaSensor::refresh()
 }
 
 //------------------------------------------
+// Broadcast current MQTT connection state via SSE (used as connected and disconnected callback)
+void WPalaSensor::broadcastMqttStatus()
+{
+  JsonDocument json;
+  if (_ha.protocol == HaProtocol::Mqtt)
+    json[F("hamqttstatus")] = _mqttMan.getStateString();
+  if (_ha.cboxProtocol == CBoxProtocol::Mqtt)
+    json[F("cboxmqttstatus")] = _mqttMan.getStateString();
+
+  if (!json.isNull())
+    _sse.broadcast(json);
+}
+
+//------------------------------------------
 // Connect then Subscribe to MQTT
 void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
 {
@@ -446,6 +460,8 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
 
   // raise flag to publish Home Assistant discovery data
   _needPublishHassDiscovery = true;
+
+  broadcastMqttStatus();
 
   // To be removed at 2027-06-12: clean retained message on base topic (used in early versions)
   mqttMan->publish(_mqttMan.getBaseTopic(), "", true);
@@ -917,6 +933,7 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
     _mqttMan.setClient(_wifiClient).setServer(_ha.mqtt.hostname, _ha.mqtt.port);
     _mqttMan.setBaseTopic(_ha.mqtt.baseTopic);
     _mqttMan.setConnectedCallback(std::bind(&WPalaSensor::mqttConnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
+    _mqttMan.setDisconnectedCallback(std::bind(&WPalaSensor::broadcastMqttStatus, this));
     _mqttMan.setCallback(std::bind(&WPalaSensor::mqttCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     // Connect
