@@ -143,6 +143,7 @@ private:
   void setDac(int resistance, bool EEPROM = false);
   void fillHaTemperatureJSON(JsonVariant json);
   void fillCBoxTemperatureJSON(JsonVariant json);
+  void fillRefreshJSON(JsonVariant json);
   void fetchHaTemperatureHttp();
   void fetchCBoxTemperatureHttp();
   void refresh();

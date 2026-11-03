@@ -109,6 +109,17 @@ void WPalaSensor::fillCBoxTemperatureJSON(JsonVariant json)
 }
 
 //------------------------------------------
+// Fill JSON with values computed at each refresh (built-in temperature, source used, pushed temperature and DAC)
+void WPalaSensor::fillRefreshJSON(JsonVariant json)
+{
+  char buf[10];
+  json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
+  json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
+  json[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
+  json[F("dac")] = _dac.getValue();
+}
+
+//------------------------------------------
 // Fetch HA temperature via HTTP and update _haTemperature / _haTemperatureMillis
 void WPalaSensor::fetchHaTemperatureHttp()
 {
@@ -374,6 +385,11 @@ void WPalaSensor::refresh()
   _lastTemperatureUsed = temperatureToDisplay;
 
   _pushedTemperature = temperatureToDisplay + _stoveDelta;
+
+  // broadcast refreshed values via SSE
+  JsonDocument json;
+  fillRefreshJSON(json);
+  _sse.broadcast(json);
 
   // if first refresh tick then set flag to false
   if (_firstRefreshTick)
@@ -897,12 +913,7 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
     json[F("mqttdiscoreason")] = _mqttMan.getLastDiscoState();
   }
 
-  char buf[10];
-  json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
-  json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
-
-  json[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
-  json[F("dac")] = _dac.getValue();
+  fillRefreshJSON(json);
 }
 
 //------------------------------------------
