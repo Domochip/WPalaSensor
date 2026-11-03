@@ -221,6 +221,11 @@ void WPalaSensor::fetchHaTemperatureHttp()
         // round to tenth and store in global _haTemperature
         _haTemperature = roundTenth(haTemperature);
         _haTemperatureMillis = millis();
+
+        // broadcast updated HA temperature via SSE
+        JsonDocument json;
+        fillHaTemperatureJSON(json);
+        _sse.broadcast(json);
       }
     }
   }
@@ -277,6 +282,11 @@ void WPalaSensor::fetchCBoxTemperatureHttp()
           // place it in global _stoveTemperature and store millis
           _stoveTemperature = stoveTemperature;
           _stoveTemperatureMillis = millis();
+
+          // broadcast updated CBox temperature via SSE
+          JsonDocument json;
+          fillCBoxTemperatureJSON(json);
+          _sse.broadcast(json);
         }
       }
     }
@@ -444,6 +454,11 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
     {
       _haTemperature = roundTenth(haTemperature);
       _haTemperatureMillis = millis();
+
+      // broadcast updated HA temperature via SSE
+      JsonDocument json;
+      fillHaTemperatureJSON(json);
+      _sse.broadcast(json);
     }
   }
 
@@ -456,6 +471,11 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
     {
       _stoveTemperature = stoveTemperature;
       _stoveTemperatureMillis = millis();
+
+      // broadcast updated CBox temperature via SSE
+      JsonDocument json;
+      fillCBoxTemperatureJSON(json);
+      _sse.broadcast(json);
     }
   }
 
