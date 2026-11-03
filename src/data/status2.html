@@ -8,10 +8,7 @@ Protocol: <span id="haprotocol"></span><br>
     Connection State: <span id="hamqttstatus"></span><br>
 </span>
 <span id="haslasttempe" style='display:none'>
-    Last HA Temperature: <span id="haslasttemp"></span><br>
-</span>
-<span id="haslasttempagee" style='display:none'>
-    Last HA Temperature Age: <span id="haslasttempage"></span> seconds<br>
+    Last HA Temperature: <span id="haslasttemp"></span> (<span id="haslasttempage"></span> seconds ago)<br>
 </span>
 <h4>WPalaControl/CBox</h4>
 Protocol: <span id="cboxprotocol"></span><br>
@@ -22,10 +19,7 @@ Protocol: <span id="cboxprotocol"></span><br>
     Connection State: <span id="cboxmqttstatus"></span><br>
 </span>
 <span id="cboxlasttempe" style='display:none'>
-    Last WPalaControl/CBox Temperature: <span id="cboxlasttemp"></span><br>
-</span>
-<span id="cboxlasttempagee" style='display:none'>
-    Last WPalaControl/CBox Temperature Age: <span id="cboxlasttempage"></span> seconds<br>
+    Last WPalaControl/CBox Temperature: <span id="cboxlasttemp"></span> (<span id="cboxlasttempage"></span> seconds ago)<br>
 </span>
 <h4>Built-In Temperature</h4>
 Temperature: <span id="onewiretemp"></span><br>
@@ -52,12 +46,10 @@ Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<
             show("hahttplastrespcodee", haP == 1);
             show("hamqttstatuse", haP == 2);
             show("haslasttempe", haP != 0);
-            show("haslasttempagee", haP != 0);
 
             show("cboxhttplastrespcodee", cboxP == 1);
             show("cboxmqttstatuse", cboxP == 2);
             show("cboxlasttempe", cboxP != 0);
-            show("cboxlasttempagee", cboxP != 0);
 
             getJSON("/gs" + qsp[8],
                 function (GS) {
