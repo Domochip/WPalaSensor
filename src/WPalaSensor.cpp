@@ -230,6 +230,11 @@ void WPalaSensor::fetchHaTemperatureHttp()
     }
   }
   http.end();
+
+  // broadcast HTTP response code via SSE
+  JsonDocument json;
+  json[F("hahttplastrespcode")] = _haRequestResult;
+  _sse.broadcast(json);
 }
 
 //------------------------------------------
@@ -292,6 +297,11 @@ void WPalaSensor::fetchCBoxTemperatureHttp()
     }
   }
   http.end();
+
+  // broadcast HTTP response code via SSE
+  JsonDocument json;
+  json[F("cboxhttplastrespcode")] = _stoveRequestResult;
+  _sse.broadcast(json);
 }
 
 //-----------------------------------------------------------------------
