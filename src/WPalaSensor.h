@@ -134,6 +134,7 @@ private:
 
   float _stoveDelta = 0.0;
   float _pushedTemperature = 20.0;
+  unsigned long _pushedTemperatureMillis = 0;
 
   WiFiClient _wifiClient; // used by _mqttMan
   MQTTMan _mqttMan;

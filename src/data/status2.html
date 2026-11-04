@@ -25,7 +25,8 @@ Protocol: <span id="cboxprotocol"></span><br>
 Temperature: <span id="onewiretemp"></span><br>
 Used: <span id="onewiretempused"></span><br>
 <h4>WPalaSensor output</h4>
-Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<br>
+Pushed Temperature: <span id="pushedtemp"></span> (<span id="pushedtempage"></span> seconds ago)<br>
+(dac: <span id="dac"></span>)<br>
 
 <script>
     // qsp is substituted at build time by pio_pre_build_spa.py — var qsp = '#content2 ';
@@ -35,7 +36,7 @@ Pushed Temperature: <span id="pushedtemp"></span> (dac: <span id="dac"></span>)<
 
     // ages (seconds) displayed in these spans keep increasing every second
     function incrementAges() {
-        ['halasttempage', 'cboxlasttempage'].forEach(function (id) {
+        ['halasttempage', 'cboxlasttempage', 'pushedtempage'].forEach(function (id) {
             var e = $(qsp + '#' + id);
             if (e == null) { clearInterval(agesTimer); return; } // page has been left
             if (e.innerHTML !== '') e.innerHTML = Number(e.innerHTML) + 1;

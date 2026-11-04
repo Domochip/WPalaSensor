@@ -346,6 +346,7 @@ void WPalaSensor::refresh()
   _lastTemperatureUsed = temperatureToDisplay;
 
   _pushedTemperature = temperatureToDisplay + _stoveDelta;
+  _pushedTemperatureMillis = millis();
 
   // broadcast refreshed values via SSE
   JsonDocument json;
@@ -881,6 +882,7 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
   json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
   json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
   json[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
+  json[F("pushedtempage")] = ((millis() - _pushedTemperatureMillis) / 1000);
   json[F("dac")] = _dac.getValue();
 }
 
