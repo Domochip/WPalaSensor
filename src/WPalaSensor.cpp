@@ -91,35 +91,6 @@ void WPalaSensor::setDac(int resistance, bool EEPROM /* = false*/)
 }
 
 //------------------------------------------
-// Fill JSON with Home Automation last temperature and its age
-void WPalaSensor::fillHaTemperatureJSON(JsonVariant json)
-{
-  char buf[10];
-  json[F("halasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
-  json[F("halasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
-}
-
-//------------------------------------------
-// Fill JSON with WPalaControl/CBox last temperature and its age
-void WPalaSensor::fillCBoxTemperatureJSON(JsonVariant json)
-{
-  char buf[10];
-  json[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
-  json[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
-}
-
-//------------------------------------------
-// Fill JSON with values computed at each refresh (built-in temperature, source used, pushed temperature and DAC)
-void WPalaSensor::fillRefreshJSON(JsonVariant json)
-{
-  char buf[10];
-  json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
-  json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
-  json[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
-  json[F("dac")] = _dac.getValue();
-}
-
-//------------------------------------------
 // Fetch HA temperature via HTTP and update _haTemperature / _haTemperatureMillis
 void WPalaSensor::fetchHaTemperatureHttp()
 {
@@ -232,11 +203,6 @@ void WPalaSensor::fetchHaTemperatureHttp()
         // round to tenth and store in global _haTemperature
         _haTemperature = roundTenth(haTemperature);
         _haTemperatureMillis = millis();
-
-        // broadcast updated HA temperature via SSE
-        JsonDocument json;
-        fillHaTemperatureJSON(json);
-        _sse.broadcast(json);
       }
     }
   }
@@ -244,7 +210,7 @@ void WPalaSensor::fetchHaTemperatureHttp()
 
   // broadcast HTTP response code via SSE
   JsonDocument json;
-  json[F("hahttplastrespcode")] = _haRequestResult;
+  fillStatusJSON(json);
   _sse.broadcast(json);
 }
 
@@ -298,11 +264,6 @@ void WPalaSensor::fetchCBoxTemperatureHttp()
           // place it in global _stoveTemperature and store millis
           _stoveTemperature = stoveTemperature;
           _stoveTemperatureMillis = millis();
-
-          // broadcast updated CBox temperature via SSE
-          JsonDocument json;
-          fillCBoxTemperatureJSON(json);
-          _sse.broadcast(json);
         }
       }
     }
@@ -311,7 +272,7 @@ void WPalaSensor::fetchCBoxTemperatureHttp()
 
   // broadcast HTTP response code via SSE
   JsonDocument json;
-  json[F("cboxhttplastrespcode")] = _stoveRequestResult;
+  fillStatusJSON(json);
   _sse.broadcast(json);
 }
 
@@ -388,7 +349,7 @@ void WPalaSensor::refresh()
 
   // broadcast refreshed values via SSE
   JsonDocument json;
-  fillRefreshJSON(json);
+  fillStatusJSON(json);
   _sse.broadcast(json);
 
   // if first refresh tick then set flag to false
@@ -446,13 +407,8 @@ void WPalaSensor::refresh()
 void WPalaSensor::broadcastMqttStatus()
 {
   JsonDocument json;
-  if (_ha.protocol == HaProtocol::Mqtt)
-    json[F("hamqttstatus")] = _mqttMan.getStateString();
-  if (_ha.cboxProtocol == CBoxProtocol::Mqtt)
-    json[F("cboxmqttstatus")] = _mqttMan.getStateString();
-
-  if (!json.isNull())
-    _sse.broadcast(json);
+  fillStatusJSON(json);
+  _sse.broadcast(json);
 }
 
 //------------------------------------------
@@ -499,7 +455,7 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
 
       // broadcast updated HA temperature via SSE
       JsonDocument json;
-      fillHaTemperatureJSON(json);
+      fillStatusJSON(json);
       _sse.broadcast(json);
     }
   }
@@ -516,7 +472,7 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
 
       // broadcast updated CBox temperature via SSE
       JsonDocument json;
-      fillCBoxTemperatureJSON(json);
+      fillStatusJSON(json);
       _sse.broadcast(json);
     }
   }
@@ -894,7 +850,11 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
 
   // Home Automation last temperature and age
   if (_ha.protocol != HaProtocol::Disabled)
-    fillHaTemperatureJSON(json);
+  {
+    char buf[10];
+    json[F("halasttemp")] = dtostrf(_haTemperature, 0, 2, buf);
+    json[F("halasttempage")] = ((millis() - _haTemperatureMillis) / 1000);
+  }
 
   // WPalaControl/CBox connection status
   if (_ha.cboxProtocol == CBoxProtocol::Http)
@@ -904,7 +864,11 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
 
   // WPalaControl/CBox last temperature and age
   if (_ha.cboxProtocol != CBoxProtocol::Disabled)
-    fillCBoxTemperatureJSON(json);
+  {
+    char buf[10];
+    json[F("cboxlasttemp")] = dtostrf(_stoveTemperature, 0, 2, buf);
+    json[F("cboxlasttempage")] = ((millis() - _stoveTemperatureMillis) / 1000);
+  }
 
   // if MQTT used add Mqtt connection count
   if (_ha.protocol == HaProtocol::Mqtt || _ha.cboxProtocol == CBoxProtocol::Mqtt)
@@ -913,7 +877,11 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
     json[F("mqttdiscoreason")] = _mqttMan.getLastDiscoState();
   }
 
-  fillRefreshJSON(json);
+  char buf[10];
+  json[F("onewiretemp")] = dtostrf(_owTemperature, 0, 2, buf);
+  json[F("onewiretempused")] = (_haTemperatureUsed ? F("No") : F("Yes"));
+  json[F("pushedtemp")] = dtostrf(_pushedTemperature, 0, 2, buf);
+  json[F("dac")] = _dac.getValue();
 }
 
 //------------------------------------------
