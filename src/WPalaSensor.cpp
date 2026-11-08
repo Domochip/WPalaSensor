@@ -890,9 +890,6 @@ void WPalaSensor::fillStatusJSON(JsonVariant json)
 // code to execute during initialization and reinitialization of the app
 bool WPalaSensor::appInit(bool reInit /* = false */)
 {
-  // stop Tickers
-  _refreshTicker.detach();
-
   // Stop MQTT
   _mqttMan.disconnect();
 
@@ -929,14 +926,8 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
   // flag to force refresh to see immediate result (init and reinit)
   _needRefresh = true;
 
-  // start refresh Ticker
-#ifdef ESP8266
-  _refreshTicker.attach(_refreshPeriod, [this]()
-                        { this->_needRefresh = true; });
-#else
-  _refreshTicker.attach<typeof this>(_refreshPeriod, [](typeof this palaSensor)
-                                     { palaSensor->_needRefresh = true; }, this);
-#endif
+  // restart the refresh period
+  _lastRefreshMillis = millis();
 
   // flag to force publish update (init and reinit) and restart the daily period
   _needPublishUpdate = true;
@@ -1059,6 +1050,13 @@ void WPalaSensor::appRun()
 
     if (_needPublishUpdate && mqttPublishUpdate(_mqttMan))
       _needPublishUpdate = false;
+  }
+
+  // request a refresh every refreshPeriod seconds
+  if (millis() - _lastRefreshMillis >= _refreshPeriod * 1000UL)
+  {
+    _lastRefreshMillis = millis();
+    _needRefresh = true;
   }
 
   if (_needRefresh)

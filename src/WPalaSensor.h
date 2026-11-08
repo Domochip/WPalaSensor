@@ -110,7 +110,7 @@ private:
   MCP4725 _dac;
 
   bool _needRefresh = false;
-  Ticker _refreshTicker;
+  unsigned long _lastRefreshMillis = 0;
   uint8_t _skipTick = 0;
   bool _needPublishHassDiscovery = false;
   bool _needPublishUpdate = false;
