@@ -114,7 +114,7 @@ private:
   uint8_t _skipTick = 0;
   bool _needPublishHassDiscovery = false;
   bool _needPublishUpdate = false;
-  Ticker _publishUpdateTicker;
+  unsigned long _lastPublishUpdateMillis = 0;
 
   // Used in refresh method for logic and calculation
 

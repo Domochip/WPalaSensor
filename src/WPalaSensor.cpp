@@ -892,7 +892,6 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
 {
   // stop Tickers
   _refreshTicker.detach();
-  _publishUpdateTicker.detach();
 
   // Stop MQTT
   _mqttMan.disconnect();
@@ -939,17 +938,9 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
                                      { palaSensor->_needRefresh = true; }, this);
 #endif
 
-  // flag to force publish update (init and reinit)
+  // flag to force publish update (init and reinit) and restart the daily period
   _needPublishUpdate = true;
-
-  // start publish update Ticker
-#ifdef ESP8266
-  _publishUpdateTicker.attach(86400, [this]()
-                              { this->_needPublishUpdate = true; });
-#else
-  _publishUpdateTicker.attach<typeof this>(86400, [](typeof this palaSensor)
-                                           { palaSensor->_needPublishUpdate = true; }, this);
-#endif
+  _lastPublishUpdateMillis = millis();
 
   return _ds18b20.getReady();
 }
@@ -1057,6 +1048,13 @@ void WPalaSensor::appRun()
     {
       _needPublishHassDiscovery = false;
       _needRefresh = true;
+    }
+
+    // request a publish update once a day
+    if (millis() - _lastPublishUpdateMillis >= 86400000UL)
+    {
+      _lastPublishUpdateMillis = millis();
+      _needPublishUpdate = true;
     }
 
     if (_needPublishUpdate && mqttPublishUpdate(_mqttMan))
