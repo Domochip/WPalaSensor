@@ -1044,7 +1044,7 @@ void WPalaSensor::appRun()
     // request a publish update once a day
     if (millis() - _lastPublishUpdateMillis >= 86400000UL)
     {
-      _lastPublishUpdateMillis = millis();
+      _lastPublishUpdateMillis += 86400000UL;
       _needPublishUpdate = true;
     }
 
@@ -1055,7 +1055,7 @@ void WPalaSensor::appRun()
   // request a refresh every refreshPeriod seconds
   if (millis() - _lastRefreshMillis >= _refreshPeriod * 1000UL)
   {
-    _lastRefreshMillis = millis();
+    _lastRefreshMillis += _refreshPeriod * 1000UL;
     _needRefresh = true;
   }
 
