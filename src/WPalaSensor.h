@@ -14,7 +14,6 @@
 #endif
 #include <SPI.h>
 #include <math.h>
-#include <Ticker.h>
 #include "SingleDS18B20.h"
 #include <MCP4725.h>
 
