@@ -1,91 +1,58 @@
 <h2 class="content-subhead">WPalaSensor<span id="l" class="ld">Loading...</span></h2>
 <h4>Home Automation</h4>
 Protocol: <span id="haprotocol"></span><br>
-<span id="hahttplastrespcodee" style='display:none'>
-    Last HTTP response code: <span id="hahttplastrespcode"></span><br>
+<span data-show="hahttplastrespcode" style='display:none'>
+    Last HTTP response code: <span data-k="hahttplastrespcode"></span><br>
 </span>
-<span id="hamqttstatuse" style='display:none'>
-    Connection State: <span id="hamqttstatus"></span><br>
+<span data-show="hamqttstatus" style='display:none'>
+    Connection State: <span data-k="hamqttstatus"></span><br>
 </span>
-<span id="halasttempe" style='display:none'>
-    Last HA Temperature: <span id="halasttemp"></span> (<span id="halasttempage"></span> seconds ago)<br>
+<span data-show="halasttemp" style='display:none'>
+    Last HA Temperature: <span data-k="halasttemp"></span> (<span data-k="halasttempage" class="age"></span> seconds ago)<br>
 </span>
 <h4>WPalaControl/CBox</h4>
 Protocol: <span id="cboxprotocol"></span><br>
-<span id="cboxhttplastrespcodee" style='display:none'>
-    Last HTTP response code: <span id="cboxhttplastrespcode"></span><br>
+<span data-show="cboxhttplastrespcode" style='display:none'>
+    Last HTTP response code: <span data-k="cboxhttplastrespcode"></span><br>
 </span>
-<span id="cboxmqttstatuse" style='display:none'>
-    Connection State: <span id="cboxmqttstatus"></span><br>
+<span data-show="cboxmqttstatus" style='display:none'>
+    Connection State: <span data-k="cboxmqttstatus"></span><br>
 </span>
-<span id="cboxlasttempe" style='display:none'>
-    Last WPalaControl/CBox Temperature: <span id="cboxlasttemp"></span> (<span id="cboxlasttempage"></span> seconds ago)<br>
+<span data-show="cboxlasttemp" style='display:none'>
+    Last WPalaControl/CBox Temperature: <span data-k="cboxlasttemp"></span> (<span data-k="cboxlasttempage" class="age"></span> seconds ago)<br>
 </span>
 <h4>Built-In Temperature</h4>
-Temperature: <span id="onewiretemp"></span><br>
-Used: <span id="onewiretempused"></span><br>
+Temperature: <span data-k="onewiretemp"></span><br>
+Used: <span data-k="onewiretempused"></span><br>
 <h4>WPalaSensor output</h4>
-Pushed Temperature: <span id="pushedtemp"></span> (<span id="pushedtempage"></span> seconds ago)<br>
-(dac: <span id="dac"></span>)<br>
+Pushed Temperature: <span data-k="pushedtemp"></span> (<span data-k="pushedtempage" class="age"></span> seconds ago)<br>
+(dac: <span data-k="dac"></span>)<br>
 
 <script>
     // Runs as this part's init function (see registerPart in index_template.html):
     //   root : this part's <div data-part> element, query it with $('#x', root)
     //   id   : this part's id ('2'), used in API endpoints like '/gs' + id
 
-    function show(elementId, cond) { $("#" + elementId, root).style.display = (cond ? '' : 'none'); }
-    function failed() { $("#l", root).innerHTML = '<span class="err">Failed</span>'; }
+    // status values (/gs2 or SSE event, both send the full status) are displayed with data-k / data-show
+    loadStatus(root, id);
 
-    // ages (seconds) displayed in these spans keep increasing every second
-    function incrementAges() {
-        ['halasttempage', 'cboxlasttempage', 'pushedtempage'].forEach(function (elementId) {
-            var e = $('#' + elementId, root);
-            if (e.innerHTML !== '') e.innerHTML = Number(e.innerHTML) + 1;
-        });
-    }
-    var agesTimer = setInterval(incrementAges, 1000);
-
-    // update displayed values from a status JSON object (from /gs or an SSE event)
-    function applyStatus(status) {
-        for (var k in status) {
-            var e = $('#' + k, root);
-            if (e != undefined) e.innerHTML = status[k];
-        }
-    }
-
-    // fetch the status and refresh all displayed data
-    function refreshStatus() {
-        getJSON("/gs" + id,
-            function (GS) {
-                applyStatus(GS);
-                fadeOut($("#l", root));
-            },
-            failed
-        );
-    }
-
-    // get configuration first to know which protocols are configured (0:Disabled, 1:HTTP, 2:MQTT)
+    // protocol names come from the configuration (0:Disabled, 1:HTTP, 2:MQTT)
     getJSON("/gc" + id,
         function (GC) {
-            var haP = GC["haproto"], cboxP = GC["cbproto"];
-            var protoNames = ["Disabled", "HTTP", "MQTT"];
-            $("#haprotocol", root).innerHTML = protoNames[haP];
-            $("#cboxprotocol", root).innerHTML = protoNames[cboxP];
-
-            show("hahttplastrespcodee", haP == 1);
-            show("hamqttstatuse", haP == 2);
-            show("halasttempe", haP != 0);
-
-            show("cboxhttplastrespcodee", cboxP == 1);
-            show("cboxmqttstatuse", cboxP == 2);
-            show("cboxlasttempe", cboxP != 0);
-
-            refreshStatus();
-        },
-        failed
+            const protoNames = ["Disabled", "HTTP", "MQTT"];
+            $("#haprotocol", root).textContent = protoNames[GC["haproto"]] ?? GC["haproto"];
+            $("#cboxprotocol", root).textContent = protoNames[GC["cbproto"]] ?? GC["cbproto"];
+        }
     );
 
-    var statusEventSource;
+    // ages (seconds) keep increasing every second between status updates
+    const agesTimer = setInterval(function () {
+        root.querySelectorAll('.age').forEach(function (e) {
+            if (e.textContent !== '') e.textContent = Number(e.textContent) + 1;
+        });
+    }, 1000);
+
+    let statusEventSource;
 
     function closeStatusEventSource() {
         if (statusEventSource != undefined && statusEventSource.readyState !== 2) {
@@ -98,11 +65,11 @@ Pushed Temperature: <span id="pushedtemp"></span> (<span id="pushedtempage"></sp
         if (statusEventSource != undefined && statusEventSource.readyState !== 2) return;
 
         statusEventSource = new EventSource('/statusEvt' + id);
-        // (re)connected: events may have been missed, so refresh everything
-        statusEventSource.addEventListener('open', refreshStatus);
+        // (re)connected: events may have been missed, so reload the whole status
+        statusEventSource.addEventListener('open', function () { loadStatus(root, id); });
         statusEventSource.addEventListener('message', function (e) {
             console.log('statusEvt' + id + ' : ' + e.data);
-            applyStatus(JSON.parse(e.data));
+            fillStatus(root, JSON.parse(e.data));
         });
     }
 
@@ -114,7 +81,7 @@ Pushed Temperature: <span id="pushedtemp"></span> (<span id="pushedtempage"></sp
 
     connectStatusEventSource();
 
-    // cleanup called by unloadPage() when leaving this page
+    // page is left: stop ages timer, SSE connection and visibility listener
     return function () {
         clearInterval(agesTimer);
         document.removeEventListener('visibilitychange', onVisibilityChange);

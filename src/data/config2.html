@@ -1,5 +1,5 @@
 <h2 class="content-subhead">Sensor Simulator<span id="l" class="ld">Loading...</span></h2>
-<form class="pure-form pure-form-aligned" id='f1'>
+<form class="pure-form pure-form-aligned" id='f'>
     <fieldset>
 
         <div class="pure-control-group">
@@ -424,40 +424,5 @@
         $("#hambtidiv", root).style.display = ($("#hambtidiv", root).style.display == '' ? 'none' : '');
     });
 
-    $("#f1", root).addEventListener('submit', function (event) {
-        $("#r", root).innerHTML = "Saving Configuration...";
-        post("/sc" + id,
-            convertFormToJson($("#f1", root)),
-            function () {
-                $("#f1", root).style.display = 'none';
-
-                sessionStorage.setItem('activeTab', '#menuConfig');
-                $('#r', root).innerHTML = '<h3><b>Configuration saved <span class="ok">successfully</span>.</b></h3>Waiting for device... <span id="cd">0</span>s';
-                redirectWhenReachable(location.origin, 30000);
-            },
-            function () {
-                $('#r', root).innerHTML = '<h3><b>Configuration <span class="err">error</span>.</b></h3>';
-            }
-        );
-        event.preventDefault();
-    });
-
-    getJSON("/gc" + id,
-        function (GC) {
-            for (k in GC) {
-                if ($('#' + k, root)) {
-                    if ($('#' + k, root).type != 'checkbox') $('#' + k, root).value = GC[k];
-                    else $('#' + k, root).checked = GC[k];
-
-                    triggerEvent($('#' + k, root), 'change');
-                }
-            }
-
-            $("#f1 input[type=submit]", root).disabled = false;
-            fadeOut($("#l", root));
-        },
-        function () {
-            $("#l", root).innerHTML = '<span class="err">Failed</span>';
-        }
-    );
+    configForm(root, id);
 </script>
