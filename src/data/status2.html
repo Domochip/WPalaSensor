@@ -29,16 +29,17 @@ Pushed Temperature: <span id="pushedtemp"></span> (<span id="pushedtempage"></sp
 (dac: <span id="dac"></span>)<br>
 
 <script>
-    // qsp is substituted at build time by pio_pre_build_spa.py — var qsp = '#content2 ';
+    // Runs as this part's init function (see registerPart in index_template.html):
+    //   root : this part's <div data-part> element, query it with $('#x', root)
+    //   id   : this part's id ('2'), used in API endpoints like '/gs' + id
 
-    function show(id, cond) { $(qsp + "#" + id).style.display = (cond ? '' : 'none'); }
-    function failed() { $(qsp + "#l").innerHTML = '<span class="err">Failed</span>'; }
+    function show(elementId, cond) { $("#" + elementId, root).style.display = (cond ? '' : 'none'); }
+    function failed() { $("#l", root).innerHTML = '<span class="err">Failed</span>'; }
 
     // ages (seconds) displayed in these spans keep increasing every second
     function incrementAges() {
-        ['halasttempage', 'cboxlasttempage', 'pushedtempage'].forEach(function (id) {
-            var e = $(qsp + '#' + id);
-            if (e == null) { clearInterval(agesTimer); return; } // page has been left
+        ['halasttempage', 'cboxlasttempage', 'pushedtempage'].forEach(function (elementId) {
+            var e = $('#' + elementId, root);
             if (e.innerHTML !== '') e.innerHTML = Number(e.innerHTML) + 1;
         });
     }
@@ -47,29 +48,29 @@ Pushed Temperature: <span id="pushedtemp"></span> (<span id="pushedtempage"></sp
     // update displayed values from a status JSON object (from /gs or an SSE event)
     function applyStatus(status) {
         for (var k in status) {
-            var e = $(qsp + '#' + k);
+            var e = $('#' + k, root);
             if (e != undefined) e.innerHTML = status[k];
         }
     }
 
     // fetch the status and refresh all displayed data
     function refreshStatus() {
-        getJSON("/gs" + qsp[8],
+        getJSON("/gs" + id,
             function (GS) {
                 applyStatus(GS);
-                fadeOut($(qsp + "#l"));
+                fadeOut($("#l", root));
             },
             failed
         );
     }
 
     // get configuration first to know which protocols are configured (0:Disabled, 1:HTTP, 2:MQTT)
-    getJSON("/gc" + qsp[8],
+    getJSON("/gc" + id,
         function (GC) {
             var haP = GC["haproto"], cboxP = GC["cbproto"];
             var protoNames = ["Disabled", "HTTP", "MQTT"];
-            $(qsp + "#haprotocol").innerHTML = protoNames[haP];
-            $(qsp + "#cboxprotocol").innerHTML = protoNames[cboxP];
+            $("#haprotocol", root).innerHTML = protoNames[haP];
+            $("#cboxprotocol", root).innerHTML = protoNames[cboxP];
 
             show("hahttplastrespcodee", haP == 1);
             show("hamqttstatuse", haP == 2);
@@ -96,19 +97,27 @@ Pushed Temperature: <span id="pushedtemp"></span> (<span id="pushedtempage"></sp
         if (!window.EventSource || document.hidden) return;
         if (statusEventSource != undefined && statusEventSource.readyState !== 2) return;
 
-        statusEventSource = new EventSource('/statusEvt' + qsp[8]);
+        statusEventSource = new EventSource('/statusEvt' + id);
         // (re)connected: events may have been missed, so refresh everything
         statusEventSource.addEventListener('open', refreshStatus);
         statusEventSource.addEventListener('message', function (e) {
-            console.log('statusEvt' + qsp[8] + ' : ' + e.data);
+            console.log('statusEvt' + id + ' : ' + e.data);
             applyStatus(JSON.parse(e.data));
         });
     }
 
-    document.addEventListener('visibilitychange', function () {
+    function onVisibilityChange() {
         if (document.hidden) closeStatusEventSource();
         else connectStatusEventSource();
-    });
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     connectStatusEventSource();
+
+    // cleanup called by unloadPage() when leaving this page
+    return function () {
+        clearInterval(agesTimer);
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+        closeStatusEventSource();
+    };
 </script>
