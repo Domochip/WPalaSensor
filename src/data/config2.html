@@ -313,25 +313,30 @@
     });
 
 
-    function addClickListener(selector, payload, resultSelector) {
+    // Calibration button: sets the DAC, then reads back the simulated resistance into resultSelector.
+    // A failure is shown in the step's errorSelector span
+    function addClickListener(selector, payload, resultSelector, errorSelector) {
         $(selector, root).addEventListener('click', function () {
+            const error = $(errorSelector, root);
+            error.textContent = '';
             post("/sdac", payload, function () {
-                getJSON("/gdac", function (data) { $(resultSelector, root).value = data.res })
-            })
+                getJSON("/gdac", function (data) { $(resultSelector, root).value = data.res },
+                    function () { showError(error, 'reading thermistor value'); });
+            }, function (response) { showError(error, response); });
         });
     }
 
-    addClickListener("#set10", "{\"temperature\":10}", "#R1");
-    addClickListener("#set10d", "{\"down\":1}", "#R1");
-    addClickListener("#set10u", "{\"up\":1}", "#R1");
+    addClickListener("#set10", "{\"temperature\":10}", "#R1", "#set10res");
+    addClickListener("#set10d", "{\"down\":1}", "#R1", "#set10res");
+    addClickListener("#set10u", "{\"up\":1}", "#R1", "#set10res");
 
-    addClickListener("#set20", "{\"temperature\":20}", "#R2");
-    addClickListener("#set20d", "{\"down\":1}", "#R2");
-    addClickListener("#set20u", "{\"up\":1}", "#R2");
+    addClickListener("#set20", "{\"temperature\":20}", "#R2", "#set20res");
+    addClickListener("#set20d", "{\"down\":1}", "#R2", "#set20res");
+    addClickListener("#set20u", "{\"up\":1}", "#R2", "#set20res");
 
-    addClickListener("#set30", "{\"temperature\":30}", "#R3");
-    addClickListener("#set30d", "{\"down\":1}", "#R3");
-    addClickListener("#set30u", "{\"up\":1}", "#R3");
+    addClickListener("#set30", "{\"temperature\":30}", "#R3", "#set30res");
+    addClickListener("#set30d", "{\"down\":1}", "#R3", "#set30res");
+    addClickListener("#set30u", "{\"up\":1}", "#R3", "#set30res");
 
     $("#calc", root).addEventListener('click', function () {
         var coeffs = getSteinhartHart($("#R1", root).value, 10.0, $("#R2", root).value, 20.0, $("#R3", root).value, 30.0);
