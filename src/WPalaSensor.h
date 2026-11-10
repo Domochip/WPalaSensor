@@ -141,6 +141,7 @@ private:
 
   void setDac(float temperature, bool EEPROM = false);
   void setDac(int resistance, bool EEPROM = false);
+  void setDacValue(int value, bool EEPROM = false);
   void fetchHaTemperatureHttp();
   void fetchCBoxTemperatureHttp();
   void refresh();

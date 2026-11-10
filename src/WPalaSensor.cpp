@@ -72,10 +72,25 @@ void WPalaSensor::setDac(float temperature, bool EEPROM /* = false*/)
 //-----------------------------------------------------------------------
 void WPalaSensor::setDac(int resistance, bool EEPROM /* = false*/)
 {
+  // a negative resistance (e.g. from bad coefficients) would divide by zero or give a negative value
+  if (resistance < 0)
+    resistance = 0;
+
   // calculate DAC value
   uint32_t value = 8200 + 2200;
   value *= 4096;
   value /= 8200 + resistance;
+
+  setDacValue(value, EEPROM);
+}
+
+//-----------------------------------------------------------------------
+// Set DAC raw value, kept between 1 and 4095:
+// 4095 is the DAC maximum and 0 would make the resistance calculation of /gdac divide by zero
+//-----------------------------------------------------------------------
+void WPalaSensor::setDacValue(int value, bool EEPROM /* = false*/)
+{
+  value = constrain(value, 1, MCP4725_MAXVALUE);
 
   // if EEPROM is true
   if (EEPROM)
@@ -944,6 +959,13 @@ void WPalaSensor::appInitWebServer(WebServer &server)
   server.on(F("/gdac"), HTTP_GET,
             [this, &server]()
             {
+              // 0 when the DAC could not be read at startup (e.g. not connected): no resistance to compute
+              if (!_dac.getValue())
+              {
+                server.send(500, F("text/html"), F("DAC not available"));
+                return;
+              }
+
               String dpJSON('{');
               dpJSON = dpJSON + F("\"res\":") + (((10400 * 4096) / _dac.getValue()) - 8200);
 #if DEVELOPPER_MODE
@@ -984,7 +1006,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               if (json[F("up")].is<JsonVariant>())
               {
                 // go one step up
-                _dac.setValue(_dac.getValue() + 1);
+                setDacValue(_dac.getValue() + 1);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
@@ -993,7 +1015,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               if (json[F("down")].is<JsonVariant>())
               {
                 // go one step down
-                _dac.setValue(_dac.getValue() - 1);
+                setDacValue(_dac.getValue() - 1);
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
@@ -1004,7 +1026,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               if ((jv = json[F("dac")]).is<JsonVariant>())
               {
                 // convert and set it
-                _dac.setValue(jv);
+                setDacValue(jv.as<int>());
                 // go for refresh tick skipped (time to look a value on stove)
                 _skipTick = TICK_TO_SKIP;
               }
