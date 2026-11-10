@@ -11,7 +11,7 @@
         <h3 class="content-subhead">Calibration</h3>
         <div class="pure-control-group">
             <label>Calibrator</label>
-            <a class="pure-button btn-ok" id="calibButton">Show</a>
+            <button type="button" class="pure-button btn-ok" id="calibButton">Show</button>
         </div>
         <div id='calib' class='panel' style='display:none'>
 
@@ -273,11 +273,6 @@
 </form>
 <span id='r'></span>
 
-<!-- inputs used for A,B and C Coeff calculation during calibration -->
-<input type='number' id='R1' style='display:none'>
-<input type='number' id='R2' style='display:none'>
-<input type='number' id='R3' style='display:none'>
-
 <script>
     // Runs as this part's init function (see registerPart in index_template.html):
     //   root : this part's <div data-part> element, query it with $('#x', root)
@@ -307,59 +302,61 @@
         return [A, B, C];
     }
 
-    $("#calibButton", root).addEventListener('click', function (evt) {
-        evt.preventDefault();
+    $("#calibButton", root).addEventListener('click', function () {
         if ($("#calib", root).style.display == 'none') {
-            $("#calibButton", root).text = 'Hide';
+            $("#calibButton", root).textContent = 'Hide';
             $("#calib", root).style.display = '';
             $("#twentyRefreshPeriodDuration", root).innerText = $("#rp", root).value * 20;
         }
         else {
-            $("#calibButton", root).text = 'Show';
+            $("#calibButton", root).textContent = 'Show';
             $("#calib", root).style.display = 'none';
         }
     });
 
 
-    // Calibration button: sets the DAC, then reads back the simulated resistance into resultSelector.
+    // thermistor resistance read back from the device at each calibration step, by step temperature (10, 20, 30)
+    const resistances = {};
+
+    // Calibration button: sets the DAC, then reads back the simulated resistance of the step at temperature.
     // A failure is shown in the step's errorSelector span
-    function addClickListener(selector, payload, resultSelector, errorSelector) {
+    function addClickListener(selector, payload, temperature, errorSelector) {
         $(selector, root).addEventListener('click', function () {
             const error = $(errorSelector, root);
             error.textContent = '';
             post("/sdac", payload, function () {
-                getJSON("/gdac", function (data) { $(resultSelector, root).value = data.res },
+                getJSON("/gdac", function (data) { resistances[temperature] = data.res; },
                     function (response) { showError(error, response || 'reading thermistor value'); });
             }, function (response) { showError(error, response); });
         });
     }
 
-    addClickListener("#set10", "{\"temperature\":10}", "#R1", "#set10res");
-    addClickListener("#set10d", "{\"down\":1}", "#R1", "#set10res");
-    addClickListener("#set10u", "{\"up\":1}", "#R1", "#set10res");
+    addClickListener("#set10", "{\"temperature\":10}", 10, "#set10res");
+    addClickListener("#set10d", "{\"down\":1}", 10, "#set10res");
+    addClickListener("#set10u", "{\"up\":1}", 10, "#set10res");
 
-    addClickListener("#set20", "{\"temperature\":20}", "#R2", "#set20res");
-    addClickListener("#set20d", "{\"down\":1}", "#R2", "#set20res");
-    addClickListener("#set20u", "{\"up\":1}", "#R2", "#set20res");
+    addClickListener("#set20", "{\"temperature\":20}", 20, "#set20res");
+    addClickListener("#set20d", "{\"down\":1}", 20, "#set20res");
+    addClickListener("#set20u", "{\"up\":1}", 20, "#set20res");
 
-    addClickListener("#set30", "{\"temperature\":30}", "#R3", "#set30res");
-    addClickListener("#set30d", "{\"down\":1}", "#R3", "#set30res");
-    addClickListener("#set30u", "{\"up\":1}", "#R3", "#set30res");
+    addClickListener("#set30", "{\"temperature\":30}", 30, "#set30res");
+    addClickListener("#set30d", "{\"down\":1}", 30, "#set30res");
+    addClickListener("#set30u", "{\"up\":1}", 30, "#set30res");
 
     $("#calc", root).addEventListener('click', function () {
         const result = $("#calcres", root);
         result.textContent = '';
 
         // each step must have been done: its thermistor resistance is read back from the device
-        const missing = [['#R1', '10°'], ['#R2', '20°'], ['#R3', '30°']]
-            .filter(([sel]) => !(Number($(sel, root).value) > 0))
-            .map(([, step]) => step);
+        const missing = [10, 20, 30]
+            .filter(temperature => !(resistances[temperature] > 0))
+            .map(temperature => temperature + '°');
         if (missing.length) {
             showError(result, 'set Thermistor to ' + missing.join(', ') + ' first');
             return;
         }
 
-        var coeffs = getSteinhartHart(Number($("#R1", root).value), 10.0, Number($("#R2", root).value), 20.0, Number($("#R3", root).value), 30.0);
+        var coeffs = getSteinhartHart(resistances[10], 10.0, resistances[20], 20.0, resistances[30], 30.0);
         // e.g. two identical resistances divide by zero: keep the current coefficients
         if (!coeffs.every(Number.isFinite)) {
             showError(result, 'resistances must all be different, adjust the steps again');
