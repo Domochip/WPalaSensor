@@ -523,8 +523,11 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
       retMsg = F("{\"update_percentage\":null,\"in_progress\":true}");
     else
     {
-      _mqttMan.publish(topic, (String(F("Update failed: ")) + retMsg).c_str(), true);
+      LOG_SERIAL_PRINTF_P(PSTR("Update failed: %s\n"), retMsg.c_str());
       retMsg = F("{\"in_progress\":false}");
+
+      // mark that we need to publish the update status again
+      _needPublishUpdate = true;
     }
 
     // publish result
