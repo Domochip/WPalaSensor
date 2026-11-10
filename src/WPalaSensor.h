@@ -94,7 +94,7 @@ private:
 
   // --------------------
 
-  uint8_t _refreshPeriod;
+  uint16_t _refreshPeriod;
   // Steinhart-Hart coefficient A
   double _shA;
   // Steinhart-Hart coefficient B
