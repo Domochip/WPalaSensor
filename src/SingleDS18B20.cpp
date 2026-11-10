@@ -117,8 +117,14 @@ float SingleDS18B20::readTemp()
   startConvertT();
 
   // wait for conversion end (DS18B20 are powered)
+  // max conversion time is 750ms, so give up after 1s to avoid blocking indefinitely
+  const unsigned long conversionStart = millis();
   while (_ow.read_bit() == 0)
+  {
+    if (millis() - conversionStart >= 1000)
+      return NAN;
     delay(10);
+  }
 
   // if read of scratchpad failed (implicit 3 times) then return NaN
   if (!readScratchPad(data))
