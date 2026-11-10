@@ -932,6 +932,9 @@ bool WPalaSensor::appInit(bool reInit /* = false */)
   _stoveTemperatureMillis = millis() - (1000 * _refreshPeriod); // delta is kept but will evolve only if a new value is received
   _stoveRequestResult = 0;
 
+  // end any calibration pause: after saving, the new configuration must apply
+  _skipTick = 0;
+
   // flag to force refresh to see immediate result (init and reinit)
   _needRefresh = true;
 
