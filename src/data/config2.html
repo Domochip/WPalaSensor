@@ -54,7 +54,7 @@
 
             <div class="pure-control-group">
                 <label for="calc">Calculate new Coeff A,B and C</label>
-                <input type='button' id='calc' value='Run Calculation'>
+                <input type='button' id='calc' value='Run Calculation'><span id='calcres'></span>
             </div>
         </div>
         <div class="pure-control-group">
@@ -339,7 +339,24 @@
     addClickListener("#set30u", "{\"up\":1}", "#R3", "#set30res");
 
     $("#calc", root).addEventListener('click', function () {
-        var coeffs = getSteinhartHart($("#R1", root).value, 10.0, $("#R2", root).value, 20.0, $("#R3", root).value, 30.0);
+        const result = $("#calcres", root);
+        result.textContent = '';
+
+        // each step must have been done: its thermistor resistance is read back from the device
+        const missing = [['#R1', '10°'], ['#R2', '20°'], ['#R3', '30°']]
+            .filter(([sel]) => !(Number($(sel, root).value) > 0))
+            .map(([, step]) => step);
+        if (missing.length) {
+            showError(result, 'set Thermistor to ' + missing.join(', ') + ' first');
+            return;
+        }
+
+        var coeffs = getSteinhartHart(Number($("#R1", root).value), 10.0, Number($("#R2", root).value), 20.0, Number($("#R3", root).value), 30.0);
+        // e.g. two identical resistances divide by zero: keep the current coefficients
+        if (!coeffs.every(Number.isFinite)) {
+            showError(result, 'resistances must all be different, adjust the steps again');
+            return;
+        }
         $("#sha", root).value = Math.round(coeffs[0] * 10000000000000000) / 10000000000000000;
         $("#shb", root).value = Math.round(coeffs[1] * 10000000000000000) / 10000000000000000;
         $("#shc", root).value = Math.round(coeffs[2] * 10000000000000000) / 10000000000000000;
