@@ -321,7 +321,7 @@
             error.textContent = '';
             post("/sdac", payload, function () {
                 getJSON("/gdac", function (data) { $(resultSelector, root).value = data.res },
-                    function () { showError(error, 'reading thermistor value'); });
+                    function (response) { showError(error, response || 'reading thermistor value'); });
             }, function (response) { showError(error, response); });
         });
     }
