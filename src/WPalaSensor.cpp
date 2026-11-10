@@ -336,8 +336,9 @@ void WPalaSensor::refresh()
   // if Connection Box protocol is defined and stove temperature arrived after last refresh and not first refresh tick
   if (_ha.cboxProtocol != CBoxProtocol::Disabled && (millis() - _stoveTemperatureMillis) < (uint32_t)_refreshPeriod * 1000 && !_firstRefreshTick)
   {
-    // adjust delta
     _stoveDelta += (_lastTemperatureUsed - _stoveTemperature) / 2.5F;
+    // limit the stove delta to ±5.0°C
+    _stoveDelta = constrain(_stoveDelta, -5.0F, 5.0F);
   }
   // else if stove temperature is too old (older for more than timeout) then reset delta
   else if ((millis() - _stoveTemperatureMillis) >= (uint32_t)_ha.cboxTemperatureTimeout * 1000)
