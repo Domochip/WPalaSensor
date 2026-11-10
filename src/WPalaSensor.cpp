@@ -952,7 +952,7 @@ void WPalaSensor::appInitWebServer(WebServer &server)
               dpJSON += '}';
 
               server.sendHeader(F("Cache-Control"), F("no-cache"));
-              server.send(200, F("text/json"), dpJSON);
+              server.send(200, F("application/json"), dpJSON);
             });
 
   // SetDAC
