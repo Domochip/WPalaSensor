@@ -370,80 +370,25 @@
         $("#shc", root).value = Math.round(coeffs[2] * 10000000000000000) / 10000000000000000;
     })
 
-    function isMQTTSelected() {
-        if ($("#haproto", root).value == 2 || $("#cbproto", root).value == 2) {
-            $("#mqtte", root).style.display = '';
-        }
-        else $("#mqtte", root).style.display = 'none';
+    // sections shown by each select: { select id: { section id: values for which it is shown } }
+    const sectionsBySelect = {
+        haproto: { hae: ['1', '2'], hahe: ['1'], hame: ['2'] },           // HA protocol: HTTP, MQTT
+        hahtype: { hah0: ['0'], hah1: ['1'], 'hah0-1': ['0', '1'], hah2: ['2'] }, // HA HTTP type: Jeedom, Fibaro, Home Assistant
+        cbproto: { cbe: ['1', '2'], cbhe: ['1'], cbme: ['2'] },           // CBox protocol: HTTP, MQTT
+    };
+    for (const [selectId, sections] of Object.entries(sectionsBySelect)) {
+        $('#' + selectId, root).addEventListener('change', function () {
+            for (const [sectionId, values] of Object.entries(sections))
+                $('#' + sectionId, root).style.display = (values.includes(this.value) ? '' : 'none');
+            // MQTT server settings are needed when HA or CBox uses MQTT
+            $("#mqtte", root).style.display =
+                ($("#haproto", root).value == '2' || $("#cbproto", root).value == '2' ? '' : 'none');
+        });
     }
-
-    $("#haproto", root).addEventListener('change', function () {
-        switch ($("#haproto", root).value) {
-            case "0":
-                $("#hae", root).style.display = 'none';
-                break;
-            case "1":
-                $("#hae", root).style.display = '';
-                $("#hahe", root).style.display = '';
-                $("#hame", root).style.display = 'none';
-                break;
-            case "2":
-                $("#hae", root).style.display = '';
-                $("#hahe", root).style.display = 'none';
-                $("#hame", root).style.display = '';
-                break;
-        }
-        isMQTTSelected();
-    });
-
-
-    $("#hahtype", root).addEventListener('change', function () {
-        switch ($("#hahtype", root).value) {
-            case "0":
-                $("#hah0", root).style.display = '';
-                $("#hah1", root).style.display = 'none';
-                $("#hah0-1", root).style.display = '';
-                $("#hah2", root).style.display = 'none';
-                break;
-            case "1":
-                $("#hah0", root).style.display = 'none';
-                $("#hah1", root).style.display = '';
-                $("#hah0-1", root).style.display = '';
-                $("#hah2", root).style.display = 'none';
-                break;
-            case "2":
-                $("#hah0", root).style.display = 'none';
-                $("#hah1", root).style.display = 'none';
-                $("#hah0-1", root).style.display = 'none';
-                $("#hah2", root).style.display = '';
-                break;
-        }
-    });
 
     $("#hamtempisjson", root).addEventListener('change', function () {
         $("#hamtempkeydiv", root).style.display = this.checked ? '' : 'none';
     });
-
-    $("#cbproto", root).addEventListener('change', function () {
-        switch ($("#cbproto", root).value) {
-            case "0":
-                $("#cbe", root).style.display = 'none';
-                break;
-            case "1":
-                $("#cbe", root).style.display = '';
-                $("#cbhe", root).style.display = '';
-                $("#cbme", root).style.display = 'none';
-                break;
-            case "2":
-                $("#cbe", root).style.display = '';
-                $("#cbhe", root).style.display = 'none';
-                $("#cbme", root).style.display = '';
-                break;
-        }
-        isMQTTSelected();
-    });
-
-
 
     configForm(root, id);
 </script>
