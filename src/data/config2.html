@@ -88,10 +88,10 @@
                 <label for="hatt">No Response Timeout</label>
                 <input type='number' id='hatt' name='hatt' min='0' max='3601'>
                 <span class="pure-form-message-inline">seconds</span>
-                <span id="hatti" name="hatti" class="infotip">?</span>
+                <span id="hatti" class="infotip" data-tip="hattidiv">?</span>
             </div>
 
-            <div class="pure-control-group" id="hattidiv" name="hattidiv" style="display:none;">
+            <div class="pure-control-group" id="hattidiv" style="display:none;">
                 <label></label>
                 <div class="infotipdiv">
                     If no Home Automation temperature is retrieved/received within this time, local temperature sensor
@@ -196,10 +196,10 @@
                 <label for="cbtt">No Response Timeout</label>
                 <input type='number' id='cbtt' name='cbtt' min='0' max='3601'>
                 <span class="pure-form-message-inline">seconds</span>
-                <span id="cbtti" name="cbtti" class="infotip">?</span>
+                <span id="cbtti" class="infotip" data-tip="cbttidiv">?</span>
             </div>
 
-            <div class="pure-control-group" id="cbttidiv" name="cbttidiv" style="display:none;">
+            <div class="pure-control-group" id="cbttidiv" style="display:none;">
                 <label></label>
                 <div class="infotipdiv">
                     If no stove temperature is retrieved/received within this time, feedback correction will be disabled
@@ -248,10 +248,10 @@
             <div class="pure-control-group">
                 <label for="hambt">Base Topic</label>
                 <input type='text' id='hambt' name='hambt' maxlength='64'>
-                <span id="hambti" name="hambti" class="infotip">?</span>
+                <span id="hambti" class="infotip" data-tip="hambtidiv">?</span>
             </div>
 
-            <div class="pure-control-group" id="hambtidiv" name="hambtidiv" style="display:none;">
+            <div class="pure-control-group" id="hambtidiv" style="display:none;">
                 <label></label>
                 <div class="infotipdiv">
                     Base Topic placeholders : <br>
@@ -282,6 +282,14 @@
     // Runs as this part's init function (see registerPart in index_template.html):
     //   root : this part's <div data-part> element, query it with $('#x', root)
     //   id   : this part's id ('2'), used in API endpoints like '/gc' + id
+
+    // each "?" info tip toggles the help block named by its data-tip attribute
+    root.querySelectorAll('.infotip[data-tip]').forEach(tip => {
+        tip.addEventListener('click', function () {
+            const help = $('#' + tip.dataset.tip, root);
+            help.style.display = (help.style.display == '' ? 'none' : '');
+        });
+    });
 
     function getSteinhartHart(R1, T1, R2, T2, R3, T3) {
         T1 = T1 + 273.15; T2 = T2 + 273.15; T3 = T3 + 273.15;
@@ -388,9 +396,6 @@
         isMQTTSelected();
     });
 
-    $("#hatti", root).addEventListener('click', function () {
-        $("#hattidiv", root).style.display = ($("#hattidiv", root).style.display == '' ? 'none' : '');
-    });
 
     $("#hahtype", root).addEventListener('change', function () {
         switch ($("#hahtype", root).value) {
@@ -438,13 +443,7 @@
         isMQTTSelected();
     });
 
-    $("#cbtti", root).addEventListener('click', function () {
-        $("#cbttidiv", root).style.display = ($("#cbttidiv", root).style.display == '' ? 'none' : '');
-    });
 
-    $("#hambti", root).addEventListener('click', function () {
-        $("#hambtidiv", root).style.display = ($("#hambtidiv", root).style.display == '' ? 'none' : '');
-    });
 
     configForm(root, id);
 </script>
