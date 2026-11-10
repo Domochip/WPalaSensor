@@ -38,10 +38,10 @@ Pushed Temperature: <span data-k="pushedtemp"></span> (<span data-k="pushedtempa
 
     // protocol names come from the configuration (0:Disabled, 1:HTTP, 2:MQTT)
     getJSON("/gc" + id,
-        function (GC) {
+        function (config) {
             const protoNames = ["Disabled", "HTTP", "MQTT"];
-            $("#haprotocol", root).textContent = protoNames[GC["haproto"]] ?? GC["haproto"];
-            $("#cboxprotocol", root).textContent = protoNames[GC["cbproto"]] ?? GC["cbproto"];
+            $("#haprotocol", root).textContent = protoNames[config["haproto"]] ?? config["haproto"];
+            $("#cboxprotocol", root).textContent = protoNames[config["cbproto"]] ?? config["cbproto"];
         }
     );
 
