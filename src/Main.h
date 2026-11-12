@@ -50,9 +50,6 @@
 #define LOG_SERIAL_PRINTF_P(...)
 #endif
 
-// Choose Pin used to boot in Rescue Mode
-// #define RESCUE_BTN_PIN 16
-
 // construct Version text
 #if DEVELOPPER_MODE
 #define _DEV_SUFFIX "-DEV"
