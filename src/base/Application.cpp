@@ -30,6 +30,20 @@ void Application::HassDiscoveryCtx::publishEntity(JsonDocument &json, const Stri
   mqttMan.publish(topic.c_str(), json, true);
 }
 
+void Application::mqttSubscribeHassStatus(MQTTMan &mqttMan, const char *hassDiscoveryPrefix)
+{
+  String topic(hassDiscoveryPrefix);
+  topic += F("/status");
+  mqttMan.subscribe(topic.c_str());
+}
+
+bool Application::isHassOnlineMessage(const char *hassDiscoveryPrefix, const char *topic, const uint8_t *payload, unsigned int length)
+{
+  const size_t prefixLen = strlen(hassDiscoveryPrefix);
+  return strncmp(topic, hassDiscoveryPrefix, prefixLen) == 0 && strcmp_P(topic + prefixLen, PSTR("/status")) == 0 &&
+         length == 6 && memcmp_P(payload, PSTR("online"), 6) == 0;
+}
+
 Application::Application(AppId appId) : _appId(appId)
 {
   _applicationList[_appId] = this;
@@ -131,6 +145,96 @@ void Application::deleteAllConfig()
     if (LittleFS.exists(configPath))
       LittleFS.remove(configPath);
   }
+}
+
+// Fills one section per application (named after getAppIdName()) with its saved configuration
+// WiFi configuration is never included
+void Application::fillBackupJSON(JsonVariant json)
+{
+  for (Application *app : _applicationList)
+  {
+    if (!app || app->_appId == WifiManApp)
+      continue;
+    app->fillConfigJSON(json[app->getAppIdName()].to<JsonObject>(), true);
+  }
+}
+
+// Restores configuration from a backup produced by fillBackupJSON and saves it
+// Only sections present in the backup are restored, WiFi configuration is never touched
+// On failure, nothing is saved and running configuration is reloaded from files
+bool Application::restoreBackupJSON(JsonVariant json, String &errMsg)
+{
+  // check structure first: each present section must be an object
+  bool found = false;
+  for (Application *app : _applicationList)
+  {
+    if (!app || app->_appId == WifiManApp)
+      continue;
+    JsonVariant section = json[app->getAppIdName()];
+    if (section.isNull())
+      continue;
+    if (!section.is<JsonObject>())
+    {
+      errMsg = F("Invalid section: ");
+      errMsg += app->getAppIdName();
+      return false;
+    }
+    found = true;
+  }
+  if (!found)
+  {
+    errMsg = F("No configuration found in file");
+    return false;
+  }
+
+  // apply each section on top of default values (so that restored config matches the backup)
+  bool ok = true;
+  for (Application *app : _applicationList)
+  {
+    if (!app || app->_appId == WifiManApp)
+      continue;
+    JsonVariant section = json[app->getAppIdName()];
+    if (!section.is<JsonObject>())
+      continue;
+    app->setConfigDefaultValues();
+    if (!app->parseConfigJSON(section))
+    {
+      errMsg = F("Invalid configuration: ");
+      errMsg += app->getAppIdName();
+      ok = false;
+      break;
+    }
+    app->validateConfig();
+  }
+
+  // save restored sections
+  for (Application *app : _applicationList)
+  {
+    if (!ok)
+      break;
+    if (!app || app->_appId == WifiManApp)
+      continue;
+    if (json[app->getAppIdName()].is<JsonObject>() && !app->saveConfig())
+    {
+      errMsg = F("Configuration hasn't been saved: ");
+      errMsg += app->getAppIdName();
+      ok = false;
+    }
+  }
+
+  // on failure, reload running configuration from files
+  if (!ok)
+  {
+    for (Application *app : _applicationList)
+    {
+      if (!app || app->_appId == WifiManApp)
+        continue;
+      app->setConfigDefaultValues();
+      app->loadConfig();
+    }
+  }
+
+  return ok;
 }
 
 // Writes a secret field: real value when saving to file, predefined placeholder when sending to web page

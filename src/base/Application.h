@@ -43,6 +43,8 @@ protected:
   bool saveConfig();
   bool loadConfig();
   static void deleteAllConfig();
+  static void fillBackupJSON(JsonVariant json);
+  static bool restoreBackupJSON(JsonVariant json, String &errMsg);
 
   char getAppIdChar();
   const __FlashStringHelper *getAppIdName();
@@ -124,6 +126,11 @@ public:
 
   virtual void fillStatusJSON(JsonVariant json) = 0;
   virtual void mqttPublishHassDiscovery(HassDiscoveryCtx &ctx) {};
+
+protected:
+  // Home Assistant birth message: "online" published to <hassDiscoveryPrefix>/status when HA starts
+  static void mqttSubscribeHassStatus(MQTTMan &mqttMan, const char *hassDiscoveryPrefix);
+  static bool isHassOnlineMessage(const char *hassDiscoveryPrefix, const char *topic, const uint8_t *payload, unsigned int length);
 };
 
 #endif
