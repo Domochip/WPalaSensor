@@ -437,6 +437,10 @@ void WPalaSensor::mqttConnectedCallback(MQTTMan *mqttMan, bool firstConnection)
   topic += F("/update/install");
   mqttMan->subscribe(topic.c_str());
 
+  // subscribe to Home Assistant status topic
+  if (_ha.mqtt.hassDiscoveryEnabled)
+    mqttSubscribeHassStatus(*mqttMan, _ha.mqtt.hassDiscoveryPrefix);
+
   // raise flag to publish Home Assistant discovery data
   _needPublishHassDiscovery = true;
 
@@ -482,6 +486,14 @@ void WPalaSensor::mqttCallback(char *topic, uint8_t *payload, unsigned int lengt
       fillStatusJSON(json);
       _sse.broadcast(json);
     }
+  }
+
+  // Home Assistant restarted: republish discovery then states (not retained)
+  if (_ha.mqtt.hassDiscoveryEnabled && isHassOnlineMessage(_ha.mqtt.hassDiscoveryPrefix, topic, payload, length))
+  {
+    LOG_SERIAL_PRINTLN(F("Home Assistant online: publish discovery and states"));
+    _needPublishHassDiscovery = true;
+    return;
   }
 
   // if topic ends with "/update/install"
